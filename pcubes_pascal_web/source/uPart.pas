@@ -130,9 +130,9 @@ var
 begin
   Result := hopInPlane;
   NormVect := Plane.NormVect;
-  PlaneVect := NormVect * Plane.NormDistance;
+  PlaneVect := VectorScale(NormVect, Plane.NormDistance);
   for Vertex in FVertices do begin
-    D := (Vertex - PlaneVect) ** NormVect;
+    D := VectorDot(VectorSubtract(Vertex, PlaneVect), NormVect);
 
     if D > DELTA then begin // outside
       if Result = hopInside then begin
