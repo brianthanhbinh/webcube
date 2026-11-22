@@ -1,12 +1,11 @@
 program pcubes_web;
 {$mode objfpc}{$H+}
-{ Browser bridge. XML-to-model loading and rendering are still TODO. }
-uses JS, Web, SysUtils, uPuzzle;
+{ Browser bridge for the original Pascal pCubes puzzle model. }
+uses JS, Web, SysUtils, Classes, DOM, XMLRead, uPuzzle, uXmlReadWrite;
 var
   StatusNode: TJSElement;
   API: TJSObject;
   CurrentPuzzle: TPuzzle;
-  OriginalXml: String;
 
 procedure SetStatus(const S: String);
 begin
@@ -24,7 +23,7 @@ begin
 end;
 
 function APIGetVersion: String;
-begin Result := '0.1.0'; end;
+begin Result := '0.2.0'; end;
 
 function APIIsPuzzleReady: Boolean;
 begin
@@ -78,17 +77,49 @@ procedure APIOpenLibrary;
 begin SetStatus('Puzzle library is not ported to the browser yet.'); end;
 
 function APILoadXML(const XmlText: String): Boolean;
+var
+  Stream: TStringStream;
+  XmlDoc: TXMLDocument;
+  NewPuzzle: TPuzzle;
 begin
   Result := False;
-  if Trim(XmlText) = '' then SetStatus('XML load failed: selected file is empty.')
-  else SetStatus('XML received (' + IntToStr(Length(XmlText)) +
-    ' characters), but XML-to-TPuzzle loading is not implemented yet.');
+  if Trim(XmlText) = '' then begin
+    SetStatus('XML load failed: selected file is empty.');
+    Exit;
+  end;
+
+  Stream := TStringStream.Create(XmlText);
+  XmlDoc := nil;
+  NewPuzzle := nil;
+  try
+    ReadXMLFile(XmlDoc, Stream);
+    if (XmlDoc = nil) or (XmlDoc.DocumentElement = nil) then
+      raise Exception.Create('The XML document has no root element.');
+    NewPuzzle := TPuzzle.Create;
+    NewPuzzle.DisableAnimation;
+    if not TXmlReadWrite.PuzzleLoadFromXml(NewPuzzle, XmlDoc.DocumentElement) then
+      raise Exception.Create('The XML is valid, but pCubes could not load its puzzle data.');
+
+    if CurrentPuzzle <> nil then CurrentPuzzle.Free;
+    CurrentPuzzle := NewPuzzle;
+    NewPuzzle := nil;
+    SetStatus('Loaded "' + CurrentPuzzle.Header.Name + '" from XML (' +
+      IntToStr(CurrentPuzzle.Parts.Count) + ' parts, ' +
+      IntToStr(CurrentPuzzle.Axes.Count) + ' axes).');
+    Result := True;
+  except
+    on E: Exception do
+      SetStatus('XML load failed: ' + E.Message);
+  end;
+  if NewPuzzle <> nil then NewPuzzle.Free;
+  if XmlDoc <> nil then XmlDoc.Free;
+  Stream.Free;
 end;
 
 procedure InstallBrowserAPI;
 begin
   API := new([]);
-  API['version'] := '0.1.0';
+  API['version'] := '0.2.0';
   API['getStatus'] := TJSFunction(@APIGetStatus);
   API['getVersion'] := TJSFunction(@APIGetVersion);
   API['isPuzzleReady'] := TJSFunction(@APIIsPuzzleReady);
@@ -105,7 +136,6 @@ end;
 begin
   CurrentPuzzle := TPuzzle.Create;
   CurrentPuzzle.DisableAnimation;
-  OriginalXml := '';
   InstallBrowserAPI;
   SetStatus('Pascal TPuzzle model instantiated. Load a puzzle definition to begin.');
 end.
