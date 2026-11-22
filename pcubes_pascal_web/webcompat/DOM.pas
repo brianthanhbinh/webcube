@@ -1,6 +1,7 @@
 unit DOM;
 
 {$mode objfpc}{$H+}
+{$modeswitch externalclass}
 
 interface
 
