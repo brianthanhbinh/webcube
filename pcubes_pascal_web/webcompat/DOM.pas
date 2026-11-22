@@ -8,6 +8,8 @@ interface
 uses JS, Web, SysUtils;
 
 type
+  DomString = String;
+
   TDomNode = class;
   TDomElement = class;
 
