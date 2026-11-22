@@ -32,9 +32,10 @@ jobs:
 
       - name: Get Pas2JS RTL source packages
         run: |
-          git clone --depth 1 https://gitlab.com/freepascal.org/fpc/pas2js.git /tmp/pas2js-rtl
+          git clone --depth 1 --recurse-submodules https://gitlab.com/freepascal.org/fpc/pas2js.git /tmp/pas2js-rtl
           test -f /tmp/pas2js-rtl/packages/rtl/system.pas
-          test -f /tmp/pas2js-rtl/packages/rtl/rtl.js
+          test -f /tmp/pas2js-rtl/compiler/utils/pas2js/dist/rtl.js
+          cp /tmp/pas2js-rtl/compiler/utils/pas2js/dist/rtl.js /tmp/pas2js-rtl/packages/rtl/rtl.js
 
       - name: Compile Pascal to browser JavaScript
         env:
