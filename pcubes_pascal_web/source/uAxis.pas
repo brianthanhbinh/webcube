@@ -80,6 +80,16 @@ begin
   SetLength(ConnectedLayers, 0, 0);
 end;
 
+function TAxis.GetNormVector: TVector;
+begin
+  Result := Line.NormVector;
+end;
+
+function TAxis.GetBaseVector: TVector;
+begin
+  Result := Line.BaseVector;
+end;
+
 destructor TAxis.Destroy;
 begin
   Clear;
