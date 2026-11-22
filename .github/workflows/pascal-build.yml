@@ -62,8 +62,8 @@ jobs:
           s = re.sub(r"(?i)(Result\s*\[\s*I\s*\]\s*:=\s*)C\s*;", r"\1Chr(C);", s)
           # TParser stores its input buffer as Char, while ReadData's
           # numeric overload requires a numeric var parameter.
-          old_decl = "procedure TParser.LoadBuffer;\\n\\nvar\\n  CharsRead,i: integer;"
-          new_decl = "procedure TParser.LoadBuffer;\\n\\nvar\\n  CharsRead,i: integer;\\n  B: UInt8;"
+          old_decl = "procedure TParser.LoadBuffer;\n\nvar\n  CharsRead,i: integer;"
+          new_decl = "procedure TParser.LoadBuffer;\n\nvar\n  CharsRead,i: integer;\n  B: UInt8;"
           if old_decl not in s:
               raise SystemExit("Could not find TParser.LoadBuffer declaration")
           s = s.replace(old_decl, new_decl, 1)
@@ -71,8 +71,8 @@ jobs:
           if old_read not in s:
               raise SystemExit("Could not find TParser.LoadBuffer ReadData call")
           s = s.replace(old_read, "FStream.ReadData(B)", 1)
-          old_loop = "      Break;\\n    Inc(CharsRead);"
-          new_loop = "      Break;\\n    FBuf[i] := Chr(B);\\n    Inc(CharsRead);"
+          old_loop = "      Break;\n    Inc(CharsRead);"
+          new_loop = "      Break;\n    FBuf[i] := Chr(B);\n    Inc(CharsRead);"
           if old_loop not in s:
               raise SystemExit("Could not find TParser.LoadBuffer read loop")
           s = s.replace(old_loop, new_loop, 1)
