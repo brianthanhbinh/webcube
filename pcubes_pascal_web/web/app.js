@@ -57,8 +57,25 @@ import { PuzzleRenderer } from "./renderer.js";
   file.addEventListener("change", async () => {
     const selected = file.files && file.files[0];
     if (!selected) return;
-    call("loadXML", await selected.text());
-    file.value = "";
+    try {
+      const bytes = new Uint8Array(await selected.arrayBuffer());
+      const header = new TextDecoder("windows-1252").decode(bytes.slice(0, 256));
+      const declaredEncoding = header.match(/<\?xml[^>]*encoding\s*=\s*["']([^"']+)["']/i);
+      const encoding = declaredEncoding ? declaredEncoding[1] : "utf-8";
+      let xmlText = new TextDecoder(encoding).decode(bytes);
+      // The file is already decoded to Unicode; the XML declaration must not
+      // ask the browser parser to reinterpret the original byte encoding.
+      xmlText = xmlText.replace(/(<\?xml[^>]*?)\s+encoding\s*=\s*(["'])[^"']+\2/i, "$1");
+      const xmlDocument = new DOMParser().parseFromString(xmlText, "application/xml");
+      const parseError = xmlDocument.getElementsByTagName("parsererror")[0];
+      if (parseError) throw new Error(parseError.textContent || "Invalid XML.");
+      if (!xmlDocument.documentElement) throw new Error("XML has no root element.");
+      call("loadXML", xmlDocument.documentElement);
+    } catch (error) {
+      status.textContent = "XML load failed: " + error.message;
+    } finally {
+      file.value = "";
+    }
   });
 
   if (document.readyState === "complete") start();
