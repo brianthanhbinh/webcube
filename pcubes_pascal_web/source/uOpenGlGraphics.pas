@@ -231,7 +231,7 @@ begin
 
   Vecs := TList<Tvector>.Create;
   for i := 0 to Face.GetVertexCount - 1 do begin
-    with getPers(Face.GetVertex(i) + ExplodeDelta) do
+    with getPers(VectorAdd(Face.GetVertex(i), ExplodeDelta)) do
       V := [X, Round(Y), 0];
     Vecs.Add(V);
   end;
@@ -527,7 +527,7 @@ begin
 
 //      for i := Face.GetVertexCount - 1 downto 0 do
       for i := 0 to Face.GetVertexCount - 1 do
-        with Face.GetVertex(i) + ExplodeDelta do
+        with VectorAdd(Face.GetVertex(i), ExplodeDelta) do
           glVertex3f(X, Y, Z);
 
       glEnd;
@@ -546,7 +546,7 @@ begin
       glBegin(GL_POLYGON);
       //for i := Face.GetVertexCount - 1 downto 0 do
       for i := 0 to Face.GetVertexCount - 1 do
-        with Face.GetVertex(i) + ExplodeDelta do
+        with VectorAdd(Face.GetVertex(i), ExplodeDelta) do
           glVertex3f(X, Y, Z);
       glEnd;
     end else begin
@@ -555,7 +555,7 @@ begin
       //for i := Face.GetVertexCount - 1 downto 0 do begin
       for i := 0 to Face.GetVertexCount - 1 do begin
         if Face.IsEdgeVisible(i) then begin
-          with Face.GetVertex(i) + ExplodeDelta do
+          with VectorAdd(Face.GetVertex(i), ExplodeDelta) do
             glVertex3f(X, Y, Z);
           with Face.GetVertex(i + 1) + ExplodeDelta do
             glVertex3f(X, Y, Z)
