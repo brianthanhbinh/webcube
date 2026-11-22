@@ -16,17 +16,22 @@ uses
   Generics.Collections;
 
 type
+  TIntegerArray = array of integer;
+  TIntegerArray2D = array of TIntegerArray;
+
   TAxis = class
   public
     Line: TLine; // base ray of axis
     Layers: TList<TLayer>;
-    ConnectedLayers: array of array of integer;
+    ConnectedLayers: TIntegerArray2D;
     TurnAxesWithLayer: integer;
     TurnAxesWithPartNo: integer;
     Enabled: Boolean;
 
-    property NormVector: TVector read Line.NormVector;
-    property BaseVector: TVector read Line.BaseVector;
+    function GetNormVector: TVector;
+    function GetBaseVector: TVector;
+    property NormVector: TVector read GetNormVector;
+    property BaseVector: TVector read GetBaseVector;
 
     constructor Create; overload;
     constructor Create(const ANormVector: TVector); overload;
@@ -52,13 +57,23 @@ const INFINITE_LAYER_DISTANCE = 1000;
 implementation
 uses uUtils;
 
+function TAxis.GetNormVector: TVector;
+begin
+  Result := Line.NormVector;
+end;
+
+function TAxis.GetBaseVector: TVector;
+begin
+  Result := Line.BaseVector;
+end;
+
 constructor TAxis.Create;
 begin
   Enabled := True;
   Layers := TList<TLayer>.Create;
   TurnAxesWithLayer := -1;
   TurnAxesWithPartNo := -1;
-  SetLength(ConnectedLayers, 0, 0);
+  SetLength(ConnectedLayers, 0);
 end;
 
 constructor TAxis.Create(const ANormVector: TVector);
@@ -75,7 +90,7 @@ begin
   Layers := TList<TLayer>.Create;
   TurnAxesWithLayer := -1;
   TurnAxesWithPartNo := -1;
-  SetLength(ConnectedLayers, 0, 0);
+  SetLength(ConnectedLayers, 0);
 end;
 
 destructor TAxis.Destroy;
@@ -93,7 +108,7 @@ begin
     Layer.Free;
   Layers.Clear;
 
-  SetLength(ConnectedLayers, 0, 0);
+  SetLength(ConnectedLayers, 0);
 end;
 
 procedure TAxis.Assign(Axis: TAxis);
@@ -120,7 +135,7 @@ begin
     Result := TMatrix.Mult(Result, TMatrix.GetRotateMatrix(X, Y, Z, Angle));
   with BaseVector do
     Result := TMatrix.Mult(Result, TMatrix.GetMoveMatrix(X, Y, Z));}
-  Result := TMatrix.GetMoveMatrix(-BaseVector);
+  Result := TMatrix.GetMoveMatrix(VectorNegate(BaseVector));
   Result := TMatrix.Mult(Result, TMatrix.GetRotateMatrix(NormVector, Angle));
   Result := TMatrix.Mult(Result, TMatrix.GetMoveMatrix(BaseVector));
 end;
@@ -180,9 +195,9 @@ end;}
 
 procedure TAxis.CreateLayers(Distances: array of extended);
 var
-  i, Count: integer;
+  i, j, Count: integer;
   Layer: TLayer;
-  BaseDistance: extended;
+  BaseDistance, Tmp: extended;
   FDistances: array of extended;
 begin
   for Layer in Layers do
@@ -191,7 +206,15 @@ begin
 
   if Length(Distances) > 0 then begin
     // sort
-    TArrayHelper<Extended>.Sort(Distances);
+    for i := 1 to High(Distances) do begin
+      Tmp := Distances[i];
+      j := i - 1;
+      while (j >= 0) and (Distances[j] > Tmp) do begin
+        Distances[j + 1] := Distances[j];
+        Dec(j);
+      end;
+      Distances[j + 1] := Tmp;
+    end;
 
     // count different distances
     Count := 1;
