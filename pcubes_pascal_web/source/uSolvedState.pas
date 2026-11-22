@@ -99,7 +99,7 @@ var FPuzzle: TPuzzle;
       fp.vc.Y := fp.vc.Y + Face.GetVertex(i).Y;
       fp.vc.Z := fp.vc.Z + Face.GetVertex(i).Z;
     end;
-    fp.vc := fp.vc / Face.GetVertexCount;
+    fp.vc := VectorDivide(fp.vc, Face.GetVertexCount);
 
     // position of center in v1, v2, v3 basis
     c1 := VectorDot(fp.vc, v1);
