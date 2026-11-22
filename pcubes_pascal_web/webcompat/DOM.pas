@@ -66,8 +66,6 @@ type
     property DocumentElement: TDomElement read FDocumentElement;
   end;
 
-  TXmlDocument = TXMLDocument;
-
 implementation
 
 function TDomNodeList.item(Index: NativeInt): TDomNode;
