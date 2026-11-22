@@ -98,18 +98,18 @@ var FPuzzle: TPuzzle;
     fp.vc := fp.vc / Face.GetVertexCount;
 
     // position of center in v1, v2, v3 basis
-    c1 := fp.vc ** v1;
-    c2 := fp.vc ** v2;
-    c3 := fp.vc ** v3;
+    c1 := VectorDot(fp.vc, v1);
+    c2 := VectorDot(fp.vc, v2);
+    c3 := VectorDot(fp.vc, v3);
     fp.vc.X := c1;
     fp.vc.Y := c2;
     fp.vc.Z := c3;
 
     // normal to face in v1, v2, v3 basis
     fp.vn := Face.GetNorm;
-    c1 := fp.vn ** v1;
-    c2 := fp.vn ** v2;
-    c3 := fp.vn ** v3;
+    c1 := VectorDot(fp.vn, v1);
+    c2 := VectorDot(fp.vn, v2);
+    c3 := VectorDot(fp.vn, v3);
     fp.vn.X := c1;
     fp.vn.Y := c2;
     fp.vn.Z := c3;
@@ -128,7 +128,7 @@ begin // CalcFromPuzzle
 
   v1 := FPuzzle.Axes[0].NormVector;
   v2 := FPuzzle.Axes[1].NormVector;
-  v2 := v2 * v1;
+  v2 := VectorCross(v2, v1);
 
   if v2.Abs < 1e-4 then begin
     ShowMessage('TSolvedState.CalcFromPuzzle: first and second axes can''t be parallel');
