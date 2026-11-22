@@ -111,7 +111,8 @@ var
   I, N: NativeInt;
 begin
   inherited Create;
-  N := NativeInt(TJSObject(AAttributes)['length']);
+  if AAttributes = nil then N := 0
+  else N := NativeInt(TJSObject(AAttributes)['length']);
   SetLength(FItems, N);
   for I := 0 to N - 1 do
     FItems[I] := TDomNode.Create(TJSNode(TJSNamedNodeMapExt(AAttributes).item(I)));
