@@ -54,26 +54,26 @@ end; // IsOpposite
 procedure TPlane.TurnRound;
 begin
   NormDistance := -NormDistance;
-  NormVect := -NormVect;
+  NormVect := VectorNegate(NormVect);
 end; // TurnRound
 
 procedure TPlane.Trans(mat: T4x4Matrix);
 var p1, p2: TVector;
 begin
-  p1 := NormVect * NormDistance;
-  p2 := p1 + NormVect;
+  p1 := VectorScale(NormVect, NormDistance);
+  p2 := VectorAdd(p1, NormVect);
 
   p1 := TMatrix.VectorMul(mat, p1);
   p2 := TMatrix.VectorMul(mat, p2);
 
   // set
-  NormVect := (p2 - p1).Norm;
-  NormDistance := p1 ** NormVect;
+  NormVect := VectorSubtract(p2, p1).Norm;
+  NormDistance := VectorDot(p1, NormVect);
 end; // Trans
 
 function TPlane.DistanceToPoint(const Point: TVector): extended;
 begin
-  Result := Point ** NormVect - NormDistance;
+  Result := VectorDot(Point, NormVect) - NormDistance;
 end;
 
 end.
