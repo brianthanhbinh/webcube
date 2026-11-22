@@ -52,8 +52,8 @@ class function TFaceUtils.IsStraightAngle(const Face: TFace; idx: integer): Bool
 var v0, v1, v2: TVector;
 begin
   v0 := Face.GetVertex(idx);
-  v1 := v0 - Face.GetVertex(idx - 1);
-  v2 := Face.GetVertex(idx + 1) - v0;
+  v1 := VectorSubtract(v0, Face.GetVertex(idx - 1));
+  v2 := VectorSubtract(Face.GetVertex(idx + 1), v0);
   v1.Normalize;
   v2.Normalize;
   Result := v1.IsNear(v2);
@@ -64,8 +64,8 @@ class function TFaceUtils.IsZeroAngle(const Face: TFace; idx: integer): Boolean;
 var v0, v1, v2: TVector;
 begin
   v0 := Face.GetVertex(idx);
-  v1 := v0 - Face.GetVertex(idx - 1);
-  v2 := v0 - Face.GetVertex(idx + 1);
+  v1 := VectorSubtract(v0, Face.GetVertex(idx - 1));
+  v2 := VectorSubtract(v0, Face.GetVertex(idx + 1));
   v1.Normalize;
   v2.Normalize;
   Result := v1.IsNear(v2);
@@ -148,7 +148,7 @@ begin
   v0 := Face.GetVertex(idx - 1);
   v1 := Face.GetVertex(idx);
   v2 := Face.GetVertex(idx + 1);
-  Result := (v2 - v1) * (v0 - v1);
+  Result := VectorCross(VectorSubtract(v2, v1), VectorSubtract(v0, v1));
   Result.Normalize;
 end; // CalculateNormal
 
@@ -160,11 +160,11 @@ var
   d: extended;
 begin
   nv := CalculateNormal(Face);
-  d := nv ** Face.GetVertex(0);
+  d := VectorDot(nv, Face.GetVertex(0));
 
   Result := False;
   for i := 1 to Face.GetVertexCount - 1 do
-    if Abs(nv ** Face.GetVertex(i) - d) > DELTA then
+    if Abs(VectorDot(nv, Face.GetVertex(i)) - d) > DELTA then
       exit;
   Result := True;
 end; // IsFlatFace
@@ -183,8 +183,8 @@ begin
     v1 := Face.GetVertex(i + 1);
     v2 := Face.GetVertex(i + 2);
 
-    v := ((v0 - v1) * (v2 - v1));
-    if v ** nv < 0 then
+    v := VectorCross(VectorSubtract(v0, v1), VectorSubtract(v2, v1));
+    if VectorDot(v, nv) < 0 then
       if not IsStraightAngle(Face, i + 1) then
         exit;
   end;
@@ -196,7 +196,7 @@ class procedure TFaceUtils.Triangulate(const Face: TFace; var list: TList<Intege
   function InTriangle(const v, v1, v2, v3: TVector): Boolean;
     function CalcNorm(const v, v1, v2: TVector): TVector;
     begin
-      Result := (v1 - v) * (v2 - v);
+      Result := VectorCross(VectorSubtract(v1, v), VectorSubtract(v2, v));
       Result.Normalize;
     end;
   var n1, n2, n3: TVector;
@@ -234,8 +234,8 @@ begin // Triangulate
         v3 := Face.GetVertex(VertIdxs[i3]);
 
         // convex vertex
-        v := ((v3 - v2) * (v1 - v2));
-        if v ** nv < DELTA then
+        v := VectorCross(VectorSubtract(v3, v2), VectorSubtract(v1, v2));
+        if VectorDot(v, nv) < DELTA then
           continue;
 
         Found := False;
@@ -304,7 +304,7 @@ var
   begin
     c1 := FaceVertices[i1];
     c2 := FaceVertices[i2];
-    Result := c1.Vector + (c2.Vector - c1.Vector) * ((0 - c1.Distance) / (c2.Distance - c1.Distance));
+    Result := VectorAdd(c1.Vector, VectorScale(VectorSubtract(c2.Vector, c1.Vector), ((0 - c1.Distance) / (c2.Distance - c1.Distance))));
   end; // CalcNewVertexV
 
 var
@@ -318,15 +318,15 @@ begin // CutFace
   if Face.GetVertexCount < 3 then
     exit;
 
-  PlaneVector := Plane.NormVect * Plane.NormDistance;
-  IntersectionVector := Plane.NormVect * Face.GetNorm;
+  PlaneVector := VectorScale(Plane.NormVect, Plane.NormDistance);
+  IntersectionVector := VectorCross(Plane.NormVect, Face.GetNorm);
   IntersectionVector.Normalize;
 
-// Weiler–Atherton clipping algorithm
+// WeilerÂ–Atherton clipping algorithm
 // 1. List the vertices of the clipping-region polygon A and those of the subject polygon B.
 // 2. Label the listed vertices of subject polygon B as either inside or outside of clipping region A.
 // 3. Find all the polygon intersections and insert them into both lists, linking the lists at the intersections.
-// 4. Generate a list of "inbound" intersections – the intersections where the vector from the intersection to the subsequent vertex of subject polygon B begins inside the clipping region.
+// 4. Generate a list of "inbound" intersections Â– the intersections where the vector from the intersection to the subsequent vertex of subject polygon B begins inside the clipping region.
 // 5. Follow each intersection clockwise around the linked lists until the start position is found.
 
   // make vertex list and intersections between them
@@ -345,10 +345,10 @@ begin // CutFace
       c := TVertex.Create;
       c.Vector := Face.GetVertex(i);
       c.InvisibleEdge := not Face.IsEdgeVisible(i);
-      c.Distance := Plane.NormVect ** (c.Vector - PlaneVector);
+      c.Distance := VectorDot(Plane.NormVect, VectorSubtract(c.Vector, PlaneVector));
 
   // 2. Label the listed vertices of subject polygon B as either inside or outside of clipping region A.
-  // ãðàíè÷íûå - ïî ïðåäûäóùèì
+  // Ã£Ã°Ã Ã­Ã¨Ã·Ã­Ã»Ã¥ - Ã¯Ã® Ã¯Ã°Ã¥Ã¤Ã»Ã¤Ã³Ã¹Ã¨Ã¬
       if c.Distance < -DELTA then
         c.typ := vtInside
       else if c.Distance > DELTA then
@@ -363,7 +363,7 @@ begin // CutFace
       //Rec.InvisibleEdge = Face.
     end;
 
-    // check code (warning ñ may not be initialized)
+    // check code (warning Ã± may not be initialized)
     if (FaceVertices[0].typ = vtSide) and (c.typ <> vtSide) then begin
       for i := 0 to FaceVertices.Count - 1 do
         if FaceVertices[i].typ = vtSide then
@@ -407,7 +407,7 @@ begin // CutFace
 
     // sorting Cut Points
     for c in CutVertices do
-      c.Distance := c.Vector ** IntersectionVector;
+      c.Distance := VectorDot(c.Vector, IntersectionVector);
     CutVertices.Sort;
 
     for i := 0 to CutVertices.Count - 2 do begin
@@ -415,7 +415,7 @@ begin // CutFace
       CutVertices[i].InvisibleEdge := InvisibleSlice;
     end;
 
-  // 4. Generate a list of "inbound" intersections – the intersections where the vector from
+  // 4. Generate a list of "inbound" intersections Â– the intersections where the vector from
   //    the intersection to the subsequent vertex of subject polygon B begins inside the clipping region.
   // 5. Follow each intersection clockwise around the linked lists until the start position is found.
 
@@ -504,9 +504,9 @@ class function TFaceUtils.CombineFaces(Face1, Face2, NewFace: TFace): Boolean;
   var V1, V2{, V3}: TVector;
   begin
     V1 := Face1.GetVertex(i1);
-    V2 := V1 - Face1.GetVertex(i2);
+    V2 := VectorSubtract(V1, Face1.GetVertex(i2));
 //    V3 := V1 - Face2.GetVertex(i3);
-    if (V1 * V2).Abs < DELTA * V1.Abs * V2.Abs then
+    if VectorCross(V1, V2).Abs < DELTA * V1.Abs * V2.Abs then
       NewFace.AddVector(V1);
   end;
 
