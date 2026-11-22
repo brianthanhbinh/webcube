@@ -57,13 +57,13 @@ type
 
 function Vector(x, y, z: extended): TVector;
 
-operator + (const ALeft, ARight: TVector): TVector;
+function VectorAdd(const ALeft, ARight: TVector): TVector;
 operator - (const ALeft: TVector): TVector;
-operator - (const ALeft, ARight: TVector): TVector;
-operator * (const V: TVector; Scalar: Extended): TVector;
-operator * (const ALeft, ARight: TVector): TVector;
+function VectorSubtract(const ALeft, ARight: TVector): TVector;
+function VectorScale(const V: TVector; Scalar: Extended): TVector;
+function VectorCross(const ALeft, ARight: TVector): TVector;
 operator /  (const V: TVector; Scalar: Extended): TVector;
-operator ** (const ALeft, ARight: TVector): Extended;
+function VectorDot(const ALeft, ARight: TVector): Extended;
 
 //const
 //  WRONG_ELEMENT = 'TVector: Element is not accessible';
@@ -140,7 +140,7 @@ begin
   Result.z := ALeft.z + ARight.z;
 end;
 
-operator -(const ALeft: TVector): TVector;
+function VectorNegate(const ALeft: TVector): TVector;
 begin
   Result.x := -ALeft.x;
   Result.y := -ALeft.y;
@@ -169,7 +169,7 @@ begin
   Result.z := ALeft.x * ARight.y - ALeft.y * ARight.x;
 end;
 
-operator / (const V: TVector; Scalar: Extended): TVector;
+function VectorDivide(const V: TVector; Scalar: Extended): TVector;
 begin
   // Divide components directly to avoid a Pas2JS Double/Extended overload mismatch.
   Result.x := V.x / Scalar;
