@@ -285,11 +285,6 @@ begin
   Distance := 0;
 end;
 
-function CompareDistances(constref A, B: TVertex): Integer;
-begin
-  Result := Sign(A.Distance - B.Distance);
-end;
-
 // Returns True, if polygon was clipped (changed)
 // in NewFaces - resulting polygons (may be several)
 class function TFaceUtils.CutFace(Face: TFace; Plane: TPlane; InvisibleSlice: Boolean; NewFaces: TList<TFace>; NewVectors: TList<TVector>): Boolean;
@@ -308,9 +303,9 @@ var
   end; // CalcNewVertexV
 
 var
-  i, i2, n: integer;
+  i, i2, n, j: integer;
   TempFace, NewFace: TFace;
-  c, c1, c2, first, current, slicePoint: TVertex;
+  c, c1, c2, first, current, slicePoint, SortItem: TVertex;
   PlaneVector, IntersectionVector: TVector;
   TempVectors: TList<TVector>;
 begin // CutFace
@@ -335,9 +330,7 @@ begin // CutFace
 
 // 1. List the vertices of the clipping-region polygon A and those of the subject polygon B.
   FaceVertices := TList<TVertex>.Create;
-  CutVertices := TList<TVertex>.Create(
-    TComparer<TVertex>.Construct(@CompareDistances)
-  );
+  CutVertices := TList<TVertex>.Create;
 
   try
 
@@ -408,7 +401,15 @@ begin // CutFace
     // sorting Cut Points
     for c in CutVertices do
       c.Distance := VectorDot(c.Vector, IntersectionVector);
-    CutVertices.Sort;
+    for i := 1 to CutVertices.Count - 1 do begin
+      SortItem := CutVertices[i];
+      j := i - 1;
+      while (j >= 0) and (CutVertices[j].Distance > SortItem.Distance) do begin
+        CutVertices[j + 1] := CutVertices[j];
+        Dec(j);
+      end;
+      CutVertices[j + 1] := SortItem;
+    end;
 
     for i := 0 to CutVertices.Count - 2 do begin
       CutVertices[i].Next := CutVertices[i + 1];
