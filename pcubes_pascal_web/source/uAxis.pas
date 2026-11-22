@@ -134,7 +134,7 @@ begin
     Result := TMatrix.Mult(Result, TMatrix.GetRotateMatrix(X, Y, Z, Angle));
   with BaseVector do
     Result := TMatrix.Mult(Result, TMatrix.GetMoveMatrix(X, Y, Z));}
-  Result := TMatrix.GetMoveMatrix(-BaseVector);
+  Result := TMatrix.GetMoveMatrix(VectorNegate(BaseVector));
   Result := TMatrix.Mult(Result, TMatrix.GetRotateMatrix(NormVector, Angle));
   Result := TMatrix.Mult(Result, TMatrix.GetMoveMatrix(BaseVector));
 end;
