@@ -1,32 +1,40 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>pCubes — Pascal Web Port</title>
-<style>
-:root{color-scheme:dark;font-family:system-ui,Segoe UI,sans-serif;background:#11151d;color:#e8edf5}*{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;grid-template-rows:auto 1fr auto}header,footer{padding:14px 20px;background:#1b2230;border-bottom:1px solid #303b4e}
-header{display:flex;justify-content:space-between;align-items:center}h1{font-size:19px;margin:0}main{display:grid;grid-template-columns:250px 1fr}
-aside{padding:18px;background:#171e2a;border-right:1px solid #303b4e}.group{display:grid;gap:9px;margin:14px 0}
-button{padding:10px 12px;border:1px solid #526783;border-radius:7px;background:#2a3850;color:white;cursor:pointer}button:disabled{opacity:.4;cursor:not-allowed}
-.stage{display:grid;place-items:center;padding:24px;min-height:500px}.panel{max-width:720px;padding:36px;border:1px dashed #526783;border-radius:12px;background:#192334;text-align:center;line-height:1.6}
-.muted,small{color:#a8b5c8}#engine-status{color:#e8c66a;overflow-wrap:anywhere;min-height:3em}code{color:#c6d8f2}footer{font-size:12px;color:#a8b5c8;border-top:1px solid #303b4e;border-bottom:0}
-@media(max-width:700px){main{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid #303b4e}}
-</style></head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browser port of pCubes, combining the Pascal puzzle engine with a web interface and Canvas renderer.">
+  <title>pCubes — Pascal Web Port</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 <body>
-<header><h1>pCubes <span class="muted">/ Pascal Web Port</span></h1><small>Object Pascal + JavaScript</small></header>
-<main><aside><b>Puzzle controls</b><div class="group">
-<button id="scramble" disabled>Scramble</button><button id="undo" disabled>Undo</button><button id="redo" disabled>Redo</button><button id="reset" disabled>Reset</button>
-<button id="library" disabled>Open library</button><button id="load">Load puzzle XML</button><input id="file" type="file" accept=".xml,text/xml" hidden></div>
-<p class="muted">Controls activate when Pascal reports a loaded puzzle.</p><p id="engine-status">Loading compiled Pascal module…</p></aside>
-<section class="stage"><div class="panel"><h2>pCubes browser port</h2><p class="muted">This interface starts the compiled Pascal program and connects to <code>window.pCubes</code>.</p><p class="muted">The bridge is present, but XML-to-model loading and 3D rendering are not implemented yet.</p><p id="model-info">Waiting for Pascal API…</p></div></section></main>
-<footer>Pascal model bridge · browser interface · renderer pending</footer>
-<script src="pcubes_web.js"></script>
-<script>
-(()=>{'use strict';const $=id=>document.getElementById(id),status=$('engine-status'),info=$('model-info'),file=$('file');
-const names=['scramble','undo','redo','reset','library'];const call=(name,...args)=>{const api=window.pCubes;if(!api||typeof api[name]!=='function'){status.textContent='Pascal API unavailable: '+name;return}try{const result=api[name](...args);if(typeof result==='string')status.textContent=result;else if(result===false)status.textContent='Pascal could not complete this request.'}catch(e){status.textContent='Pascal error: '+e.message}};
-function start(){try{if(!window.rtl||typeof window.rtl.run!=='function')throw Error('Pas2JS RTL missing. Compile with -Jirtl.js.');window.rtl.run();const api=window.pCubes;if(!api)throw Error('Pascal program did not install window.pCubes.');const model=api.getModelInfo(),ready=api.isPuzzleReady();status.textContent=api.getStatus();info.textContent='Pascal '+api.getVersion()+' · model '+(model.connected?'connected':'offline')+' · '+model.parts+' parts · '+model.axes+' axes';for(const n of names)$ (n).disabled=!ready;}catch(e){status.textContent=e.message;info.textContent='See browser console for details.'}}
-for(const n of names)$(n).onclick=()=>call(n==='library'?'openLibrary':n);$('load').onclick=()=>file.click();file.onchange=async()=>{const f=file.files&&file.files[0];if(f){call('loadXML',await f.text());file.value=''}};
-if(document.readyState==='complete')start();else addEventListener('load',start,{once:true});
-})();
-</script></body></html>
+  <header>
+    <h1>pCubes <span class="muted">/ Pascal Web Port</span></h1>
+    <small>Pascal engine · HTML interface · Canvas renderer</small>
+  </header>
+  <main>
+    <aside>
+      <b>Puzzle controls</b>
+      <div class="group">
+        <button id="scramble" disabled>Scramble</button>
+        <button id="undo" disabled>Undo</button>
+        <button id="redo" disabled>Redo</button>
+        <button id="reset" disabled>Reset</button>
+        <button id="library" disabled>Open library</button>
+        <button id="load">Load puzzle XML</button>
+        <input id="puzzle-file" type="file" accept=".xml,text/xml" hidden>
+      </div>
+      <p class="muted">Puzzle rules and transformations stay in Pascal. Browser controls and drawing run in JavaScript.</p>
+      <p id="engine-status" role="status" aria-live="polite">Loading compiled Pascal module…</p>
+      <p id="model-info" class="muted">Waiting for Pascal API…</p>
+    </aside>
+    <section class="stage" aria-label="Puzzle viewport">
+      <canvas id="puzzle-canvas" aria-label="3D puzzle rendering area"></canvas>
+    </section>
+  </main>
+  <footer>Pascal puzzle model · JavaScript Canvas renderer · browser interface</footer>
+  <script src="rtl.js"></script>
+  <script src="pcubes_web.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
