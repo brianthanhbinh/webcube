@@ -360,10 +360,10 @@ end;
 class function TXmlReadWrite.LineLoadFromXml(var Line: TLine; XmlNode: TDomNode): Boolean;
 begin
   if not ReadVectorFromXml(Line.BaseVector, XmlNode, 'BaseVector') then
-    Line.BaseVector := [0, 0, 0];
+    Line.BaseVector := Vector(0, 0, 0);
 
   if not ReadVectorFromXml(Line.NormVector, XmlNode, 'NormVector') then
-    Line.NormVector := [1, 0, 0];
+    Line.NormVector := Vector(1, 0, 0);
 
   Line.NormVector.Normalize;
 
@@ -460,7 +460,7 @@ var
 begin // FillAxis
   Axis.CreateLayers(LoadArrayFromString(PlaneDistances));
 
-  // !!!!хорошо бы поправить, чтобы Fixed слой не содержал лишних углов (Helicoper)
+  // !!!!ГµГ®Г°Г®ГёГ® ГЎГ» ГЇГ®ГЇГ°Г ГўГЁГІГј, Г·ГІГ®ГЎГ» Fixed Г±Г«Г®Г© Г­ГҐ Г±Г®Г¤ГҐГ°Г¦Г Г« Г«ГЁГёГ­ГЁГµ ГіГЈГ«Г®Гў (Helicoper)
   S := TurningAngles;
   if Pos(';', S) <> 0 then
     for i := 0 to Axis.Layers.Count - 1 do
@@ -680,7 +680,7 @@ begin // FaceLoadFromXml
 
   AddIndexesFromString(Trim(ReadStringFromXml(XmlNode, 'VertexIndexes')));
 
-  //временно, переделать на '1,10,...'
+  //ГўГ°ГҐГ¬ГҐГ­Г­Г®, ГЇГҐГ°ГҐГ¤ГҐГ«Г ГІГј Г­Г  '1,10,...'
   InvisibleEdges := ReadIntExpressionFromXml(XmlNode, 'InvisibleEdges');
   if InvisibleEdges <> 0 then
     for i := 0 to Face.GetVertexCount - 1 do
@@ -860,7 +860,7 @@ begin
       FacesLoadFromXml(Part.Faces, XmlSubNode, Part.Vertices)
   end;
 
-  // проверяем на неиспользуемые вершины
+  // ГЇГ°Г®ГўГҐГ°ГїГҐГ¬ Г­Г  Г­ГҐГЁГ±ГЇГ®Г«ГјГ§ГіГҐГ¬Г»ГҐ ГўГҐГ°ГёГЁГ­Г»
 //  UsedVertices := TList.Create;
 //  for i := 0 to Faces.Count - 1 do
 //    for j := 0 to Faces[i].Vertices.Count - 1 do
@@ -946,7 +946,7 @@ begin // AddCylinder
 
   Part.Trans(TMatrix.GetScaleMatrix(Radius, Radius, Height));
 
-  a := [0, 0, 1];
+  a := Vector(0, 0, 1);
   if not V.IsNear(a) then begin
     Al := ArcCos(V ** a);
     if Abs(Abs(Al) - Pi) < 1e-6 then
@@ -997,7 +997,7 @@ begin // AddCircle
   Face := TFace.Create(Part.Vertices);
   for i := 0 to CIRCLE_SECTORS - 1 do begin
     Al := i * 2 * PI / CIRCLE_SECTORS;
-    V := [cos(Al), sin(Al), 0];
+    V := Vector(cos(Al), sin(Al), 0);
     Part.AddVertex(V);
     Face.AddVector(V);
   end;
@@ -1010,7 +1010,7 @@ begin // AddCircle
 
   Part.Trans(TMatrix.GetScaleMatrix(Radius, Radius, 1));
 
-  a := [0, 0, 1];
+  a := Vector(0, 0, 1);
   if not V.IsNear(a) then begin
     Al := ArcCos(V ** a);
     if Abs(Abs(Al) - Pi) < 1e-6 then
@@ -1039,10 +1039,10 @@ begin // LoadCircle
   Color := ReadColorExpressionFromXml(XmlNode, 'Color');
 
   if not ReadVectorFromXml(Base, XmlNode, 'Base') then
-    Base := [0, 0, 0];
+    Base := Vector(0, 0, 0);
 
   if not ReadVectorFromXml(Center, XmlNode, 'Center') then
-    Center := [1, 0, 0];
+    Center := Vector(1, 0, 0);
 
   AddCircle(Part, Base, Center, Radius, Color);
 
@@ -1701,11 +1701,11 @@ begin // PuzzleLoadFromXml
   lMacros := TList<TDomNode>.Create;
   try
 
-    Calc.ClearVars; // очищаем Script во избежание накладок от предыдущих скриптов
+    Calc.ClearVars; // Г®Г·ГЁГ№Г ГҐГ¬ Script ГўГ® ГЁГ§ГЎГҐГ¦Г Г­ГЁГҐ Г­Г ГЄГ«Г Г¤Г®ГЄ Г®ГІ ГЇГ°ГҐГ¤Г»Г¤ГіГ№ГЁГµ Г±ГЄГ°ГЁГЇГІГ®Гў
     Calc.ClearProcs;
     Calc.DefineConsts;
 
-    ExecuteScript(TSettings.PreScript); // 03.08.2017 по просьбе Евгения Григорьева - прескрипт
+    ExecuteScript(TSettings.PreScript); // 03.08.2017 ГЇГ® ГЇГ°Г®Г±ГјГЎГҐ Г…ГўГЈГҐГ­ГЁГї ГѓГ°ГЁГЈГ®Г°ГјГҐГўГ  - ГЇГ°ГҐГ±ГЄГ°ГЁГЇГІ
 
     //Clear;
 
@@ -2117,7 +2117,7 @@ begin // PuzzleExecMacroFromXmlFile
         Macro := Trim(TUtils.Parse(MacroString, ' '));
         Found := False;
         if SameStr(Trim(TDomElement(XmlSubNode).GetAttribute('Name')), Macro) then begin
-          Calc.ClearVars; // очищаем Script во избежание накладок от предыдущих скриптов
+          Calc.ClearVars; // Г®Г·ГЁГ№Г ГҐГ¬ Script ГўГ® ГЁГ§ГЎГҐГ¦Г Г­ГЁГҐ Г­Г ГЄГ«Г Г¤Г®ГЄ Г®ГІ ГЇГ°ГҐГ¤Г»Г¤ГіГ№ГЁГµ Г±ГЄГ°ГЁГЇГІГ®Гў
           Calc.ClearProcs;
           Calc.DefineConsts;
           ExecMacroBody(lMacros[i]);
