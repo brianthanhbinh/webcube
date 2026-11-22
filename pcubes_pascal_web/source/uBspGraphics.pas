@@ -226,7 +226,7 @@ begin
     inherited DrawBackground
   else begin
 
-    // задвоение
+    // Г§Г Г¤ГўГ®ГҐГ­ГЁГҐ
     if FAntiAliasedBitmap <> nil then
       if (FAntiAliasedBitmap.Width <> FBitMap.Width) or (FAntiAliasedBitmap.Height <> FBitMap.Height) then
         FreeAndNil(FAntiAliasedBitmap);
@@ -344,8 +344,8 @@ begin
   Result := TGeometryUtils.DistancePointToLine(Axis.Line, Point);
 end; // DistanceFromPointToAxis
 
-// помещает в MouseOverFace, MouseOverPart, MouseOverAxis, MouseOverAxisNo, MouseNearestVertex
-// то, что находится под курсором (mx, my)
+// ГЇГ®Г¬ГҐГ№Г ГҐГІ Гў MouseOverFace, MouseOverPart, MouseOverAxis, MouseOverAxisNo, MouseNearestVertex
+// ГІГ®, Г·ГІГ® Г­Г ГµГ®Г¤ГЁГІГ±Гї ГЇГ®Г¤ ГЄГіГ°Г±Г®Г°Г®Г¬ (mx, my)
 procedure TBspGraphics.GetMouseParts(Puzzle: TPuzzle; mx, my: integer);
 var
   i: integer;
@@ -471,21 +471,21 @@ begin // CalcPartitioning
       if FPuzzle.Parts[i].Visible then
         VisibleParts.Add(i);
 
-  // ищем заблокированные плоскости
+  // ГЁГ№ГҐГ¬ Г§Г ГЎГ«Г®ГЄГЁГ°Г®ГўГ Г­Г­Г»ГҐ ГЇГ«Г®Г±ГЄГ®Г±ГІГЁ
     for PartNo in VisibleParts do begin
       FPuzzle.GetPartPosition(AxisNo, PartNo, iFrom, iTo);
 //TUtils.Log('GetPartPosition1 iFrom = ' {+ IntToStr(iFrom) + ' iTo = ' + IntToStr(iTo)});
       for j := iFrom to iTo - 1 do
-        if BlockedPlanes.IndexOf(j) = -1 then             // заменить на TDictionary
+        if BlockedPlanes.IndexOf(j) = -1 then             // Г§Г Г¬ГҐГ­ГЁГІГј Г­Г  TDictionary
           BlockedPlanes.Add(j);
     end;
 
-    // создаём полный список плоскостей из осей
+    // Г±Г®Г§Г¤Г ВёГ¬ ГЇГ®Г«Г­Г»Г© Г±ГЇГЁГ±Г®ГЄ ГЇГ«Г®Г±ГЄГ®Г±ГІГҐГ© ГЁГ§ Г®Г±ГҐГ©
     for Axis in FPuzzle.Axes do
       for j := 0 to Axis.Layers.Count - 2 do
         Planes.Add(Axis.GetLayerPlaneTo(j));
 
-    // передаём в Bsp
+    // ГЇГҐГ°ГҐГ¤Г ВёГ¬ Гў Bsp
     FBsp3.Clear;
     if AxisNo < FPuzzle.Axes.Count then begin
 
@@ -600,11 +600,11 @@ begin // PaintScene
 
 
   //TestPaint;
-//          bmp := TBGRABitmap.Create(100, 100, BGRABlack); // создаем изображение размером 100x100 пикселей с черным фоном
+//          bmp := TBGRABitmap.Create(100, 100, BGRABlack); // Г±Г®Г§Г¤Г ГҐГ¬ ГЁГ§Г®ГЎГ°Г Г¦ГҐГ­ГЁГҐ Г°Г Г§Г¬ГҐГ°Г®Г¬ 100x100 ГЇГЁГЄГ±ГҐГ«ГҐГ© Г± Г·ГҐГ°Г­Г»Г¬ ГґГ®Г­Г®Г¬
           //bmp := TBGRABitmap.Create(FBitmap);
           //
-          //bmp.FillRect(20, 20, 60, 60, BGRAWhite, dmSet); // рисуем белый квадрат без прозрачности
-          //bmp.FillRect(40, 40, 80, 80, BGRA(0, 0, 255, 128), dmDrawWithTransparency); // рисуем прозрачный синий квадрат
+          //bmp.FillRect(20, 20, 60, 60, BGRAWhite, dmSet); // Г°ГЁГ±ГіГҐГ¬ ГЎГҐГ«Г»Г© ГЄГўГ Г¤Г°Г ГІ ГЎГҐГ§ ГЇГ°Г®Г§Г°Г Г·Г­Г®Г±ГІГЁ
+          //bmp.FillRect(40, 40, 80, 80, BGRA(0, 0, 255, 128), dmDrawWithTransparency); // Г°ГЁГ±ГіГҐГ¬ ГЇГ°Г®Г§Г°Г Г·Г­Г»Г© Г±ГЁГ­ГЁГ© ГЄГўГ Г¤Г°Г ГІ
           //bmp.Canvas.Pen.Width := 5;
           //bmp.Canvas.Pen.Style := psDash;
           //bmp.Canvas.Pen.Color := BGRAWhite;
@@ -627,7 +627,7 @@ begin
 //  FBitmap.Canvas.Draw(400, 200, Texture);
 //  PaintPoint(TSelection.MouseOver);
   for Axis in FPuzzle.Axes do begin
-    v2 := Axis.NormVector * (TSelection.MouseOver - Axis.BaseVector);
+    v2 := VectorScale(Axis.NormVector, VectorSubtract(TSelection.MouseOver, Axis.BaseVector));
     v2.Normalize;
     PaintRay(TSelection.MouseOver, v2);
   end;
@@ -639,9 +639,9 @@ begin
   ExplodeDelta := [0, 0, 0];
   if FExplode > 10 then begin
     for V in Part.Vertices do
-      ExplodeDelta := ExplodeDelta + V;
-    ExplodeDelta := ExplodeDelta / Part.Vertices.Count; // Center
-    ExplodeDelta := ExplodeDelta * (FExplode / 10 - 1);
+      ExplodeDelta := VectorAdd(ExplodeDelta, V);
+    ExplodeDelta := VectorDivide(ExplodeDelta, Part.Vertices.Count); // Center
+    ExplodeDelta := VectorScale(ExplodeDelta, FExplode / 10 - 1);
   end;
 end; // CalcExplode
 
@@ -656,13 +656,13 @@ begin
   PenWidth(10);
 
   V := Axis.Line.BaseVector;
-  Line3d(V, V + Axis.NormVector * L);
+  Line3d(V, VectorAdd(V, VectorScale(Axis.NormVector, L)));
 
   // Planes
   FBitmap.Canvas.Pen.Color := RGB(100, 0, 100);
   FBitmap.Canvas.Pen.Width := 1;
   for i := 0 to Axis.Layers.Count - 2 do
-    PaintRay(Axis.BaseVector + Axis.NormVector * Axis.Layers[i].DistanceTo, Axis.NormVector);
+    PaintRay(VectorAdd(Axis.BaseVector, VectorScale(Axis.NormVector, Axis.Layers[i].DistanceTo)), Axis.NormVector);
 end; // PaintAxis
 
 procedure TBspGraphics.PaintSmallSquare(const ScreenPoint: TVector);
@@ -700,7 +700,7 @@ end; // PaintSmallSquare
 
 procedure TBspGraphics.PaintPlane(const Plane: TPlane);
 begin
-  PaintRay(Plane.NormVect * Plane.NormDistance, Plane.NormVect);
+  PaintRay(VectorScale(Plane.NormVect, Plane.NormDistance), Plane.NormVect);
 end; // PaintPlane
 
 procedure TBspGraphics.PaintFaceContour(Face: TFace);
