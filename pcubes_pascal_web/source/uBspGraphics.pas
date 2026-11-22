@@ -280,7 +280,7 @@ begin
 
   Vecs := TList<TVector>.Create;
   for i := 0 to Face.GetVertexCount - 1 do begin
-    with GetPers(Face.GetVertex(i) + ExplodeDelta) do
+    with GetPers(VectorAdd(Face.GetVertex(i), ExplodeDelta)) do
       V := [X, Round(Y), 0];
     Vecs.Add(V);
   end;
@@ -717,7 +717,7 @@ begin
       PenWidth(1);
       SetLength(PPath, Face.GetVertexCount);
       for i := 0 to Face.GetVertexCount - 1 do
-        with GetPers(Face.GetVertex(i) + ExplodeDelta) do
+        with GetPers(VectorAdd(Face.GetVertex(i), ExplodeDelta)) do
           PPath[i] := Types.Point(Round(X), Round(Y));
       Polygon(PPath);
     end;
@@ -730,7 +730,7 @@ begin
 
       SetLength(PPath, Face.GetVertexCount);
       for i := 0 to Face.GetVertexCount - 1 do
-        with GetPers(Face.GetVertex(i) + ExplodeDelta) do
+        with GetPers(VectorAdd(Face.GetVertex(i), ExplodeDelta)) do
           PPath[i] := Types.Point(Round(X), Round(Y));
       Polygon(PPath);
       Pen.Style := psSolid;
@@ -774,7 +774,7 @@ procedure TBspGraphics.PaintFace(Face: TFace);
   var pp: TVector;
   begin
     pp := [0, -1, 0];
-    Result := pp ** Face.GetNorm;
+    Result := VectorDot(pp, Face.GetNorm);
   end; // FaceLighting
 
 var
@@ -808,7 +808,7 @@ begin // PaintFace
     PenWidth(FPenWidth);
     SetLength(Path, Face.GetVertexCount);
     for i := 0 to Face.GetVertexCount - 1 do
-      with GetPers(Face.GetVertex(i) + ExplodeDelta) do
+      with GetPers(VectorAdd(Face.GetVertex(i), ExplodeDelta)) do
         Path[i] := [X, Y, Z + d];
     Polygon(Path);
 
@@ -875,20 +875,20 @@ begin // DrawPicture
 
   for i := 0 to Face.GetVertexCount - 1 do begin
     V := Face.GetVertex(i);
-    vCenter := vCenter + V;
+    vCenter := VectorAdd(vCenter, V);
   end;
-  vCenter := vCenter / Face.GetVertexCount;
+  vCenter := VectorDivide(vCenter, Face.GetVertexCount);
 
   v0 := Face.GetVertex(0);
 
   vNorm := Face.GetNorm;
 
-  vx := v0 - vCenter;
+  vx := VectorSubtract(v0, vCenter);
   vx := TMatrix.VectorMul(TMatrix.GetRotateMatrix(vNorm, -Pi / 2), vx);
 
-  vy := vCenter - vx;
-  vx := vx + vCenter - v0;
-  vy := vy - v0;
+  vy := VectorSubtract(vCenter, vx);
+  vx := VectorSubtract(VectorAdd(vx, vCenter), v0);
+  vy := VectorSubtract(vy, v0);
 
   for i := 0 to VectorImage.VectorCommands.Count - 1 do begin
     if VectorImage.VectorCommands[i] is TVectorCommandPenColor then
@@ -899,7 +899,7 @@ begin // DrawPicture
       Points := TVectorCommandPolygon(VectorImage.VectorCommands[i]).Points;
       SetLength(Path, Points.Count);
       for j := 0 to Points.Count - 1 do
-        Path[j] := vx * (Points[j].x / VectorImage.Width) + vy * (Points[j].y / VectorImage.Height) + v0;
+        Path[j] := VectorAdd(VectorAdd(VectorScale(vx, Points[j].x / VectorImage.Width), VectorScale(vy, Points[j].y / VectorImage.Height)), v0);
       Polygon3d(Path);
     end;
   end;
