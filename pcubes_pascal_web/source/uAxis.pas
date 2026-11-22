@@ -27,8 +27,10 @@ type
     TurnAxesWithPartNo: integer;
     Enabled: Boolean;
 
-    property NormVector: TVector read Line.NormVector;
-    property BaseVector: TVector read Line.BaseVector;
+    function GetNormVector: TVector;
+    function GetBaseVector: TVector;
+    property NormVector: TVector read GetNormVector;
+    property BaseVector: TVector read GetBaseVector;
 
     constructor Create; overload;
     constructor Create(const ANormVector: TVector); overload;
