@@ -34,7 +34,7 @@ type
   protected
     FParts: TList<TPart>;
     FAxes: TList<TAxis>;
-    FTextures: TList<TTexture>; // todo - вынести или в Puzzle или в Main
+    FTextures: TList<TTexture>; // todo - ГўГ»Г­ГҐГ±ГІГЁ ГЁГ«ГЁ Гў Puzzle ГЁГ«ГЁ Гў Main
 
     procedure TransParts(mat: T4x4Matrix; Parts: TList<TPart>);
     procedure TransAxes(mat: T4x4Matrix; Axes: TList<TAxis>);
@@ -201,7 +201,7 @@ var
     NormVect := Axis.NormVector;
 
     for Vector in Part.Vertices do begin
-      d := Vector ** NormVect;
+      d := VectorDot(Vector, NormVect);
       if not Result then begin
         AMin := d;
         AMax := d;
@@ -215,7 +215,7 @@ var
     end;
 
     if Result then begin
-      BaseProjection := Axis.NormVector ** Axis.BaseVector;
+      BaseProjection := VectorDot(Axis.NormVector, Axis.BaseVector);
       AMin := AMin - BaseProjection;
       AMax := AMax - BaseProjection;
     end;
