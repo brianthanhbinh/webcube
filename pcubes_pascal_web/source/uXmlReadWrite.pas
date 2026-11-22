@@ -397,7 +397,7 @@ begin
 
   Plane.NormVect.Normalize;
 
-  Plane.NormDistance := ReadDoubleExpressionFromXml(XmlNode, 'NormDistance') + BaseVector ** (Plane.NormVect);
+  Plane.NormDistance := ReadDoubleExpressionFromXml(XmlNode, 'NormDistance') + VectorDot(BaseVector, Plane.NormVect);
   Result := True;
 end;
 
@@ -948,7 +948,7 @@ begin // AddCylinder
 
   a := Vector(0, 0, 1);
   if not V.IsNear(a) then begin
-    Al := ArcCos(V ** a);
+    Al := ArcCos(VectorDot(V, a));
     if Abs(Abs(Al) - Pi) < 1e-6 then
       Part.Trans(TMatrix.GetRotateMatrix(Vector(1, 0, 0), Al))
     else if Abs(Al) > 1e-6 then begin
@@ -1012,7 +1012,7 @@ begin // AddCircle
 
   a := Vector(0, 0, 1);
   if not V.IsNear(a) then begin
-    Al := ArcCos(V ** a);
+    Al := ArcCos(VectorDot(V, a));
     if Abs(Abs(Al) - Pi) < 1e-6 then
       Part.Trans(TMatrix.GetRotateMatrix(Vector(1, 0, 0), Al))
     else if Abs(Al) > 1e-6 then begin
