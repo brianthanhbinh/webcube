@@ -60,6 +60,29 @@ jobs:
           s = re.sub(r"(?i)\bc\s*:\s*Char;", "C: UInt8;", s)
           s = re.sub(r"(?i)(Result\s*\[\s*i\s*\]\s*:=\s*)C\s*;", r"\1Chr(C);", s)
           s = re.sub(r"(?i)(Result\s*\[\s*I\s*\]\s*:=\s*)C\s*;", r"\1Chr(C);", s)
+          # TParser stores its input buffer as Char, but ReadData's
+          # numeric overload requires a numeric var parameter. Read into
+          # UInt8 first, then convert the byte back to a Pascal Char.
+          old_parser_decl = """  CharsRead,i: integer;
+
+begin
+  CharsRead:=0;"""
+          new_parser_decl = """  CharsRead,i: integer;
+  B: UInt8;
+
+begin
+  CharsRead:=0;"""
+          if old_parser_decl not in s:
+              raise SystemExit("Could not find TParser.LoadBuffer variable declaration")
+          s = s.replace(old_parser_decl, new_parser_decl, 1)
+          old_parser_read = """    if FStream.ReadData(FBuf[i])<>2 then
+      Break;"""
+          new_parser_read = """    if FStream.ReadData(B)<>2 then
+      Break;
+    FBuf[i] := Chr(B);"""
+          if old_parser_read not in s:
+              raise SystemExit("Could not find TParser.LoadBuffer ReadData call")
+          s = s.replace(old_parser_read, new_parser_read, 1)
           p.write_text(s)
           PY
 
