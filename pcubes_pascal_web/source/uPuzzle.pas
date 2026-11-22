@@ -571,8 +571,6 @@ procedure TPuzzle.TurnWithAnimation(AngleToTurn: extended);
 const
   delta = 1e-6;
 var
-  TicksOld, TicksNew: Cardinal;
-//  nx, ny, nz: extended;
   Diff: extended;
 begin // TurnWithAnimation
   if TurningState = tsTurningAnimated then
@@ -584,12 +582,10 @@ begin // TurnWithAnimation
 //    nz := Z;
 //  end;
 
-  TicksNew := GetTickCount;
-  TicksOld := TicksNew;
   TurningState := tsTurningAnimated;
   try
     while Abs(AngleToTurn) > delta do begin
-      Diff := Sign(AngleToTurn) * integer(TicksNew - TicksOld) / 200;
+      Diff := Sign(AngleToTurn) * 0.05;
       if Abs(AngleToTurn) < Abs(diff) then
         diff := AngleToTurn;
 
@@ -601,8 +597,6 @@ begin // TurnWithAnimation
       if Assigned(FOnTurning) then
         FOnTurning(ttManual, tsTurningAnimated);
 
-      TicksOld := TicksNew;
-      TicksNew := GetTickCount;
     end;
   finally
     TurningState := tsFree;
