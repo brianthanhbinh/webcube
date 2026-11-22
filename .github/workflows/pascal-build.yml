@@ -49,6 +49,7 @@ jobs:
           # as UInt8, then convert them back to Pascal characters.
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p = Path("/tmp/pas2js-rtl/packages/rtl/classes.pas")
           s = p.read_text()
           for routine in (
@@ -62,9 +63,8 @@ jobs:
               if end < 0:
                   end = len(s)
               block = s[start:end]
-              block = block.replace("c : Char;", "c : UInt8;")
-              block = block.replace("Result[I]:=C;", "Result[I]:=Chr(C);")
-              block = block.replace("Result[i]:=C;", "Result[i]:=Chr(C);")
+              block = re.sub(r"(?i)\bC\s*:\s*Char;", "C: UInt8;", block)
+              block = re.sub(r"(?i)(Result\[i\]\s*:=\s*)C\s*;", r"\1Chr(C);", block)
               s = s[:start] + block + s[end:]
           p.write_text(s)
           PY
