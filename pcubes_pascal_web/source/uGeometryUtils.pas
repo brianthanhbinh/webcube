@@ -26,12 +26,12 @@ implementation
 
 class function TGeometryUtils.DistancePointToLine(const Line: TLine; const Point: TVector): extended;
 begin
-  Result := ((Line.BaseVector - Point) * Line.NormVector).Abs / Line.NormVector.Abs;
+  Result := VectorCross(VectorSubtract(Line.BaseVector, Point), Line.NormVector).Abs / Line.NormVector.Abs;
 end;
 
 class function TGeometryUtils.DistancePointToPlane(const Plane: TPlane; const Point: TVector): extended;
 begin
-  Result := (Point - Plane.NormVect * Plane.NormDistance) ** Plane.NormVect;
+  Result := VectorDot(VectorSubtract(Point, VectorScale(Plane.NormVect, Plane.NormDistance)), Plane.NormVect);
 end;
 
 //class function TGeometryUtils.HalfPlane(const Plane: TPlane; const Point: TVector): THalfOfPlane;
