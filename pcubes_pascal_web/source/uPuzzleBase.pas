@@ -115,20 +115,30 @@ begin
 end; // ClearHeader
 
 procedure TPuzzleBase.Clear;
-var i: Integer;
+var
+  i: Integer;
+  Texture: TTexture;
+  Part: TPart;
+  Axis: TAxis;
 begin
   ClearHeader;
 
-  for i := 0 to FTextures.Count - 1 do
-    FTextures[i].Free;
+  for i := 0 to FTextures.Count - 1 do begin
+    Texture := FTextures[i];
+    Texture.Free;
+  end;
   FTextures.Clear;
 
-  for i := 0 to FParts.Count - 1 do
-    FParts[i].Free;
+  for i := 0 to FParts.Count - 1 do begin
+    Part := FParts[i];
+    Part.Free;
+  end;
   FParts.Clear;
 
-  for i := 0 to FAxes.Count - 1 do
-    FAxes[i].Free;
+  for i := 0 to FAxes.Count - 1 do begin
+    Axis := FAxes[i];
+    Axis.Free;
+  end;
   FAxes.Clear;
 end; // Clear
 
