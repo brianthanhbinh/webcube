@@ -74,11 +74,6 @@ begin
   Result := TDomNode(TJSNodeList(Self).item(Index));
 end;
 
-function TDomNamedNodeMap.item(Index: NativeInt): TDomAttr;
-begin
-  Result := TDomAttr(TJSNamedNodeMap(Self).getNamedItem(''));
-end;
-
 function TDomNode.FindNode(const AName: String): TDomNode;
 var
   I: Integer;
