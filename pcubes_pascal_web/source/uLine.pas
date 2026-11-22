@@ -58,12 +58,12 @@ end; // isNearOpposite
 
 procedure TLine.Trans(mat: T4x4Matrix);
 begin
-  NormVector := NormVector + BaseVector;
+  NormVector := VectorAdd(NormVector, BaseVector);
 
   BaseVector := TMatrix.VectorMul(mat, BaseVector);
   NormVector := TMatrix.VectorMul(mat, NormVector);
 
-  NormVector := NormVector - BaseVector;
+  NormVector := VectorSubtract(NormVector, BaseVector);
 
   NormVector.Normalize;
 end; // Trans
