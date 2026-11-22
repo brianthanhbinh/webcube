@@ -12,7 +12,7 @@ unit uPuzzle;
 
 interface
 uses uSolvedState, uMatrix, uPart, uAxis, uMacro, uSelection, uPuzzleBase, uTurn,
-     {$IFNDEF PCUBES_WEB}DOM,{$ENDIF}
+     {$IFNDEF PCUBES_WEB}DOM,{$ELSE}uWebCompat,{$ENDIF}
      Classes, Generics.Collections;
 
 type
@@ -255,7 +255,7 @@ begin
   MovesStartingPoint := 0;
 
   for i := 0 to Macros.Count - 1 do
-    Macros[i].Free;
+    { Macros[i] is garbage-collected in JavaScript } ;
   Macros.Clear;
 
   FMovingParts.Clear;

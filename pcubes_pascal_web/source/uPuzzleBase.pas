@@ -28,6 +28,8 @@ type
   TPartPosition = record
     iFrom, iTo: integer;
   end;
+  TPartPositionArray = array of TPartPosition;
+  TPartPositionArray2D = array of TPartPositionArray;
 
 type
   TPuzzleBase = class
@@ -59,7 +61,7 @@ type
     procedure GetPartPosition(AxisNo, PartNo: integer; var iFrom, iTo: integer);
     procedure PositionsInvalidate;
   private
-    FPartPositions: array of array of TPartPosition;
+    FPartPositions: TPartPositionArray2D;
     FAxesValid: array of Boolean;
     procedure CalcPartPosition(AxisNo: integer; Part: TPart; var iFrom, iTo: integer);
     procedure CalcPartPositionsForAxis(AxisNo: integer);
@@ -119,15 +121,15 @@ begin
   ClearHeader;
 
   for i := 0 to FTextures.Count - 1 do
-    FTextures[i].Free;
+    { FTextures[i] is garbage-collected in JavaScript } ;
   FTextures.Clear;
 
   for i := 0 to FParts.Count - 1 do
-    FParts[i].Free;
+    { FParts[i] is garbage-collected in JavaScript } ;
   FParts.Clear;
 
   for i := 0 to FAxes.Count - 1 do
-    FAxes[i].Free;
+    { FAxes[i] is garbage-collected in JavaScript } ;
   FAxes.Clear;
 end; // Clear
 
@@ -249,7 +251,9 @@ procedure TPuzzleBase.CalcPartPositionsForAxis(AxisNo: integer);
 var i, PCount: integer;
 begin
   PCount := FParts.Count;
-  SetLength(FPartPositions, FAxes.Count, PCount);
+  if Length(FPartPositions) <> FAxes.Count then
+    SetLength(FPartPositions, FAxes.Count);
+  SetLength(FPartPositions[AxisNo], PCount);
 
   for i := 0 to PCount - 1 do begin
     with FPartPositions[AxisNo][i] do

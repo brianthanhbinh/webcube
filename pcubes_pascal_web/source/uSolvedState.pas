@@ -67,7 +67,7 @@ destructor TSolvedState.Destroy;
 var i: integer;
 begin
   for i := 0 to FacesProperties.Count - 1 do
-    FacesProperties[i].Free;
+    { FacesProperties[i] is garbage-collected in JavaScript } ;
   FacesProperties.Free;
 
   inherited;
@@ -95,7 +95,7 @@ var FPuzzle: TPuzzle;
       fp.vc.Y := fp.vc.Y + Face.GetVertex(i).Y;
       fp.vc.Z := fp.vc.Z + Face.GetVertex(i).Z;
     end;
-    fp.vc := fp.vc / Face.GetVertexCount;
+    fp.vc := VectorDivide(fp.vc, Face.GetVertexCount);
 
     // position of center in v1, v2, v3 basis
     c1 := VectorDot(fp.vc, v1);
@@ -137,7 +137,7 @@ begin // CalcFromPuzzle
 
   v2.Normalize;
   v3 := v2;
-  v3 := v3 * v1;
+  v3 := VectorCross(v3, v1);
   v3.Normalize;
 
   Colors := TList<TColor>.Create;
@@ -239,7 +239,7 @@ procedure TSolvedStates.Clear;
 var i: integer;
 begin
   for i := 0 to FSolvedStates.Count - 1 do
-    FSolvedStates[i].Free;
+    { FSolvedStates[i] is garbage-collected in JavaScript } ;
   FSolvedStates.Clear;
 end;
 

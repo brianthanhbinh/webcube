@@ -232,10 +232,10 @@ begin
   Result := True;
 
   for i := 0 to Face.GetVertexCount - 1 do begin
-    V := ((Face.GetVertex(i + 1) - Face.GetVertex(i)) * NormVec);
+    V := VectorCross(VectorSubtract(Face.GetVertex(i + 1), Face.GetVertex(i)), NormVec);
     V.Normalize;
 
-    d := V ** (Point - Face.GetVertex(i));
+    d := VectorDot(V, VectorSubtract(Point, Face.GetVertex(i)));
 
     if d > DELTA then begin
       Result := False;
