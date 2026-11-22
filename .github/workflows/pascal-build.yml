@@ -30,7 +30,16 @@ jobs:
           sudo ln -sf "$PAS2JS_BIN" /usr/local/bin/pas2js
           pas2js -iV
 
+      - name: Get Pas2JS RTL source packages
+        run: |
+          git clone --depth 1 https://gitlab.com/freepascal.org/fpc/pas2js.git /tmp/pas2js-rtl
+          test -f /tmp/pas2js-rtl/packages/rtl/system.pas
+          test -f /tmp/pas2js-rtl/packages/rtl/rtl.js
+
       - name: Compile Pascal to browser JavaScript
+        env:
+          PAS2JS_RTL_DIR: /tmp/pas2js-rtl/packages/rtl
+          PAS2JS_PACKAGES_DIR: /tmp/pas2js-rtl/packages
         run: |
           chmod +x pcubes_pascal_web/build/build.sh
           ./pcubes_pascal_web/build/build.sh
@@ -39,7 +48,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pcubes_pascal_web/web/pcubes_web.js
+          git add pcubes_pascal_web/web/pcubes_web.js pcubes_pascal_web/web/rtl.js
           if git diff --cached --quiet; then
             echo "Generated JavaScript is already up to date."
           else
