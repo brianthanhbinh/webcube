@@ -16,6 +16,8 @@ uses
   Generics.Collections;
 
 type
+  TConnectedLayer = array of integer;
+
   TAxis = class
   public
     Line: TLine; // base ray of axis
