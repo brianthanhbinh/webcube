@@ -1,7 +1,7 @@
 program pcubes_web;
 {$mode objfpc}{$H+}
 { Browser bridge for the original Pascal pCubes puzzle model. }
-uses JS, Web, SysUtils, Classes, DOM, XMLRead, uPuzzle, uXmlReadWrite;
+uses JS, Web, SysUtils, DOM, uPuzzle, uXmlReadWrite;
 var
   StatusNode: TJSElement;
   API: TJSObject;
@@ -76,29 +76,23 @@ end;
 procedure APIOpenLibrary;
 begin SetStatus('Puzzle library is not ported to the browser yet.'); end;
 
-function APILoadXML(const XmlText: String): Boolean;
+function APILoadXML(XmlRoot: TJSObject): Boolean;
 var
-  Stream: TStringStream;
-  XmlDoc: TXMLDocument;
   NewPuzzle: TPuzzle;
 begin
   Result := False;
-  if Trim(XmlText) = '' then begin
-    SetStatus('XML load failed: selected file is empty.');
+  if XmlRoot = nil then begin
+    SetStatus('XML load failed: no XML root element was supplied.');
     Exit;
   end;
 
-  Stream := TStringStream.Create(XmlText);
-  XmlDoc := nil;
-  NewPuzzle := nil;
+  NewPuzzle := TPuzzle.Create;
   try
-    ReadXMLFile(XmlDoc, Stream);
-    if (XmlDoc = nil) or (XmlDoc.DocumentElement = nil) then
-      raise Exception.Create('The XML document has no root element.');
-    NewPuzzle := TPuzzle.Create;
     NewPuzzle.DisableAnimation;
-    if not TXmlReadWrite.PuzzleLoadFromXml(NewPuzzle, XmlDoc.DocumentElement) then
-      raise Exception.Create('The XML is valid, but pCubes could not load its puzzle data.');
+    if not TXmlReadWrite.PuzzleLoadFromXml(NewPuzzle, TDomNode(XmlRoot)) then begin
+      SetStatus('XML load failed: pCubes rejected the puzzle definition.');
+      Exit;
+    end;
 
     if CurrentPuzzle <> nil then CurrentPuzzle.Free;
     CurrentPuzzle := NewPuzzle;
@@ -112,8 +106,6 @@ begin
       SetStatus('XML load failed: ' + E.Message);
   end;
   if NewPuzzle <> nil then NewPuzzle.Free;
-  if XmlDoc <> nil then XmlDoc.Free;
-  Stream.Free;
 end;
 
 procedure InstallBrowserAPI;
