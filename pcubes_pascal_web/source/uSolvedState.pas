@@ -240,10 +240,14 @@ begin
 end;
 
 procedure TSolvedStates.Clear;
-var i: integer;
+var
+  i: integer;
+  SolvedStateItem: TSolvedState;
 begin
-  for i := 0 to FSolvedStates.Count - 1 do
-    FSolvedStates[i].Free;
+  for i := 0 to FSolvedStates.Count - 1 do begin
+    SolvedStateItem := FSolvedStates[i];
+    SolvedStateItem.Free;
+  end;
   FSolvedStates.Clear;
 end;
 
