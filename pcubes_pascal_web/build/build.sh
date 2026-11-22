@@ -9,26 +9,16 @@ command -v pas2js >/dev/null 2>&1 || {
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 RTL_DIR="${PAS2JS_RTL_DIR:-}"
 PACKAGES_DIR="${PAS2JS_PACKAGES_DIR:-}"
-FCL_XML_DIR="${PAS2JS_FCL_XML_DIR:-}"
-FCL_BASE_DIR="${PAS2JS_FCL_BASE_DIR:-}"
 
 if [ -z "$RTL_DIR" ] || [ ! -f "$RTL_DIR/system.pas" ]; then
   echo 'Pas2JS RTL not found. Set PAS2JS_RTL_DIR to the directory containing system.pas.' >&2
   exit 1
 fi
 
-if [ -z "$FCL_XML_DIR" ] || [ ! -f "$FCL_XML_DIR/dom.pp" ]; then
-  echo 'FPC fcl-xml sources not found. Set PAS2JS_FCL_XML_DIR to the directory containing dom.pp.' >&2
-  exit 1
-fi
-
 cd "$ROOT/web"
 
 # Add the Pas2JS core RTL, FPC XML parser, and supporting package units.
-RTL_FLAGS="-Fu$RTL_DIR -Fu$FCL_XML_DIR"
-if [ -n "$FCL_BASE_DIR" ] && [ -d "$FCL_BASE_DIR" ]; then
-  RTL_FLAGS="$RTL_FLAGS -Fu$FCL_BASE_DIR"
-fi
+RTL_FLAGS="-Fu$RTL_DIR"
 if [ -n "$PACKAGES_DIR" ] && [ -d "$PACKAGES_DIR" ]; then
   RTL_FLAGS="$RTL_FLAGS -Fu$PACKAGES_DIR/*"
 fi
