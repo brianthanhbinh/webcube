@@ -141,7 +141,7 @@ begin // CalcFromPuzzle
 
   v2.Normalize;
   v3 := v2;
-  v3 := v3 * v1;
+  v3 := VectorCross(v3, v1);
   v3.Normalize;
 
   Colors := TList<TColor>.Create;
