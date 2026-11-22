@@ -64,7 +64,7 @@ end;
 constructor TAxis.Create(const ANormVector: TVector);
 var ABaseVector: TVector;
 begin
-  ABaseVector := [0, 0, 0];
+  ABaseVector := Vector(0, 0, 0);
   Create(ABaseVector, ANormVector);
 end;
 
