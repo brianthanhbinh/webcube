@@ -41,7 +41,7 @@ begin
   v := v * TSelection.SelectedFace.GetNorm;
 //  v.Normalize;
 
-  Result := -Sign(v ** TSelection.TurnAxis.NormVector);
+  Result := -Sign(VectorDot(v, TSelection.TurnAxis.NormVector));
 end;
 
 function TPuzzleScreen.GetRotateAxis(GraphicEngine: TBaseGraphics; dx, dy: extended): integer;
@@ -85,7 +85,7 @@ begin // GetRotateAxis
   NAxes := TList<TAxis>.Create;
   try
     RotationVector := [dx, 0, dy];
-    RotationVector := RotationVector * TSelection.SelectedFace.GetNorm;
+    RotationVector := VectorCross(RotationVector, TSelection.SelectedFace.GetNorm);
     RotationVector.Normalize;
 
     Result := -1;
@@ -101,7 +101,7 @@ begin // GetRotateAxis
       if Axis.IsLayerFixed(TSelection.TurnLayers) then
         continue;
 
-      h1 := Abs(RotationVector ** Axis.NormVector);
+      h1 := Abs(VectorDot(RotationVector, Axis.NormVector));
 
       if First then begin
         First := False;
