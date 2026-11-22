@@ -191,7 +191,7 @@ begin // Contains
     Plane := Face.GetPlane;
 
     NormVec := Plane.NormVect;
-    d := NormVec ** (Point - NormVec * Plane.NormDistance);
+    d := VectorDot(NormVec, VectorSubtract(Point, VectorScale(NormVec, Plane.NormDistance)));
 
     hf := HalfPlane(Plane);
 
