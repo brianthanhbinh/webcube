@@ -20,7 +20,7 @@ type
   public
     Line: TLine; // base ray of axis
     Layers: TList<TLayer>;
-    ConnectedLayers: array of array of integer;
+    ConnectedLayers: array of TConnectedLayer;
     TurnAxesWithLayer: integer;
     TurnAxesWithPartNo: integer;
     Enabled: Boolean;
@@ -58,7 +58,7 @@ begin
   Layers := TList<TLayer>.Create;
   TurnAxesWithLayer := -1;
   TurnAxesWithPartNo := -1;
-  SetLength(ConnectedLayers, 0, 0);
+  SetLength(ConnectedLayers, 0);
 end;
 
 constructor TAxis.Create(const ANormVector: TVector);
