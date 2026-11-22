@@ -24,7 +24,7 @@ unit uScript;
 
 interface
 
-uses classes, Generics.Collections;
+uses classes, Generics.Collections, Variants;
 
 type
   TToken =
