@@ -1104,7 +1104,11 @@ begin
     ReadXMLFile(XmlDoc, FileName);
     Result := PuzzleLoadHeaderFromXml(Puzzle, XmlDoc.DocumentElement);
   finally
-    XmlDoc.Free;
+    {$IFNDEF PAS2JS}
+
+      XmlDoc.Free;
+
+    {$ENDIF}
   end;
 
 //  Clear;
@@ -1510,7 +1514,11 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
       Result := Load(ExtractFilePath(Puzzle.Header.FileName) + S);
     if Result then begin
       LoadFigure(XmlDoc.DocumentElement);
-      XmlDoc.Free;
+      {$IFNDEF PAS2JS}
+
+        XmlDoc.Free;
+
+      {$ENDIF}
     end;
   end;
 
@@ -1788,7 +1796,11 @@ begin
     //  XmlDoc := LoadXmlDocument(AnsiString(FileName));
     Result := PuzzleLoadFromXmlCommon(Puzzle, XmlDoc, FileName);
   finally
-    XmlDoc.Free;
+    {$IFNDEF PAS2JS}
+
+      XmlDoc.Free;
+
+    {$ENDIF}
   end;
 end; // PuzzleLoadFromXmlFile
 
@@ -1812,7 +1824,11 @@ begin
       Result := PuzzleLoadFromXmlCommon(Puzzle, XmlDoc, FileName);
     end;
   finally
-    XmlDoc.Free;
+    {$IFNDEF PAS2JS}
+
+      XmlDoc.Free;
+
+    {$ENDIF}
     mStream.Free;
   end;
 end; // PuzzleLoadFromCompressedXmlFile
@@ -1877,7 +1893,11 @@ begin
 
     WriteXMLFile(XmlDoc, FileName);
   finally
-    XmlDoc.Free;
+    {$IFNDEF PAS2JS}
+
+      XmlDoc.Free;
+
+    {$ENDIF}
   end;
 //  XmlDoc.Save(AnsiString(FileName));
 end; // PuzzleSaveToXmlFile
@@ -2131,7 +2151,11 @@ begin // PuzzleExecMacroFromXmlFile
     end;
 
   finally
-    XmlDoc.Free;
+    {$IFNDEF PAS2JS}
+
+      XmlDoc.Free;
+
+    {$ENDIF}
   end;
 end; // PuzzleExecMacroFromXmlFile
 
