@@ -47,12 +47,17 @@ end;
 
 function TTexture.Load(const PuzzleFileName: String): Boolean;
 
-  function LoadVec(const FileName: String): Boolean;
+  function LoadVec(const AFileName: String): Boolean;
   begin
-    Result := FileExists(FileName);
-    if Result then begin
-      VectorImage := TVectorImage.Create;
-      VectorImage.LoadFromFile(FileName);
+    Result := False;
+    VectorImage := TVectorImage.Create;
+    try
+      // FileExists is unavailable in the browser-target Pas2JS RTL.
+      // Attempt the read directly and treat an unreadable file as absent.
+      VectorImage.LoadFromFile(AFileName);
+      Result := True;
+    except
+      FreeAndNil(VectorImage);
     end;
   end;
 
