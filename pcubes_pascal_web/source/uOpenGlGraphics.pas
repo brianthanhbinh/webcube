@@ -478,9 +478,9 @@ begin
   ExplodeDelta := [0, 0, 0];
   if FExplode > 10 then begin
     for V in Part.Vertices do
-      ExplodeDelta := ExplodeDelta + V;
-    ExplodeDelta := ExplodeDelta / Part.Vertices.Count; // Center
-    ExplodeDelta := ExplodeDelta * (FExplode / 10 - 1);
+      ExplodeDelta := VectorAdd(ExplodeDelta, V);
+    ExplodeDelta := VectorDivide(ExplodeDelta, Part.Vertices.Count); // Center
+    ExplodeDelta := VectorScale(ExplodeDelta, FExplode / 10 - 1);
   end;
 end; // CalcExplode
 
@@ -557,7 +557,7 @@ begin
         if Face.IsEdgeVisible(i) then begin
           with VectorAdd(Face.GetVertex(i), ExplodeDelta) do
             glVertex3f(X, Y, Z);
-          with Face.GetVertex(i + 1) + ExplodeDelta do
+          with VectorAdd(Face.GetVertex(i + 1), ExplodeDelta) do
             glVertex3f(X, Y, Z)
         end;
       end;
@@ -583,13 +583,13 @@ begin
   PenWidth(10);
 
   V := Axis.Line.BaseVector;
-  Line3d(V, V + Axis.NormVector * L);
+  Line3d(V, VectorAdd(V, VectorScale(Axis.NormVector, L)));
 
   // Planes
   FBitmap.Canvas.Pen.Color := RGB(100, 0, 100);
   FBitmap.Canvas.Pen.Width := 1;
   for i := 0 to Axis.Layers.Count - 2 do
-    PaintRay(Axis.BaseVector + Axis.NormVector * Axis.Layers[i].DistanceTo, Axis.NormVector);
+    PaintRay(VectorAdd(Axis.BaseVector, VectorScale(Axis.NormVector, Axis.Layers[i].DistanceTo)), Axis.NormVector);
 end; // PaintAxis
 
 procedure TOpenGlGraphics.PaintSmallSquare(const ScreenPoint: TVector);
@@ -611,7 +611,7 @@ end; // PaintSmallSquare
 
 procedure TOpenGlGraphics.PaintPlane(Plane: TPlane);
 begin
-  PaintRay(Plane.NormVect * Plane.NormDistance, Plane.NormVect);
+  PaintRay(VectorScale(Plane.NormVect, Plane.NormDistance), Plane.NormVect);
 end; // PaintPlane
 
 procedure TOpenGlGraphics.PaintRay(const VBase, V: TVector);
