@@ -57,7 +57,7 @@ type
 
 function Vector(x, y, z: extended): TVector;
 
-operator := (const arr:  Array of extended): TVector;
+operator := (const arr: array[0..2] of Extended): TVector;
 operator +  (const ALeft, ARight: TVector): TVector;
 operator -  (const ALeft: TVector): TVector;
 operator -  (const ALeft, ARight: TVector): TVector;
@@ -134,7 +134,7 @@ begin
     System.Abs(z + Vect.z) < DELTA;
 end;
 
-operator := (const arr: Array of extended): TVector;
+operator := (const arr: array[0..2] of Extended): TVector;
 begin
   Result.x := arr[0];
   Result.y := arr[1];
