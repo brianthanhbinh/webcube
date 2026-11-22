@@ -89,7 +89,7 @@ begin
   NewPuzzle := TPuzzle.Create;
   try
     NewPuzzle.DisableAnimation;
-    if not TXmlReadWrite.PuzzleLoadFromXml(NewPuzzle, TDomNode(XmlRoot)) then begin
+    if not TXmlReadWrite.PuzzleLoadFromXml(NewPuzzle, WrapDomNode(TJSNode(XmlRoot))) then begin
       SetStatus('XML load failed: pCubes rejected the puzzle definition.');
       Exit;
     end;
