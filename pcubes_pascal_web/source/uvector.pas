@@ -58,11 +58,11 @@ type
 function Vector(x, y, z: extended): TVector;
 
 function VectorAdd(const ALeft, ARight: TVector): TVector;
-operator - (const ALeft: TVector): TVector;
+function VectorNegate(const ALeft: TVector): TVector;
 function VectorSubtract(const ALeft, ARight: TVector): TVector;
 function VectorScale(const V: TVector; Scalar: Extended): TVector;
 function VectorCross(const ALeft, ARight: TVector): TVector;
-operator /  (const V: TVector; Scalar: Extended): TVector;
+function VectorDivide(const V: TVector; Scalar: Extended): TVector;
 function VectorDot(const ALeft, ARight: TVector): Extended;
 
 //const
@@ -133,7 +133,7 @@ begin
     System.Abs(z + Vect.z) < DELTA;
 end;
 
-operator + (const ALeft, ARight: TVector): TVector;
+function VectorAdd(const ALeft, ARight: TVector): TVector;
 begin
   Result.x := ALeft.x + ARight.x;
   Result.y := ALeft.y + ARight.y;
@@ -147,14 +147,14 @@ begin
   Result.z := -ALeft.z;
 end;
 
-operator - (const ALeft, ARight: TVector): TVector;
+function VectorSubtract(const ALeft, ARight: TVector): TVector;
 begin
   Result.x := ALeft.x - ARight.x;
   Result.y := ALeft.y - ARight.y;
   Result.z := ALeft.z - ARight.z;
 end;
 
-operator * (const V: TVector; Scalar: Extended): TVector;
+function VectorScale(const V: TVector; Scalar: Extended): TVector;
 begin
   Result.x := V.x * Scalar;
   Result.y := V.y * Scalar;
@@ -162,7 +162,7 @@ begin
 end;
 
 // vector mult
-operator * (const ALeft, ARight: TVector): TVector;
+function VectorCross(const ALeft, ARight: TVector): TVector;
 begin
   Result.x := ALeft.y * ARight.z - ALeft.z * ARight.y;
   Result.y := ALeft.z * ARight.x - ALeft.x * ARight.z;
@@ -176,7 +176,7 @@ begin
   Result.y := V.y / Scalar;
   Result.z := V.z / Scalar;
 end;// scalar mult
-operator ** (const ALeft, ARight: TVector): Extended;
+function VectorDot(const ALeft, ARight: TVector): Extended;
 begin
   Result := ALeft.x * ARight.x + ALeft.y * ARight.y + ALeft.z * ARight.z;
 end;
