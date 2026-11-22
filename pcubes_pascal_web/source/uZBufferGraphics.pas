@@ -863,7 +863,7 @@ begin
 
   Vecs := TList<TVector>.Create;
   for i := 0 to Face.GetVertexCount - 1 do begin
-    with getPers(Face.GetVertex(i) + ExplodeDelta) do
+    with getPers(VectorAdd(Face.GetVertex(i), ExplodeDelta)) do
       V := [X, Round(Y), 0];
     Vecs.Add(V);
   end;
@@ -996,9 +996,9 @@ begin
   ExplodeDelta := [0, 0, 0];
   if FExplode > 10 then begin
     for V in Part.Vertices do
-      ExplodeDelta := ExplodeDelta + V;
-    ExplodeDelta := ExplodeDelta / Part.Vertices.Count; // Center
-    ExplodeDelta := ExplodeDelta * (FExplode / 10 - 1);
+      ExplodeDelta := VectorAdd(ExplodeDelta, V);
+    ExplodeDelta := VectorDivide(ExplodeDelta, Part.Vertices.Count); // Center
+    ExplodeDelta := VectorScale(ExplodeDelta, FExplode / 10 - 1);
   end;
 end; // CalcExplode
 
@@ -1129,18 +1129,18 @@ begin
   PenWidth(10);
 
   V := Axis.Line.BaseVector;
-  Line3d(V, V + Axis.NormVector * L);
+  Line3d(V, VectorAdd(V, VectorScale(Axis.NormVector, L)));
 
   with getPers(V) do
     FBitmap.Canvas.MoveTo(Round(X), Round(Y));
-  with getPers(V + Axis.NormVector * L) do
+  with getPers(VectorAdd(V, VectorScale(Axis.NormVector, L))) do
     FBitmap.Canvas.LineTo(Round(X), Round(Y));
 
   // Planes
   FBitmap.Canvas.Pen.Color := RGB(100, 0, 100);
   FBitmap.Canvas.Pen.Width := 1;
   for i := 0 to Axis.Layers.Count - 2 do
-    PaintRay(Axis.BaseVector + Axis.NormVector * (Axis.Layers[i].DistanceTo), Axis.NormVector);
+    PaintRay(VectorAdd(Axis.BaseVector, VectorScale(Axis.NormVector, Axis.Layers[i].DistanceTo)), Axis.NormVector);
 end; // PaintAxis
 
 procedure TZBufferGraphics.PaintSmallSquare(const ScreenPoint: TVector);
@@ -1166,8 +1166,8 @@ const
 var
   v0, vn: TVector;
 begin
-  v0 := getPers(Plane.NormVect * Plane.NormDistance);
-  vn := getPers(Plane.NormVect * (L + Plane.NormDistance));
+  v0 := getPers(VectorScale(Plane.NormVect, Plane.NormDistance));
+  vn := getPers(VectorScale(Plane.NormVect, L + Plane.NormDistance));
 
   PenWidth(1);
 
@@ -1193,7 +1193,7 @@ begin
   with FBitmap.Canvas do begin
     SetLength(PPath, Face.GetVertexCount);
     for i := 0 to Face.GetVertexCount - 1 do
-      with getPers(Face.GetVertex(i) + ExplodeDelta) do begin
+      with getPers(VectorAdd(Face.GetVertex(i), ExplodeDelta)) do begin
         PPath[i].X := Round(X);
         PPath[i].Y := Round(Y);
       end;
@@ -1213,9 +1213,9 @@ begin
   ExplodeDelta := [0, 0, 0];
   if FExplode > 10 then begin
     for V in Part.Vertices do
-      ExplodeDelta := ExplodeDelta + V;
-    ExplodeDelta := ExplodeDelta / Part.Vertices.Count; // Center
-    ExplodeDelta := ExplodeDelta * (FExplode / 10 - 1);
+      ExplodeDelta := VectorAdd(ExplodeDelta, V);
+    ExplodeDelta := VectorDivide(ExplodeDelta, Part.Vertices.Count); // Center
+    ExplodeDelta := VectorScale(ExplodeDelta, FExplode / 10 - 1);
   end;
 
   for i := 0 to Part.Faces.Count - 1 do
@@ -1230,7 +1230,7 @@ procedure TZBufferGraphics.PaintFace(Face: TFace);
   var pp: TVector;
   begin
     pp := [0, -1, 0];
-    Result := pp ** Face.GetNorm;
+    Result := VectorDot(pp, Face.GetNorm);
   end; // FaceLighting
 
 var
@@ -1294,7 +1294,7 @@ begin // PaintFace
       PenWidth(1);
       SetLength(Path, Face.GetVertexCount);
       for i := 0 to Face.GetVertexCount - 1 do
-        Path[i] := GetPers(Face.GetVertex(i) + ExplodeDelta);
+        Path[i] := GetPers(VectorAdd(Face.GetVertex(i), ExplodeDelta));
       Polygon2(Path);
   end;
 
@@ -1345,20 +1345,20 @@ begin // DrawPicture
   vCenter := [0, 0, 0];
   for i := 0 to Face.GetVertexCount - 1 do begin
     v := Face.GetVertex(i);
-    vCenter := vCenter + v;
+    vCenter := VectorAdd(vCenter, v);
   end;
-  vCenter := vCenter / Face.GetVertexCount;
+  vCenter := VectorDivide(vCenter, Face.GetVertexCount);
 
   v0 := Face.GetVertex(0);
 
   vNorm := Face.GetNorm;
 
-  vx := v0 - vCenter;
+  vx := VectorSubtract(v0, vCenter);
   vx := TMatrix.VectorMul(TMatrix.GetRotateMatrix(vNorm, Pi / 2), vx);
 
-  vy := vCenter - vx;
-  vx := vx + vCenter - v0;
-  vy := vy - v0;
+  vy := VectorSubtract(vCenter, vx);
+  vx := VectorSubtract(VectorAdd(vx, vCenter), v0);
+  vy := VectorSubtract(vy, v0);
 
 //  DrawPolygon(1 / 350, [148,119, 125,61, 59,61, 59,77, 111,77, 134,128, 125,139, 106,113, 35,137, 40,153, 101,132, 117,154, 114,170, 90,156, 28,192, 36,206, 91,174, 116,188, 123,203, 81,203, 52,285, 68,291, 94,219, 136,219, 150,227, 175,213, 192,211, 204,197, 192,201, 175,203, 156,201, 144,197, 156,211, 175,213, 150,227, 164,231, 184,231, 198,227, 212,219, 254,219, 280,291, 296,285, 267,203, 225,203, 232,188, 257,174, 312,206, 320,192, 258,156, 234,170, 231,154, 247,132, 308,153, 313,137, 242,113, 223,139, 214,128, 237,77, 289,77, 289,61, 223,61, 200,119, 192,116, 180,114, 180,138, 191,136, 201,140, 207,148, 207,165, 203,173, 194,176, 185,176, 178,174, 174,168, 170,174, 163,176, 154,176, 145,173, 141,165, 141,148, 147,140, 157,136, 168,138, 174,144, 180,138, 180,114, 168,114, 156,116]);
   for i := 0 to VectorImage.VectorCommands.Count - 1 do begin
@@ -1370,7 +1370,7 @@ begin // DrawPicture
       Points := TVectorCommandPolygon(VectorImage.VectorCommands[i]).Points;
       SetLength(Path, Points.Count);
       for j := 0 to Points.Count - 1 do
-        Path[j] := vx * (Points[j].x / VectorImage.Width) + vy * (Points[j].y / VectorImage.Height) + v0;
+        Path[j] := VectorAdd(VectorAdd(VectorScale(vx, Points[j].x / VectorImage.Width), VectorScale(vy, Points[j].y / VectorImage.Height)), v0);
       Polygon3d(Path);
     end;
   end;
