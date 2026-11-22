@@ -11,83 +11,238 @@ type
   TDomNode = class;
   TDomElement = class;
 
-  TDomNodeList = class external name 'NodeList' (TJSObject)
-  private
-    FLength: NativeInt; external name 'length';
+  TJSNamedNodeMapExt = class external name 'NamedNodeMap' (TJSObject)
   public
-    function item(Index: NativeInt): TDomNode;
-    property Count: NativeInt read FLength;
-    property Items[Index: NativeInt]: TDomNode read item; default;
+    function item(Index: NativeInt): TJSAttr; external name 'item';
   end;
 
-  TDomAttr = class external name 'Attr' (TJSNode)
+  TDomNodeList = class
+  private
+    FItems: array of TDomNode;
+    function GetItem(Index: NativeInt): TDomNode;
+  public
+    constructor Create(ANodes: TJSNodeList);
+    function Count: NativeInt;
+    property Items[Index: NativeInt]: TDomNode read GetItem; default;
   end;
 
-  TDomNamedNodeMap = class external name 'NamedNodeMap' (TJSObject)
+  TDomNamedNodeMap = class
   private
-    FLength: NativeInt; external name 'length';
+    FItems: array of TDomNode;
+    function GetItem(Index: NativeInt): TDomNode;
   public
-    function item(Index: NativeInt): TDomAttr; external name 'item';
-    property Length: NativeInt read FLength;
-    property Items[Index: NativeInt]: TDomAttr read item; default;
+    constructor Create(AAttributes: TJSNamedNodeMap);
+    function Length: NativeInt;
+    property Items[Index: NativeInt]: TDomNode read GetItem; default;
   end;
 
-  TDomNode = class external name 'Node' (TJSNode)
-  private
-    FAttributes: TDomNamedNodeMap; external name 'attributes';
-    FChildNodes: TDomNodeList; external name 'childNodes';
-    FParentNode: TDomNode; external name 'parentNode';
-    FNodeName: String; external name 'nodeName';
+  TDomNode = class
+  protected
+    FNode: TJSNode;
   public
+    constructor Create(ANode: TJSNode); virtual;
     function FindNode(const AName: String): TDomNode;
     function CompareName(const AName: String): Integer;
-    property Attributes: TDomNamedNodeMap read FAttributes;
-    property ChildNodes: TDomNodeList read FChildNodes;
-    property ParentNode: TDomNode read FParentNode;
-    property NodeName: String read FNodeName;
+    function AppendChild(Node: TDomNode): TDomNode;
+    function GetAttributes: TDomNamedNodeMap;
+    function GetChildNodes: TDomNodeList;
+    function GetParentNode: TDomNode;
+    function GetNodeName: String;
+    function GetNodeValue: String;
+    function GetTextContent: String;
+    property Attributes: TDomNamedNodeMap read GetAttributes;
+    property ChildNodes: TDomNodeList read GetChildNodes;
+    property ParentNode: TDomNode read GetParentNode;
+    property NodeName: String read GetNodeName;
+    property NodeValue: String read GetNodeValue;
+    property TextContent: String read GetTextContent;
+    property NativeNode: TJSNode read FNode;
   end;
 
-  TDomElement = class external name 'Element' (TDomNode)
+  TDomElement = class(TDomNode)
   private
-    function GetAttribute(const AName: String): String; external name 'getAttribute';
-    procedure SetAttribute(const AName, AValue: String); external name 'setAttribute';
+    function GetAttribute(const AName: String): String;
+    procedure SetAttribute(const AName, AValue: String);
   public
+    constructor Create(ANode: TJSElement); reintroduce;
     property AttribStrings[const AName: String]: String
       read GetAttribute write SetAttribute; default;
+    procedure SetAttributeValue(const AName, AValue: String);
   end;
 
-  TXMLDocument = class external name 'Document' (TJSObject)
+  TXmlDocument = class
   private
-    FDocumentElement: TDomElement; external name 'documentElement';
+    FDocument: TJSDocument;
+    function GetDocumentElement: TDomElement;
   public
-    function CreateElement(const AName: String): TDomElement; external name 'createElement';
-    function AppendChild(Node: TDomNode): TDomNode; external name 'appendChild';
-    property DocumentElement: TDomElement read FDocumentElement;
+    constructor Create(ADocument: TJSDocument);
+    function CreateElement(const AName: String): TDomElement;
+    function AppendChild(Node: TDomNode): TDomNode;
+    procedure Free;
+    property DocumentElement: TDomElement read GetDocumentElement;
   end;
+
+function WrapDomNode(ANode: TJSNode): TDomNode;
 
 implementation
 
-function TDomNodeList.item(Index: NativeInt): TDomNode;
+constructor TDomNodeList.Create(ANodes: TJSNodeList);
+var
+  I: NativeInt;
 begin
-  Result := TDomNode(TJSNodeList(Self).item(Index));
+  inherited Create;
+  SetLength(FItems, ANodes.length);
+  for I := 0 to ANodes.length - 1 do
+    FItems[I] := WrapDomNode(ANodes.item(I));
+end;
+
+function TDomNodeList.GetItem(Index: NativeInt): TDomNode;
+begin
+  Result := FItems[Index];
+end;
+
+function TDomNodeList.Count: NativeInt;
+begin
+  Result := Length(FItems);
+end;
+
+constructor TDomNamedNodeMap.Create(AAttributes: TJSNamedNodeMap);
+var
+  I, N: NativeInt;
+begin
+  inherited Create;
+  N := NativeInt(TJSObject(AAttributes)['length']);
+  SetLength(FItems, N);
+  for I := 0 to N - 1 do
+    FItems[I] := TDomNode.Create(TJSNode(TJSNamedNodeMapExt(AAttributes).item(I)));
+end;
+
+function TDomNamedNodeMap.GetItem(Index: NativeInt): TDomNode;
+begin
+  Result := FItems[Index];
+end;
+
+function TDomNamedNodeMap.Length: NativeInt;
+begin
+  Result := Length(FItems);
+end;
+
+constructor TDomNode.Create(ANode: TJSNode);
+begin
+  inherited Create;
+  FNode := ANode;
+end;
+
+function WrapDomNode(ANode: TJSNode): TDomNode;
+begin
+  if ANode = nil then Exit(nil);
+  if ANode.nodeType = 1 then
+    Result := TDomElement.Create(TJSElement(ANode))
+  else
+    Result := TDomNode.Create(ANode);
 end;
 
 function TDomNode.FindNode(const AName: String): TDomNode;
 var
   I: Integer;
+  Nodes: TDomNodeList;
   Child: TDomNode;
 begin
   Result := nil;
-  for I := 0 to ChildNodes.Count - 1 do begin
-    Child := ChildNodes[I];
-    if SameText(Child.NodeName, AName) then
-      Exit(Child);
+  Nodes := ChildNodes;
+  for I := 0 to Nodes.Count - 1 do begin
+    Child := Nodes[I];
+    if SameText(Child.NodeName, AName) then Exit(Child);
   end;
 end;
 
 function TDomNode.CompareName(const AName: String): Integer;
 begin
   if SameText(NodeName, AName) then Result := 0 else Result := 1;
+end;
+
+function TDomNode.AppendChild(Node: TDomNode): TDomNode;
+begin
+  Result := WrapDomNode(FNode.appendChild(Node.NativeNode));
+end;
+
+function TDomNode.GetAttributes: TDomNamedNodeMap;
+begin
+  if FNode.nodeType = 1 then
+    Result := TDomNamedNodeMap.Create(TJSElement(FNode).attributes)
+  else
+    Result := TDomNamedNodeMap.Create(nil);
+end;
+
+function TDomNode.GetChildNodes: TDomNodeList;
+begin
+  Result := TDomNodeList.Create(FNode.childNodes);
+end;
+
+function TDomNode.GetParentNode: TDomNode;
+begin
+  Result := WrapDomNode(FNode.parentNode);
+end;
+
+function TDomNode.GetNodeName: String;
+begin
+  Result := FNode.nodeName;
+end;
+
+function TDomNode.GetNodeValue: String;
+begin
+  Result := FNode.nodeValue;
+end;
+
+function TDomNode.GetTextContent: String;
+begin
+  Result := FNode.textContent;
+end;
+
+constructor TDomElement.Create(ANode: TJSElement);
+begin
+  inherited Create(ANode);
+end;
+
+function TDomElement.GetAttribute(const AName: String): String;
+begin
+  Result := TJSElement(FNode).getAttribute(AName);
+end;
+
+procedure TDomElement.SetAttribute(const AName, AValue: String);
+begin
+  TJSElement(FNode).setAttribute(AName, AValue);
+end;
+
+procedure TDomElement.SetAttributeValue(const AName, AValue: String);
+begin
+  SetAttribute(AName, AValue);
+end;
+
+constructor TXmlDocument.Create(ADocument: TJSDocument);
+begin
+  inherited Create;
+  FDocument := ADocument;
+end;
+
+function TXmlDocument.GetDocumentElement: TDomElement;
+begin
+  Result := TDomElement(WrapDomNode(FDocument.documentElement));
+end;
+
+function TXmlDocument.CreateElement(const AName: String): TDomElement;
+begin
+  Result := TDomElement.Create(FDocument.createElement(AName));
+end;
+
+function TXmlDocument.AppendChild(Node: TDomNode): TDomNode;
+begin
+  Result := WrapDomNode(FDocument.appendChild(Node.NativeNode));
+end;
+
+procedure TXmlDocument.Free;
+begin
+  { Native browser documents are garbage-collected by JavaScript. }
 end;
 
 end.
