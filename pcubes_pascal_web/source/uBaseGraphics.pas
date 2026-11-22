@@ -67,8 +67,8 @@ type
     procedure SetExplode(Explode: integer);
     procedure SetPartsFromTo(iFrom, iTo: integer);
 
-    // помещает в MouseOverFace, MouseOverPart, MouseOverAxis, MouseOverAxisNo
-   // то, что находится под курсором (mx, my)
+    // ГЇГ®Г¬ГҐГ№Г ГҐГІ Гў MouseOverFace, MouseOverPart, MouseOverAxis, MouseOverAxisNo
+   // ГІГ®, Г·ГІГ® Г­Г ГµГ®Г¤ГЁГІГ±Гї ГЇГ®Г¤ ГЄГіГ°Г±Г®Г°Г®Г¬ (mx, my)
     procedure GetMouseParts(Puzzle: TPuzzle; mx, my: integer); virtual; abstract;
 
     property Lighting: integer read GetLighting write SetLighting;
@@ -231,7 +231,7 @@ begin
     gif.Assign(FBitMap);
 //    gif.Add(FBitMap);
 
-    //Удаляем лишние цвета из палитры
+    //Г“Г¤Г Г«ГїГҐГ¬ Г«ГЁГёГ­ГЁГҐ Г¶ГўГҐГІГ  ГЁГ§ ГЇГ Г«ГЁГІГ°Г»
 //    gif.OptimizeColorMap;
 //    gif.Pack;
     gif.SaveToFile(FileName);
@@ -252,17 +252,17 @@ end;
 function TBaseGraphics.IsFaceVisible(Face: TFace; ExplodeDelta: TVector): boolean;
 var V: TVector;
 begin
-  V := Face.GetVertex(0) + ExplodeDelta;
+  V := VectorAdd(Face.GetVertex(0), ExplodeDelta);
   V.Y := V.Y + d;
-  Result := Face.GetNorm ** V < 0;
+  Result := VectorDot(Face.GetNorm, V) < 0;
 end;
 
 function TBaseGraphics.IsPlaneVisible(const Plane: TPlane): Boolean;
 var N: TVector;
 begin
-  N := Plane.NormVect * Plane.NormDistance;
+  N := VectorScale(Plane.NormVect, Plane.NormDistance);
   N.Y := N.Y + d;
-  Result := Plane.NormVect ** N < 0;
+  Result := VectorDot(Plane.NormVect, N) < 0;
 end; // IsVisible
 
 procedure TBaseGraphics.SetPenWidth(PenWidth: integer);
@@ -412,7 +412,7 @@ end; // GetIntersectPoint
 //  Y := -V.Z * d * Zoom  / (V.Y + d) + FHeight / 2;
 //  Z :=  V.Y + d;
 //
-//  x y z принадлежат Plane
+//  x y z ГЇГ°ГЁГ­Г Г¤Г«ГҐГ¦Г ГІ Plane
 //
 //  Y := Screen.Z - d;
 //  (Screen.X - FWidth / 2) * Y + (Screen.X - FWidth / 2) * d :=  X * d * Zoom;
@@ -435,7 +435,7 @@ end; // GetIntersectPoint
 //  L0 := [(Screen.X - FWidth / 2) / Zoom, 0, (Screen.Y - FHeight / 2) / Zoom];
 //  L1 := L0 + [(Screen.X - FWidth / 2), d, -(Screen.Y - FHeight / 2)];
 //
-//  (Vec - Plane.NormVect * Plane.NormDistance) * Plane.NormVect = 0
+//  (Vec - VectorScale(Plane.NormVect, Plane.NormDistance)) * Plane.NormVect = 0
 //  X * nx + Y * ny + Z * nz = nx * nd
 //
 //  (x - nx * nd) * nx   +  (y - ny * nd) * ny   +   (z - nz * nd) * nz = 0
