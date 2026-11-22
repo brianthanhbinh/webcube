@@ -26,7 +26,7 @@ type
   private
     FLength: NativeInt; external name 'length';
   public
-    function item(Index: NativeInt): TDomAttr;
+    function item(Index: NativeInt): TDomAttr; external name 'item';
     property Length: NativeInt read FLength;
     property Items[Index: NativeInt]: TDomAttr read item; default;
   end;
