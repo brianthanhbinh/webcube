@@ -57,6 +57,7 @@ jobs:
               "function TBinaryObjectReader.ReadStr",
               "function TBinaryObjectReader.ReadString",
               "function TObjectStreamConverter.ReadStr",
+              "function TObjectStreamConverter.ReadString",
           ):
               start = s.index(routine)
               end = s.find("\nfunction ", start + len(routine))
