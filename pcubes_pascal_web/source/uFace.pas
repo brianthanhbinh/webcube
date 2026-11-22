@@ -208,9 +208,9 @@ var
 begin
   Result := hopInPlane;
   NormVect := Plane.NormVect;
-  PlaneVect := NormVect * Plane.NormDistance;
+  PlaneVect := VectorScale(NormVect, Plane.NormDistance);
   for i := 0 to GetVertexCount - 1 do begin
-    D := (GetVertex(i) - PlaneVect) ** NormVect;
+    D := VectorDot(VectorSubtract(GetVertex(i), PlaneVect), NormVect);
 
     if D > DELTA then begin
       if Result = hopInside then begin
@@ -238,7 +238,7 @@ begin
   v1 := GetVertex(FNormalIndex);
   v2 := GetVertex(FNormalIndex + 1);
 
-  Result := ((v2 - v1) * (v0 - v1));
+  Result := VectorCross(VectorSubtract(v2, v1), VectorSubtract(v0, v1));
   Result.Normalize;
 end;
 
@@ -272,7 +272,7 @@ end;
 function TFace.GetPlane: TPlane;
 begin
   Result.NormVect := GetNorm;
-  Result.NormDistance := Result.NormVect ** GetVertex(0);
+  Result.NormDistance := VectorDot(Result.NormVect, GetVertex(0));
 end; // GetPlane
 
 procedure TFace.Rotate(n: integer);
