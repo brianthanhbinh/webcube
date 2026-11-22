@@ -194,9 +194,9 @@ end;}
 
 procedure TAxis.CreateLayers(Distances: array of extended);
 var
-  i, Count: integer;
+  i, j, Count: integer;
   Layer: TLayer;
-  BaseDistance: extended;
+  BaseDistance, TempDistance: extended;
   FDistances: array of extended;
 begin
   for Layer in Layers do
@@ -204,8 +204,16 @@ begin
   Layers.Clear;
 
   if Length(Distances) > 0 then begin
-    // sort
-    TArrayHelper<Extended>.Sort(Distances);
+    // sort (simple insertion sort; compatible with Pas2JS)
+    for i := Low(Distances) + 1 to High(Distances) do begin
+      TempDistance := Distances[i];
+      j := i - 1;
+      while (j >= Low(Distances)) and (Distances[j] > TempDistance) do begin
+        Distances[j + 1] := Distances[j];
+        Dec(j);
+      end;
+      Distances[j + 1] := TempDistance;
+    end;
 
     // count different distances
     Count := 1;
