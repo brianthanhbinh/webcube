@@ -149,7 +149,7 @@ end;
 
 class procedure TSelection.SetMouseMotion(dx, dy: extended);
 begin
-  MouseVector := [dx, dy, 0];
+  MouseVector := Vector(dx, dy, 0);
   MouseVector.Normalize;
 end;
 
