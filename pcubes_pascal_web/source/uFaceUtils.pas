@@ -305,7 +305,7 @@ var
 var
   i, i2, n, j: integer;
   TempFace, NewFace: TFace;
-  c, c1, c2, first, current, slicePoint, SortItem: TVertex;
+  c, c1, c2, first, current, slicePoint, SortItem, FreeItem: TVertex;
   PlaneVector, IntersectionVector: TVector;
   TempVectors: TList<TVector>;
 begin // CutFace
@@ -466,11 +466,15 @@ begin // CutFace
 
     until first = nil;
   finally
-    for i := 0 to FaceVertices.Count - 1 do
-      FaceVertices[i].Free;
+    for i := 0 to FaceVertices.Count - 1 do begin
+      FreeItem := FaceVertices[i];
+      FreeItem.Free;
+    end;
     FaceVertices.Free;
-    for i := 0 to CutVertices.Count - 1 do
-      CutVertices[i].Free;
+    for i := 0 to CutVertices.Count - 1 do begin
+      FreeItem := CutVertices[i];
+      FreeItem.Free;
+    end;
     CutVertices.Free;
   end;
 end; // CutFace
