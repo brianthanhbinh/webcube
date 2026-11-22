@@ -28,6 +28,7 @@ type
   TPartPosition = record
     iFrom, iTo: integer;
   end;
+  TPartPositionArray = array of TPartPosition;
 
 type
   TPuzzleBase = class
@@ -59,7 +60,7 @@ type
     procedure GetPartPosition(AxisNo, PartNo: integer; var iFrom, iTo: integer);
     procedure PositionsInvalidate;
   private
-    FPartPositions: array of array of TPartPosition;
+    FPartPositions: array of TPartPositionArray;
     FAxesValid: array of Boolean;
     procedure CalcPartPosition(AxisNo: integer; Part: TPart; var iFrom, iTo: integer);
     procedure CalcPartPositionsForAxis(AxisNo: integer);
