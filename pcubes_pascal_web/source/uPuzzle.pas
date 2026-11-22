@@ -58,7 +58,7 @@ type
   TPuzzle = class (TPuzzleBase)
   private
     FCheckSolvedProc: TCheckSolvedProc;
-    FMarks: TList<Integer>; // Marks stack - todo переместить в MainForm?
+    FMarks: TList<Integer>; // Marks stack - todo ГЇГҐГ°ГҐГ¬ГҐГ±ГІГЁГІГј Гў MainForm?
     FSolvedStates: TSolvedStates;
     FMovingParts: TMovingParts;
 
@@ -177,7 +177,7 @@ type
     property OnTransLayers: TTransLayersEvent write FOnTransLayers;
   end;
 
-// TODO добавить: OnPuzzleChanged(pcPartDeleted, pcPartsCombined)
+// TODO Г¤Г®ГЎГ ГўГЁГІГј: OnPuzzleChanged(pcPartDeleted, pcPartsCombined)
 
 implementation
 uses
@@ -247,15 +247,19 @@ begin
 end; // ClearHeader
 
 procedure TPuzzle.Clear;
-var i: Integer;
+var
+  i: Integer;
+  Macro: TMacro;
 begin
   inherited;
 
   TimerValue := 0;
   MovesStartingPoint := 0;
 
-  for i := 0 to Macros.Count - 1 do
-    Macros[i].Free;
+  for i := 0 to Macros.Count - 1 do begin
+    Macro := Macros[i];
+    Macro.Free;
+  end;
   Macros.Clear;
 
   FMovingParts.Clear;
@@ -460,7 +464,7 @@ begin
   if Axis.IsLayerFixed(Layers) then
     exit;
 
-  GetRotateAngleRange(AxisNo, Layers, AngleMin, AngleMax); // второй раз?
+  GetRotateAngleRange(AxisNo, Layers, AngleMin, AngleMax); // ГўГІГ®Г°Г®Г© Г°Г Г§?
   Al := GetTurningAngle(AxisNo, Layers, Al, AngleMin, AngleMax);
 
   mat := Axis.GetRotateMatrix(Al);
@@ -493,7 +497,7 @@ begin
 
 
   //  Axis := Axes[AxisNo];
-  // если в макросе написано Angle = Pi/2 * random(3), то надо привести его в соответствие с max и min.
+  // ГҐГ±Г«ГЁ Гў Г¬Г ГЄГ°Г®Г±ГҐ Г­Г ГЇГЁГ±Г Г­Г® Angle = Pi/2 * random(3), ГІГ® Г­Г Г¤Г® ГЇГ°ГЁГўГҐГ±ГІГЁ ГҐГЈГ® Гў Г±Г®Г®ГІГўГҐГІГ±ГІГўГЁГҐ Г± max ГЁ min.
 //  Al := GetTurningAngle(AxisNo, LayerFrom, LayerTo, Al);
 //  for i := 0 to High(Layers) do
 //    if Layers[i] then
@@ -520,7 +524,7 @@ procedure TPuzzle.RotateLayers(AxisNo: integer; Layers: array of Boolean; Al: ex
 begin
 //  Log('RotateLayers start');
   if FCheckSliceEnabled then
-    if not GetMovingParts(AxisNo, Layers{, Sign(Al)}) then // дублируется при вращении мышью
+    if not GetMovingParts(AxisNo, Layers{, Sign(Al)}) then // Г¤ГіГЎГ«ГЁГ°ГіГҐГІГ±Гї ГЇГ°ГЁ ГўГ°Г Г№ГҐГ­ГЁГЁ Г¬Г»ГёГјГѕ
       if not AllowWhole then
         exit;
 
