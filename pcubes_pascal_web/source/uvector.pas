@@ -179,10 +179,11 @@ end;
 
 operator / (const V: TVector; Scalar: Extended): TVector;
 begin
-  Result := V * (1 / Scalar);
-end;
-
-// scalar mult
+  // Divide components directly to avoid a Pas2JS Double/Extended overload mismatch.
+  Result.x := V.x / Scalar;
+  Result.y := V.y / Scalar;
+  Result.z := V.z / Scalar;
+end;// scalar mult
 operator ** (const ALeft, ARight: TVector): Extended;
 begin
   Result := ALeft.x * ARight.x + ALeft.y * ARight.y + ALeft.z * ARight.z;
