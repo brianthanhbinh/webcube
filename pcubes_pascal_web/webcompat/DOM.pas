@@ -62,7 +62,6 @@ type
   public
     function CreateElement(const AName: String): TDomElement; external name 'createElement';
     function AppendChild(Node: TDomNode): TDomNode; external name 'appendChild';
-    procedure Free;
     property DocumentElement: TDomElement read FDocumentElement;
   end;
 
@@ -89,11 +88,6 @@ end;
 function TDomNode.CompareName(const AName: String): Integer;
 begin
   if SameText(NodeName, AName) then Result := 0 else Result := 1;
-end;
-
-procedure TXMLDocument.Free;
-begin
-  { Browser-owned XML documents are garbage-collected by JavaScript. }
 end;
 
 end.
