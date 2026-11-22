@@ -64,10 +64,14 @@ begin
 end;
 
 destructor TSolvedState.Destroy;
-var i: integer;
+var
+  i: integer;
+  FacePropertiesItem: TFaceProperties;
 begin
-  for i := 0 to FacesProperties.Count - 1 do
-    FacesProperties[i].Free;
+  for i := 0 to FacesProperties.Count - 1 do begin
+    FacePropertiesItem := FacesProperties[i];
+    FacePropertiesItem.Free;
+  end;
   FacesProperties.Free;
 
   inherited;
