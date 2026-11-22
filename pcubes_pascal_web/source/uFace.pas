@@ -27,7 +27,7 @@ type
   TFace = class
   private
     FPartVertices: TList<TVector>; // pointer to parent's Vertices
-    FSpikes: TList<Integer>; // Spikes and grooves øèïû (>0) è ïàçû (<0)
+    FSpikes: TList<Integer>; // Spikes and grooves Ã¸Ã¨Ã¯Ã» (>0) Ã¨ Ã¯Ã Ã§Ã» (<0)
 //    FTriangles: TList<TVector>; // not used
     FConvexity: TFaceType;
     FNormalIndex: integer; // normal calulates from this vertex and its neighbours
@@ -57,7 +57,7 @@ type
     function GetVertexIndex(i: integer): integer;
     function GetVertexCount: integer;
     function HalfPlane(Plane: TPlane): THalfOfPlane;
-//    function GetDepth: extended; // ñðåäíåàðèôìåòè÷åñêàÿ êîîðäèíàòà y
+//    function GetDepth: extended; // Ã±Ã°Ã¥Ã¤Ã­Ã¥Ã Ã°Ã¨Ã´Ã¬Ã¥Ã²Ã¨Ã·Ã¥Ã±ÃªÃ Ã¿ ÃªÃ®Ã®Ã°Ã¤Ã¨Ã­Ã Ã²Ã  y
     function GetPlane: TPlane;
     procedure Rotate(n: integer);
     function AddVector(v: TVector; Visible: Boolean = True): Boolean;
@@ -149,7 +149,7 @@ var n: integer;
 begin
   n := FVertices.Count;
   if n = 0 then begin
-    Result := [0, 0, 0];
+    Result := Vector(0, 0, 0);
     exit;
   end;
   while i >= n do
