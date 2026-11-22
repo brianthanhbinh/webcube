@@ -25,7 +25,7 @@ jobs:
       - name: Install Free Pascal tools and Pas2JS
         run: |
           sudo apt-get update
-          sudo apt-get install -y fp-compiler-3.2.2 fp-utils-3.2.2
+          sudo apt-get install -y fp-compiler-3.2.2 fp-utils-3.2.2 fpc-source-3.2.2
           PAS2JS_BIN="$(command -v pas2js-3.2.2)"
           sudo ln -sf "$PAS2JS_BIN" /usr/local/bin/pas2js
           pas2js -iV
@@ -52,16 +52,9 @@ jobs:
           import re
           p = Path("/tmp/pas2js-rtl/packages/rtl/classes.pas")
           s = p.read_text()
-          # Patch every Char buffer variable in this RTL file. The same
-          # ReadBufferData(Char) incompatibility appears in several reader
-          # implementations, including declarations not covered by a
-          # routine-name search because the first match is an interface
-          # declaration rather than the implementation.
           s = re.sub(r"(?i)\bc\s*:\s*Char;", "C: UInt8;", s)
           s = re.sub(r"(?i)(Result\s*\[\s*i\s*\]\s*:=\s*)C\s*;", r"\1Chr(C);", s)
           s = re.sub(r"(?i)(Result\s*\[\s*I\s*\]\s*:=\s*)C\s*;", r"\1Chr(C);", s)
-          # TParser stores its input buffer as Char, while ReadData's
-          # numeric overload requires a numeric var parameter.
           old_decl = "procedure TParser.LoadBuffer;\n\nvar\n  CharsRead,i: integer;"
           new_decl = "procedure TParser.LoadBuffer;\n\nvar\n  CharsRead,i: integer;\n  B: UInt8;"
           if old_decl not in s:
@@ -83,6 +76,8 @@ jobs:
         env:
           PAS2JS_RTL_DIR: /tmp/pas2js-rtl/packages/rtl
           PAS2JS_PACKAGES_DIR: /tmp/pas2js-rtl/packages
+          PAS2JS_FCL_XML_DIR: /usr/share/fpcsrc/3.2.2/packages/fcl-xml/src
+          PAS2JS_FCL_BASE_DIR: /usr/share/fpcsrc/3.2.2/packages/fcl-base/src
         run: |
           chmod +x pcubes_pascal_web/build/build.sh
           ./pcubes_pascal_web/build/build.sh
