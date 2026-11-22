@@ -54,6 +54,7 @@ jobs:
           for routine in (
               "function TBinaryObjectReader.ReadIdent",
               "function TBinaryObjectReader.ReadStr",
+              "function TBinaryObjectReader.ReadString",
               "function TObjectStreamConverter.ReadStr",
           ):
               start = s.index(routine)
