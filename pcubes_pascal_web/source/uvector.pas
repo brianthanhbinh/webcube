@@ -57,11 +57,11 @@ type
 
 function Vector(x, y, z: extended): TVector;
 
-operator +  (const ALeft, ARight: TVector): TVector;
-operator -  (const ALeft: TVector): TVector;
-operator -  (const ALeft, ARight: TVector): TVector;
-operator *  (const V: TVector; Scalar: Extended): TVector;
-operator *  (const ALeft, ARight: TVector): TVector;
+operator + (const ALeft, ARight: TVector): TVector;
+operator - (const ALeft: TVector): TVector;
+operator - (const ALeft, ARight: TVector): TVector;
+operator * (const V: TVector; Scalar: Extended): TVector;
+operator * (const ALeft, ARight: TVector): TVector;
 operator /  (const V: TVector; Scalar: Extended): TVector;
 operator ** (const ALeft, ARight: TVector): Extended;
 
