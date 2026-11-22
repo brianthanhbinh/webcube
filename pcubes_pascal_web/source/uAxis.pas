@@ -241,12 +241,12 @@ end; // IsLayerFixed
 
 function TAxis.GetLayerPlaneTo(LayerNo: integer): TPlane;
 begin
-  Result := Plane(NormVector, Layers[LayerNo].DistanceTo + BaseVector ** NormVector);
+  Result := Plane(NormVector, Layers[LayerNo].DistanceTo + VectorDot(BaseVector, NormVector));
 end;
 
 function TAxis.GetLayerPlaneFrom(LayerNo: integer): TPlane;
 begin
-  Result := Plane(NormVector, Layers[LayerNo].DistanceFrom + BaseVector ** NormVector);
+  Result := Plane(NormVector, Layers[LayerNo].DistanceFrom + VectorDot(BaseVector, NormVector));
 end;
 
 function TAxis.ConnectLayers(Layer1, Layer2: integer): Boolean;
