@@ -60,7 +60,11 @@ const
     '..');
 
 const
+  {$IFDEF PAS2JS}
+  Alpha: set of Char = ['_', '0'..'9', 'a'..'z', 'A'..'Z'];
+  {$ELSE}
   Alpha: set of AnsiChar = ['_', '0'..'9', 'a'..'z', 'A'..'Z'];
+  {$ENDIF}
   StrDelimiter: Char = '''';
   DecimalPoint: Char = '.';
   TokenDelimiter: Char = #127;
@@ -130,7 +134,7 @@ type
 
     FInteractiveFunctionsEnabled: Boolean;
 
-    // внешние функции
+    // ГўГ­ГҐГёГ­ГЁГҐ ГґГіГ­ГЄГ¶ГЁГЁ
     IdleProc: PIdleProc;
     CallGlobalProc: TFunction;
 
@@ -268,7 +272,11 @@ uses fOrderDialog,
      SysUtils, Variants, Types, Windows, Messages, Math, Dialogs, Controls, Forms;
 
 const
+  {$IFDEF PAS2JS}
+  SpaceSet: set of Char = [' ', #9, #10, #13];
+  {$ELSE}
   SpaceSet: set of AnsiChar = [' ', #9, #10, #13];
+  {$ENDIF}
 
 const
   errOK            = 0; // O.K.
@@ -277,7 +285,7 @@ const
   errVarNotFound   = 3; // Variable not found
   errInvalidName   = 4; // Invalid variable/function/procedure name
   errTypeCast      = 5; // Invalid typecast
-  errString        = 6; // Invalid string constant
+  errString        = 6; // InvalidВ string constant
   errCall          = 7; // Invalid function call
   errFuncNotFound  = 8; // Function not found
   errInvalidOp     = 9; // Invalid operator
@@ -296,14 +304,14 @@ const
   errManyRbr       = 22; // Too many '['
   errZeroDivide    = 23; // Division by zero
   errNameDup       = 24; // Variable or array name duplicated
-  errFileOpen      = 25; // File оpen error
+  errFileOpen      = 25; // File Г®pen error
   errFuncResult    = 26; // Function must return result
   errOfExpected    = 27; // CASE without OF
   errManyElse      = 28; // Too many ELSE in CASE statement
   errCaseRange     = 29; // Case range expected
 
 // Fast upcase function for Russian Win-1251 charset.
-// For other charsets, уоu can modify it or replace
+// For other charsets, ГіГ®u can modify it or replace
 // function StUpCaseR with AnsiUpperCase
 
 
@@ -375,7 +383,7 @@ begin
 end; // ExtToInt
 
 
-// сравнивает две строки, s1 с начала, s2 - с p-го символа, длиной L
+// Г±Г°Г ГўГ­ГЁГўГ ГҐГІ Г¤ГўГҐ Г±ГІГ°Г®ГЄГЁ, s1 Г± Г­Г Г·Г Г«Г , s2 - Г± p-ГЈГ® Г±ГЁГ¬ГўГ®Г«Г , Г¤Г«ГЁГ­Г®Г© L
 function CmpStr(s1, s2: String; p, L: integer): Boolean;
 var i, n: integer;
 begin
@@ -389,7 +397,7 @@ begin
 end; // CmpStr
 
 
-// буквы, цифры и подчерк
+// ГЎГіГЄГўГ», Г¶ГЁГґГ°Г» ГЁ ГЇГ®Г¤Г·ГҐГ°ГЄ
 function IsAlpha(s: String): Boolean;
 var
   i: integer;
@@ -401,7 +409,7 @@ begin
   Result := True;
 end; // IsAlpha
 
-// слова вида S, S[1], S[-1], S[1,1]
+// Г±Г«Г®ГўГ  ГўГЁГ¤Г  S, S[1], S[-1], S[1,1]
 function ValidName(S: String): Boolean;
 var
   i, n: integer;
@@ -685,7 +693,7 @@ begin // Calc
   Expr := ETmp;
 end; // Calc
 
-procedure TScript.Level1(var R: TVar); (* логическое OR или XOR *)
+procedure TScript.Level1(var R: TVar); (* Г«Г®ГЈГЁГ·ГҐГ±ГЄГ®ГҐ OR ГЁГ«ГЁ XOR *)
 var
   op: TToken;
   hold: TVar;
@@ -703,7 +711,7 @@ begin // Level1
   end;
 end; // Level1
 
-procedure TScript.Level2(var R: TVar); (* логическое И *)
+procedure TScript.Level2(var R: TVar); (* Г«Г®ГЈГЁГ·ГҐГ±ГЄГ®ГҐ Г€ *)
 var
   op: TToken;
   hold: TVar;
@@ -721,7 +729,7 @@ begin // Level2
   end;
 end; // Level2
 
-procedure TScript.Level3(var R: TVar); (* сравнение     *)
+procedure TScript.Level3(var R: TVar); (* Г±Г°Г ГўГ­ГҐГ­ГЁГҐ     *)
 var
   op: TToken;
   hold: TVar;
@@ -741,7 +749,7 @@ begin
   end;
 end; // Level3
 
-procedure TScript.Level4(var R: TVar); (* сложение, вычитание *)
+procedure TScript.Level4(var R: TVar); (* Г±Г«Г®Г¦ГҐГ­ГЁГҐ, ГўГ»Г·ГЁГІГ Г­ГЁГҐ *)
 var
   op: TToken;
   hold: TVar;
@@ -759,7 +767,7 @@ begin
   end;
 end; // Level4
 
-procedure TScript.Level5(var R: TVar); (* унарные операции *)
+procedure TScript.Level5(var R: TVar); (* ГіГ­Г Г°Г­Г»ГҐ Г®ГЇГҐГ°Г Г¶ГЁГЁ *)
 var
   op: TToken;
 begin
@@ -775,7 +783,7 @@ begin
     Unary(op, R);
 end; // Level5
 
-procedure TScript.Level6(var R: TVar); (* умножение, деление, div, mod *)
+procedure TScript.Level6(var R: TVar); (* ГіГ¬Г­Г®Г¦ГҐГ­ГЁГҐ, Г¤ГҐГ«ГҐГ­ГЁГҐ, div, mod *)
 var
   op: TToken;
   hold: TVar;
@@ -793,7 +801,7 @@ begin
   end;
 end; // Level6
 
-procedure TScript.Level7(var R: TVar); (* возв. в степень *)
+procedure TScript.Level7(var R: TVar); (* ГўГ®Г§Гў. Гў Г±ГІГҐГЇГҐГ­Гј *)
 var
   op: TToken;
   hold: TVar;
@@ -811,7 +819,7 @@ begin
   end;
 end; // Level7
 
-procedure TScript.Level8(var R: TVar); (* круглые скобки *)
+procedure TScript.Level8(var R: TVar); (* ГЄГ°ГіГЈГ«Г»ГҐ Г±ГЄГ®ГЎГЄГЁ *)
 var
   T: TToken;
   i: integer;
@@ -1108,7 +1116,7 @@ begin // GetIndex
       except
         Error('Invalid index: ' + UnParse(ind, True), S, errTypeCast);
         Exit;
-//        i := 0; // fake, чтобы не было warnings
+//        i := 0; // fake, Г·ГІГ®ГЎГ» Г­ГҐ ГЎГ»Г«Г® warnings
       end;
 
       if Result = '' then
@@ -1180,7 +1188,7 @@ begin // GetFuncParams
   Result := p;
 end; // GetFuncParams
 
-// здесь только встроенные функции и процедуры
+// Г§Г¤ГҐГ±Гј ГІГ®Г«ГјГЄГ® ГўГ±ГІГ°Г®ГҐГ­Г­Г»ГҐ ГґГіГ­ГЄГ¶ГЁГЁ ГЁ ГЇГ°Г®Г¶ГҐГ¤ГіГ°Г»
 function TScript.CallFunc(const FuncName: String; ParamString: String; var V: TVar): Boolean;
 var
   i{, j}: integer;
@@ -1202,7 +1210,7 @@ begin // CallFunc
   slParamStrings.Text := ParamString;
   VarListLocals := TList<TVar>.Create;
 
-  // вычисляем параметры
+  // ГўГ»Г·ГЁГ±Г«ГїГҐГ¬ ГЇГ Г°Г Г¬ГҐГІГ°Г»
   for i := 0 to slParamStrings.Count - 1 do
     if Calc(slParamStrings[i], VR) then begin
       Param := VR;
@@ -1229,7 +1237,7 @@ begin // CallFunc
 
   err := '';
   try
-    // тело функции
+    // ГІГҐГ«Г® ГґГіГ­ГЄГ¶ГЁГЁ
     Result := FuncList[FuncName].Func(VarListLocals, V);
   except
     on E:Exception do
@@ -1241,7 +1249,7 @@ begin // CallFunc
   end;
 
   if Result then begin
-    // если параметры - VAR, то присваиваем значения
+    // ГҐГ±Г«ГЁ ГЇГ Г°Г Г¬ГҐГІГ°Г» - VAR, ГІГ® ГЇГ°ГЁГ±ГўГ ГЁГўГ ГҐГ¬ Г§Г­Г Г·ГҐГ­ГЁГї
     for i := 0 to slParamStrings.Count - 1 do
       if slVars[i] <> '' then
         SetValue(slVars[i], VarListLocals[i].Value);
@@ -1258,7 +1266,7 @@ begin // CallFunc
   Result := True;
 end; // CallFunc
 
-{// здесь только встроенные функции и процедуры
+{// Г§Г¤ГҐГ±Гј ГІГ®Г«ГјГЄГ® ГўГ±ГІГ°Г®ГҐГ­Г­Г»ГҐ ГґГіГ­ГЄГ¶ГЁГЁ ГЁ ГЇГ°Г®Г¶ГҐГ¤ГіГ°Г»
 function TScript.CallFunc(FuncName: String; ParamString: String; var V: TVar): Boolean;
 var
   i, j, iFunc: integer;
@@ -1280,7 +1288,7 @@ begin // CallFunc
   slParamStrings.Text := ParamString;
   VarListLocals := NewVarList;
 
-  // вычисляем параметры
+  // ГўГ»Г·ГЁГ±Г«ГїГҐГ¬ ГЇГ Г°Г Г¬ГҐГІГ°Г»
   for i := 0 to slParamStrings.Count - 1 do
     if Calc(slParamStrings.Items[i], VR) then begin
       New(P);
@@ -1305,7 +1313,7 @@ begin // CallFunc
 
   err := '';
   try
-    // тело функции
+    // ГІГҐГ«Г® ГґГіГ­ГЄГ¶ГЁГЁ
     Result := PFunction(PFunc(FuncList.Items[iFunc])^.Func)(Self, VarListLocals, V);
   except
     on E:Exception do
@@ -1317,7 +1325,7 @@ begin // CallFunc
   end;
 
   if Result then begin
-    // если параметры - VAR, то присваиваем значения
+    // ГҐГ±Г«ГЁ ГЇГ Г°Г Г¬ГҐГІГ°Г» - VAR, ГІГ® ГЇГ°ГЁГ±ГўГ ГЁГўГ ГҐГ¬ Г§Г­Г Г·ГҐГ­ГЁГї
     for i := 0 to slParamStrings.Count - 1 do begin
       j := integer(slParamStrings.Objects[i]);
       if (j >= 0) and (i < VarListLocals.Count) and (j < VarList.Count) then begin
@@ -1338,7 +1346,7 @@ begin // CallFunc
   VarListLocals.Destroy;
 end; // CallFunc}
 
-// упрощенная процедура - без возврата данных и без локальных переменных
+// ГіГЇГ°Г®Г№ГҐГ­Г­Г Гї ГЇГ°Г®Г¶ГҐГ¤ГіГ°Г  - ГЎГҐГ§ ГўГ®Г§ГўГ°Г ГІГ  Г¤Г Г­Г­Г»Гµ ГЁ ГЎГҐГ§ Г«Г®ГЄГ Г«ГјГ­Г»Гµ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»Гµ
 function TScript.CallProc(ProcName: String; ParamString: String; var V: TVar): Boolean;
 var
   i: integer;
@@ -1353,7 +1361,7 @@ begin // CallProc
     Exit;
   end;
 
-  // создаем переменные
+  // Г±Г®Г§Г¤Г ГҐГ¬ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ
   slParamStrings := TStringList.Create;
   slParams := TStringList.Create;
 //  VarListTemp := TVarList.Create;
@@ -1361,10 +1369,10 @@ begin // CallProc
 
   try
 
-    // сохраняем глобальные переменные во временный список
+    // Г±Г®ГµГ°Г Г­ГїГҐГ¬ ГЈГ«Г®ГЎГ Г«ГјГ­Г»ГҐ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ ГўГ® ГўГ°ГҐГ¬ГҐГ­Г­Г»Г© Г±ГЇГЁГ±Г®ГЄ
 //    VarList.CopyTo(VarListTemp);
 
-    // проверяем, совпадает ли количество параметров
+    // ГЇГ°Г®ГўГҐГ°ГїГҐГ¬, Г±Г®ГўГЇГ Г¤Г ГҐГІ Г«ГЁ ГЄГ®Г«ГЁГ·ГҐГ±ГІГўГ® ГЇГ Г°Г Г¬ГҐГІГ°Г®Гў
     slParamStrings.Text := ParamString;
     slParams.Text := Proc.Params;
     if slParams.Count <> slParamStrings.Count then begin
@@ -1372,7 +1380,7 @@ begin // CallProc
       Exit;
     end;
 
-    // Присваиваем параметры локальным переменным (SetVar(VR))
+    // ГЏГ°ГЁГ±ГўГ ГЁГўГ ГҐГ¬ ГЇГ Г°Г Г¬ГҐГІГ°Г» Г«Г®ГЄГ Г«ГјГ­Г»Г¬ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»Г¬ (SetVar(VR))
     for i := 0 to slParamStrings.Count - 1 do begin
       if Calc(slParamStrings[i], VR) then begin
         VR.Name := slParams[i];
@@ -1390,11 +1398,11 @@ begin // CallProc
       end;
     end;
 
-    // если это функция, удаляем Result (надо быть уверенным, что Result присвоен, и чтобы тип его был правильным)
+    // ГҐГ±Г«ГЁ ГЅГІГ® ГґГіГ­ГЄГ¶ГЁГї, ГіГ¤Г Г«ГїГҐГ¬ Result (Г­Г Г¤Г® ГЎГ»ГІГј ГіГўГҐГ°ГҐГ­Г­Г»Г¬, Г·ГІГ® Result ГЇГ°ГЁГ±ГўГ®ГҐГ­, ГЁ Г·ГІГ®ГЎГ» ГІГЁГЇ ГҐГЈГ® ГЎГ»Г« ГЇГ°Г ГўГЁГ«ГјГ­Г»Г¬)
     if Proc.Result then
       VarRemove('RESULT');
 
-    // выполняем процедуру
+    // ГўГ»ГЇГ®Г«Г­ГїГҐГ¬ ГЇГ°Г®Г¶ГҐГ¤ГіГ°Гі
     Exec(Proc.Body);
 
     // ???
@@ -1412,12 +1420,12 @@ begin // CallProc
       end;
     end;
 
-    // восстанавливаем глобальные переменные
+    // ГўГ®Г±Г±ГІГ Г­Г ГўГ«ГЁГўГ ГҐГ¬ ГЈГ«Г®ГЎГ Г«ГјГ­Г»ГҐ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ
 //    VarList.CopyTo(VarListTemp2);
 //    VarList.ClearAll;
 //    VarListTemp.CopyTo(VarList);
 
-    // если параметры - VAR, то присваиваем значения
+    // ГҐГ±Г«ГЁ ГЇГ Г°Г Г¬ГҐГІГ°Г» - VAR, ГІГ® ГЇГ°ГЁГ±ГўГ ГЁГўГ ГҐГ¬ Г§Г­Г Г·ГҐГ­ГЁГї
 (*    for i := 0 to slParams.Count - 1 do
       if VarListTemp2.VarByName(slParams.Items[i], VR) then begin
         j := -1;
@@ -1430,7 +1438,7 @@ begin // CallProc
         end;
       end;*)
 
-    // Для функций - присваиваем результат
+    // Г„Г«Гї ГґГіГ­ГЄГ¶ГЁГ© - ГЇГ°ГЁГ±ГўГ ГЁГўГ ГҐГ¬ Г°ГҐГ§ГіГ«ГјГІГ ГІ
     if Proc.Result then begin
 //      if VarListTemp2.VarByName('RESULT', VR) then
       if VarByName('RESULT', VR) then
@@ -1469,7 +1477,7 @@ begin // CallProc
     Exit;
   end;
 
-  // создаем переменные
+  // Г±Г®Г§Г¤Г ГҐГ¬ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ
   slParamStrings := NewStrList;
   slParams := NewStrList;
   VarListTemp := NewVarList;
@@ -1477,10 +1485,10 @@ begin // CallProc
 
   try
 
-    // сохраняем глобальные переменные во временный список
+    // Г±Г®ГµГ°Г Г­ГїГҐГ¬ ГЈГ«Г®ГЎГ Г«ГјГ­Г»ГҐ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ ГўГ® ГўГ°ГҐГ¬ГҐГ­Г­Г»Г© Г±ГЇГЁГ±Г®ГЄ
     VarList.CopyTo(VarListTemp);
 
-    // проверяем, совпадает ли количество параметров
+    // ГЇГ°Г®ГўГҐГ°ГїГҐГ¬, Г±Г®ГўГЇГ Г¤Г ГҐГІ Г«ГЁ ГЄГ®Г«ГЁГ·ГҐГ±ГІГўГ® ГЇГ Г°Г Г¬ГҐГІГ°Г®Гў
     slParamStrings.Text := ParamString;
     slParams.Text := Proc.Params;
     if slParams.Count <> slParamStrings.Count then begin
@@ -1488,7 +1496,7 @@ begin // CallProc
       Exit;
     end;
 
-    // Присваиваем параметры локальным переменным (SetVar(VR))
+    // ГЏГ°ГЁГ±ГўГ ГЁГўГ ГҐГ¬ ГЇГ Г°Г Г¬ГҐГІГ°Г» Г«Г®ГЄГ Г«ГјГ­Г»Г¬ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»Г¬ (SetVar(VR))
     for i := 0 to slParamStrings.Count - 1 do begin
       if Calc(slParamStrings.Items[i], VR) then begin
         VR.Name := slParams.Items[i];
@@ -1506,7 +1514,7 @@ begin // CallProc
       end;
     end;
 
-    // если это функция, удаляем Result (надо быть уверенным, что Result присвоен, и чтобы тип его был правильным)
+    // ГҐГ±Г«ГЁ ГЅГІГ® ГґГіГ­ГЄГ¶ГЁГї, ГіГ¤Г Г«ГїГҐГ¬ Result (Г­Г Г¤Г® ГЎГ»ГІГј ГіГўГҐГ°ГҐГ­Г­Г»Г¬, Г·ГІГ® Result ГЇГ°ГЁГ±ГўГ®ГҐГ­, ГЁ Г·ГІГ®ГЎГ» ГІГЁГЇ ГҐГЈГ® ГЎГ»Г« ГЇГ°Г ГўГЁГ«ГјГ­Г»Г¬)
     if Proc.Result then begin
       i := VarIndex('RESULT');
       if i >= 0 then begin
@@ -1515,7 +1523,7 @@ begin // CallProc
       end;
     end;
 
-    // выполняем процедуру
+    // ГўГ»ГЇГ®Г«Г­ГїГҐГ¬ ГЇГ°Г®Г¶ГҐГ¤ГіГ°Гі
     Exec(Proc.Body);
 
     // ???
@@ -1533,12 +1541,12 @@ begin // CallProc
       end;
     end;
 
-    // восстанавливаем глобальные переменные
+    // ГўГ®Г±Г±ГІГ Г­Г ГўГ«ГЁГўГ ГҐГ¬ ГЈГ«Г®ГЎГ Г«ГјГ­Г»ГҐ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ
     VarList.CopyTo(VarListTemp2);
     VarList.ClearAll;
     VarListTemp.CopyTo(VarList);
 
-    // если параметры - VAR, то присваиваем значения
+    // ГҐГ±Г«ГЁ ГЇГ Г°Г Г¬ГҐГІГ°Г» - VAR, ГІГ® ГЇГ°ГЁГ±ГўГ ГЁГўГ ГҐГ¬ Г§Г­Г Г·ГҐГ­ГЁГї
     for i := 0 to slParams.Count - 1 do
       if VarListTemp2.VarByName(slParams.Items[i], VR) then begin
         j := -1;
@@ -1551,7 +1559,7 @@ begin // CallProc
         end;
       end;
 
-    // Для функций - присваиваем результат
+    // Г„Г«Гї ГґГіГ­ГЄГ¶ГЁГ© - ГЇГ°ГЁГ±ГўГ ГЁГўГ ГҐГ¬ Г°ГҐГ§ГіГ«ГјГІГ ГІ
     if Proc.Result then begin
       if VarListTemp2.VarByName('RESULT', VR) then
         V.Value := VR.Value
@@ -2277,7 +2285,7 @@ begin
     t := tASSIGN;
 
   if t <> tASSIGN then begin
-    Error('Invalid орerator: ' + s + ' (''' + ResWords[tFOR] + ''' expected ', CmdLine, errInvalidOp);
+    Error('Invalid Г®Г°erator: ' + s + ' (''' + ResWords[tFOR] + ''' expected ', CmdLine, errInvalidOp);
     Exit;
   end;
 
