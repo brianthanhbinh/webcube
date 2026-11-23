@@ -1484,10 +1484,13 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
 
     function Load(const FileName: String): Boolean;
     begin
+      {$IFDEF PAS2JS}
+      Result := False;
+      {$ELSE}
       Result := FileExists(FileName);
       if Result then
         ReadXMLFile(XmlDoc, FileName);
-//        XmlDoc.Load(String(FileName));
+      {$ENDIF}
     end;
   var
     S, AttrName: String;
