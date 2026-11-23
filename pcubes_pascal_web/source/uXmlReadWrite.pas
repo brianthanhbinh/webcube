@@ -1591,9 +1591,14 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
 
 //    XmlDoc := TXmlDocument.Create;
 
+    {$IFDEF PAS2JS}
+    // Browser XML is supplied by the caller; nested filesystem includes are unavailable.
+    Result := False;
+    {$ELSE}
     Result := Load(TUtils.GetStartDir + S);
     if not Result then
       Result := Load(ExtractFilePath(Puzzle.Header.FileName) + S);
+    {$ENDIF}
     if Result then begin
       LoadFigure(XmlDoc.DocumentElement);
       {$IFNDEF PAS2JS}
