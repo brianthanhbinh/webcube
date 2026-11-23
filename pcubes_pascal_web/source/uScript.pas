@@ -24,7 +24,8 @@ unit uScript;
 
 interface
 
-uses classes, Generics.Collections, Variants;
+uses classes, Generics.Collections, Variants
+  {$IFDEF PAS2JS}, JS{$ENDIF};
 
 type
   TToken =
@@ -259,6 +260,10 @@ type
   end;
 
 implementation
+
+{$IFDEF PAS2JS}
+function BrowserEval(const S: String): JSValue; external name 'eval';
+{$ENDIF}
 
 //procedure SetFunctions(Script: TScript);
 
