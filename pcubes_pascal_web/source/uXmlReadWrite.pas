@@ -119,6 +119,19 @@ uses
   {$IFDEF PAS2JS} JS, Variants, {$ELSE} Variants, {$ENDIF} StrUtils, Classes, Math,
 {Unzip,} XmlRead, XMLWrite{, ZipUtils};
 
+function XmlIntToStr(Value: Integer): String;
+var
+  N: Integer;
+begin
+  if Value = 0 then Exit('0');
+  N := Value;
+  Result := '';
+  while N > 0 do begin
+    Result := Chr(Ord('0') + (N mod 10)) + Result;
+    N := N div 10;
+  end;
+end;
+
 function XmlTrim(const S: String): String;
 var
   First, Last: Integer;
@@ -186,10 +199,10 @@ begin
       if Calc.VarByName(PS + '[0]', V) and (not Calc.VarByName(PS, V1)) and ((VarType(V.Value) = varDouble)) then begin
         i := 0;
         repeat
-          EList.Add(CalcExpression(PS + '[' + IntToStr(i) + ']'));
+          EList.Add(CalcExpression(PS + '[' + XmlIntToStr(i) + ']'));
           //Axis.AddPlane(V.Value);
           Inc(i);
-        until not (Calc.VarByName(PS + '[' + IntToStr(i) + ']', V) and (VarType(V.Value) = varDouble));
+        until not (Calc.VarByName(PS + '[' + XmlIntToStr(i) + ']', V) and (VarType(V.Value) = varDouble));
       end else
         EList.Add(CalcExpression(PS));
     end;
@@ -240,9 +253,9 @@ var
     if not isArray[Dim] then
       Exit(True);
 
-    Result := Calc.VarByName(ArrayName[Dim] + '[' + IntToStr(i) + ']', V);
+    Result := Calc.VarByName(ArrayName[Dim] + '[' + XmlIntToStr(i) + ']', V);
     if Result then
-      vec[Dim] := CalcExpression(ArrayName[Dim] + '[' + IntToStr(i) + ']')
+      vec[Dim] := CalcExpression(ArrayName[Dim] + '[' + XmlIntToStr(i) + ']')
     else
       vec[Dim] := 0;
   end; // GetArrayValue
@@ -503,7 +516,7 @@ begin // FillAxis
     if (i >= 0) and (i < Axis.Layers.Count) then
       Axis.Layers[i].Fixed := True
     else
-      TUtils.Log('FillAxis: FixedLayers out of bounds: ' + IntToStr(i));
+      TUtils.Log('FillAxis: FixedLayers out of bounds: ' + XmlIntToStr(i));
   end;
 
   S := AvailableAngles;
@@ -581,7 +594,7 @@ begin
   S := '';
   for i := 0 to Axis.Layers.Count - 1 do begin
     if Axis.Layers[i].Fixed then
-      S := S + IntToStr(i) + ';';
+      S := S + XmlIntToStr(i) + ';';
   end;
   if Length(S) > 0 then begin
     Delete(S, Length(S), 1);
@@ -589,10 +602,10 @@ begin
   end;
 
   if Axis.TurnAxesWithLayer >= 0 then
-    TDomElement(XmlNode).AttribStrings['TurnAxesWithLayer'] := IntToStr(Axis.TurnAxesWithLayer);
+    TDomElement(XmlNode).AttribStrings['TurnAxesWithLayer'] := XmlIntToStr(Axis.TurnAxesWithLayer);
 
   if Axis.TurnAxesWithPartNo >= 0 then
-    TDomElement(XmlNode).AttribStrings['TurnAxesWithPartNo'] := IntToStr(Axis.TurnAxesWithPartNo);
+    TDomElement(XmlNode).AttribStrings['TurnAxesWithPartNo'] := XmlIntToStr(Axis.TurnAxesWithPartNo);
 end; // AxisSaveToXml
 
 class function TXmlReadWrite.AxesLoadFromXml(Axes: TList<TAxis>; XmlNode: TDomNode): Boolean;
@@ -604,8 +617,8 @@ class function TXmlReadWrite.AxesLoadFromXml(Axes: TList<TAxis>; XmlNode: TDomNo
 
     if Calc.VarByName(Name, V) and ((VarType(V.Value) = varDouble)) then
       D := CalcExpression(Name)
-    else if Calc.VarByName(Name + '[' + IntToStr(idx) + ']', V) and (VarType(V.Value) in [varDouble, varInteger]) then
-      D := CalcExpression(Name + '[' + IntToStr(idx) + ']')
+    else if Calc.VarByName(Name + '[' + XmlIntToStr(idx) + ']', V) and (VarType(V.Value) in [varDouble, varInteger]) then
+      D := CalcExpression(Name + '[' + XmlIntToStr(idx) + ']')
     else
       Result := False;
   end; // GetValue
@@ -736,7 +749,7 @@ begin
   for i := 0 to n - 1 do begin
     if i <> 0 then
       S := S + '; ';
-    S := S + IntToStr(Face.GetVertexIndex(i));
+    S := S + XmlIntToStr(Face.GetVertexIndex(i));
   end;
 
   TDomElement(XmlNode).AttribStrings['VertexIndexes'] := String(S);
@@ -749,14 +762,14 @@ begin
     ei := ei shl 1;
   end;
   if InvisibleEdges <> 0 then
-    TDomElement(XmlNode).AttribStrings['InvisibleEdges'] := IntToStr(InvisibleEdges);
+    TDomElement(XmlNode).AttribStrings['InvisibleEdges'] := XmlIntToStr(InvisibleEdges);
 
   // TODO !!
 //  if Face.TextureFileName <> '' then begin
 //    XmlNode.SetAttr('Texture', String(Face.TextureFileName));
 //    S := '';
 //    for i := 0 to Face.GetVertexCount - 1 do
-//      S := S + IntToStr(Face.TextureXCoords[i]) + ';' + IntToStr(Face.TextureYCoords[i]) + ';';
+//      S := S + XmlIntToStr(Face.TextureXCoords[i]) + ';' + XmlIntToStr(Face.TextureYCoords[i]) + ';';
 //    XmlNode.SetAttr('TextureCoordinates', String(S));
 //  end;
 end; // FaceSaveToXml
@@ -1707,13 +1720,13 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
 //        Axis1 := Puzzle.Axes[i];
 //        Axis2 := Puzzle.Axes[j];
 //        if Axis1.Line.isNear(Axis2.Line) then begin
-//          TUtils.Log('Parallel axes: ' + IntToStr(i) + ':' + IntToStr(j));
+//          TUtils.Log('Parallel axes: ' + XmlIntToStr(i) + ':' + XmlIntToStr(j));
 ////          ShowMessage(Name + ': parallel axes');
 //          for k := 0 to Axis2.Layers.Count - 2 do
 //            Axis1.AddPlane(Axis2.Layers[k].DistanceTo);
 //          Puzzle.Axes.Delete(j);
 //        end else if Axis1.Line.isNearOpposite(Axis2.Line) then begin
-//          TUtils.Log('Opposite axes: ' + IntToStr(i) + ':' + IntToStr(j));
+//          TUtils.Log('Opposite axes: ' + XmlIntToStr(i) + ':' + XmlIntToStr(j));
 //          //ShowMessage(Name + ': opposite axes');
 //          for k := 0 to Axis2.Layers.Count - 2 do
 //            Axis1.AddPlane(-Axis2.Layers[k].DistanceTo);
@@ -1873,7 +1886,7 @@ var
   ProcName: String;
   i: integer;
 begin
-  TDomElement(XmlRoot).SetAttribute('Data_Version', IntToStr(XML_VERSION));
+  TDomElement(XmlRoot).SetAttribute('Data_Version', XmlIntToStr(XML_VERSION));
 
   PuzzleSaveHeaderToXml(Puzzle, XmlDoc, XmlRoot);
 
@@ -1897,7 +1910,7 @@ begin
   XmlProceduresNode := XmlDoc.CreateElement('Procedures');
   case Puzzle.CheckSolvedProc of
     cspEachColorHasSameOrOppositeDirection:     ProcName := 'EachColorHasSameOrOppositeDirection';
-    cspCountUniquePlanes:                       ProcName := 'CountUniquePlanes = ' + IntToStr(Puzzle.SolvedStates.UniquePlanes);
+    cspCountUniquePlanes:                       ProcName := 'CountUniquePlanes = ' + XmlIntToStr(Puzzle.SolvedStates.UniquePlanes);
     cspEachFaceConsistsOfDifferentColors:       ProcName := 'EachFaceConsistsOfDifferentColors';
     cspEachRowColConsistsOfDifferentColors:     ProcName := 'EachRowColConsistsOfDifferentColors';
     cspEachRowColDiagConsistsOfDifferentColors: ProcName := 'EachRowColDiagConsistsOfDifferentColors';
@@ -1974,15 +1987,15 @@ class procedure TXmlReadWrite.TurnSaveToXml(Turn: TTurn; XmlNode: TDomElement);
 var S: String;
     i: integer;
 begin
-  XmlNode.SetAttribute('Axis', IntToStr(Turn.AxisNo));
+  XmlNode.SetAttribute('Axis', XmlIntToStr(Turn.AxisNo));
 
   S := '';
   for i := 0 to High(Turn.Layers) do
     if Turn.Layers[i] then begin
       if S = '' then
-        S := IntToStr(i)
+        S := XmlIntToStr(i)
       else
-        S := S + ';' + IntToStr(i);
+        S := S + ';' + XmlIntToStr(i);
     end;
   XmlNode.SetAttribute('Layers', String(S));
 
