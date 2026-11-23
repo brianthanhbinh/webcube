@@ -3574,9 +3574,9 @@ begin
     Exit(False);
   V := Vars[0];
   if Vars.Count = 1 then
-    V.Value := V.Value + 1
+    V.Value := ScriptToFloat(V.Value) + 1
   else
-    V.Value := V.Value + Vars[1].Value;
+    V.Value := ScriptToFloat(V.Value) + ScriptToFloat(Vars[1].Value);
   Vars[0] := V;
   Result := True;
 end; // fInc
@@ -3588,9 +3588,9 @@ begin
     Exit(False);
   V := Vars[0];
   if Vars.Count = 1 then
-    V.Value := V.Value - 1
+    V.Value := ScriptToFloat(V.Value) - 1
   else
-    V.Value := V.Value - Vars[1].Value;
+    V.Value := ScriptToFloat(V.Value) - ScriptToFloat(Vars[1].Value);
   Vars[0] := V;
   Result := True;
 end; // fDec
