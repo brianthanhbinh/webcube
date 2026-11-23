@@ -258,6 +258,7 @@ type
 var
   Calc: TScript;
 
+procedure ExecuteScript(Text: String);
 function CalcExpression(Text: String; Default: extended = 0): extended;
 
 implementation
@@ -3829,22 +3830,15 @@ end;
 {$ENDIF}
 
 procedure ExecuteScript(Text: String);
-//         var i:integer;
-//         S: string;
 begin
+  {$IFNDEF PAS2JS}
   if Text = '' then
     exit;
-
-//  S := Text + #13#10;
-//  for i  := 0 to Calc.VarList.Count - 1 do
-//    S := S + Calc.VarList[i]^.Name + ' = ' + VarAsType(Calc.VarList[i]^.Value, varString) + #13#10;
-
-//    ShowMessage(S);
   Calc.Execute(Text);
 
   if Calc.ErrCode <> 0 then
     raise Exception.Create(Calc.ErrMsg + ': ''' + Calc.ErrLine + '''');
-//    ShowMessage(Calc.ErrMsg + ': ''' + Calc.ErrLine + ''''); // Memo2.Lines.Add(Calc.ErrLine)
+  {$ENDIF}
 end; // ExecuteScript
 
 function CalcExpression(Text: String; Default: extended = 0): extended;
