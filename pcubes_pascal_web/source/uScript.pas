@@ -3752,7 +3752,9 @@ procedure TScript.SetFunctions;
 begin
   {$IFNDEF PAS2JS}
   // String routines
+  {$IFNDEF PAS2JS}
   SetFunction('Val',            FuncValCompat);
+  {$ENDIF}
   SetFunction('IntToStr',       FuncIntToStr);
   SetFunction('StrToInt',       FuncStrToInt);
   SetFunction('FloatToStr',     FuncFloatToStr);
