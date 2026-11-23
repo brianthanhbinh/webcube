@@ -25,7 +25,7 @@ jobs:
       - name: Install Free Pascal build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y fp-compiler-3.2.2 fp-utils-3.2.2 make
+          sudo apt-get install -y fp-compiler-3.2.2 fp-utils-3.2.2 fp-units-fcl-3.2.2 make
 
       # Use the official GitHub mirror. The GitLab checkout recursively fetched
       # its compiler submodule and failed before the Pascal compile could start.
@@ -37,6 +37,8 @@ jobs:
           git clone --filter=blob:none https://github.com/fpc/FPCSource.git /tmp/pas2js-rtl/compiler
           git -C /tmp/pas2js-rtl/compiler fetch --depth 1 origin "$PAS2JS_RTL_COMMIT"
           git -C /tmp/pas2js-rtl/compiler checkout --detach "$PAS2JS_RTL_COMMIT"
+          PAS2JS_BOOTSTRAP="$(command -v pas2js-3.2.2)"
+          sudo ln -sf "$PAS2JS_BOOTSTRAP" /usr/local/bin/pas2js
           make -C /tmp/pas2js-rtl all
           sudo ln -sf /tmp/pas2js-rtl/bin/x86_64-linux/pas2js /usr/local/bin/pas2js
           pas2js -iV
