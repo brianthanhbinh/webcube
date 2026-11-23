@@ -137,6 +137,27 @@ begin
   Result := XmlUpperCase(A) = XmlUpperCase(B);
 end;
 
+function XmlStrToIntDef(const S: String; Default: Integer): Integer;
+var
+  I, Sign, N: Integer;
+begin
+  if S = '' then Exit(Default);
+  I := 1;
+  Sign := 1;
+  if S[1] = '-' then begin
+    Sign := -1;
+    I := 2;
+  end;
+  if I > Length(S) then Exit(Default);
+  N := 0;
+  while I <= Length(S) do begin
+    if (S[I] < '0') or (S[I] > '9') then Exit(Default);
+    N := N * 10 + Ord(S[I]) - Ord('0');
+    Inc(I);
+  end;
+  Result := N * Sign;
+end;
+
 function XmlStrToInt(const S: String): Integer;
 var
   I, Sign, N: Integer;
@@ -784,8 +805,8 @@ begin // FaceLoadFromXml
 //
 //    Coords := string(XmlNode.GetAttr('TextureCoordinates', ''));
 //    for i := 0 to Face.GetVertexCount - 1 do begin
-//      Face.TextureXCoords[i] := StrToIntDef(XmlTrim(TUtils.Parse(Coords, ';')), 0);
-//      Face.TextureYCoords[i] := StrToIntDef(XmlTrim(TUtils.Parse(Coords, ';')), 0);
+//      Face.TextureXCoords[i] := XmlStrToIntDef(XmlTrim(TUtils.Parse(Coords, ';')), 0);
+//      Face.TextureYCoords[i] := XmlStrToIntDef(XmlTrim(TUtils.Parse(Coords, ';')), 0);
 //    end;
 //  end;
 
@@ -1661,7 +1682,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
 
     function ParseInt(var S: String): integer;
     begin
-      Result := StrToIntDef(XmlTrim(TUtils.Parse(S, ';')), -1);
+      Result := XmlStrToIntDef(XmlTrim(TUtils.Parse(S, ';')), -1);
     end; // ParseInt
 
   var
