@@ -3474,7 +3474,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Int(Vars[0].Value);
+  Res.Value := Int(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fInt
 
@@ -3483,7 +3483,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Frac(Vars[0].Value);
+  Res.Value := Frac(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fFrac
 
@@ -3510,7 +3510,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Ceil(Vars[0].Value);
+  Res.Value := Ceil(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fCeil
 
@@ -3519,7 +3519,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Floor(Vars[0].Value);
+  Res.Value := Floor(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fFloor
 
@@ -3539,7 +3539,7 @@ begin
   for i := 0 to Vars.Count - 1 do begin
     if VarType(Res.Value) <> VarType(Vars[i].Value) then
       Exit;
-    if Vars[i].Value > Res.Value then
+    if ScriptToFloat(Vars[i].Value) > ScriptToFloat(Res.Value) then
       Res.Value := Vars[i].Value;
   end;
   Result := True;
@@ -3561,7 +3561,7 @@ begin
   for i := 0 to Vars.Count - 1 do begin
     if VarType(Res.Value) <> VarType(Vars[i].Value) then
       Exit;
-    if Vars[i].Value < Res.Value then
+    if ScriptToFloat(Vars[i].Value) < ScriptToFloat(Res.Value) then
       Res.Value := Vars[i].Value;
   end;
   Result := True;
