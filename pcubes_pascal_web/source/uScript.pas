@@ -3160,7 +3160,11 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
+  {$IFDEF PAS2JS}
+  Res.Value := '';
+  {$ELSE}
   Res.Value := DateToStr(JS.toNumber(Vars[0].Value));
+  {$ENDIF}
   Result := True;
 end; // fDateToStr
 
@@ -3169,7 +3173,11 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
+  {$IFDEF PAS2JS}
+  Res.Value := 0;
+  {$ELSE}
   Res.Value := StrToDate(String(Vars[0].Value));
+  {$ENDIF}
   Result := True;
 end; // fStrToDate
 
@@ -3178,7 +3186,11 @@ begin
   Result := False;
   if Vars.Count <> 2 then
     Exit;
+  {$IFDEF PAS2JS}
+  Res.Value := '';
+  {$ELSE}
   Res.Value := FormatDateTime(String(Vars[0].Value), JS.toNumber(Vars[1].Value));
+  {$ENDIF}
   Result := True;
 end; // fFormatDateTime
 
