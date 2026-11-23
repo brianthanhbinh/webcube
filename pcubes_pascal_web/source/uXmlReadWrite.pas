@@ -1620,12 +1620,10 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
 
   procedure ExecMacro(XmlNode: TDomNode);
   var
-    i, k, n: integer;
-    MacroName, AttrName: String;
-    MacroNames: TStringDynArray;
+    i, k, n, SpacePos: integer;
+    MacroName, MacroText, AttrName: String;
   begin
-    MacroName := XmlTrim(TDomElement(XmlNode).GetAttribute('MacroName'));
-    MacroNames := SplitString(MacroName, ' ');
+    MacroText := XmlTrim(TDomElement(XmlNode).GetAttribute('MacroName'));
     n := ReadIntExpressionFromXml(XmlNode, 'Repeat', 1);
 
     for i := 0 to XmlNode.Attributes.Length - 1 do begin
@@ -1634,16 +1632,29 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
         ExecuteScript(AttrName + ':=' + TDomElement(XmlNode).GetAttribute(String(AttrName)));
     end;
 
-    for k := 0 to n - 1 do
-      for MacroName in MacroNames do
-        if Length(MacroName) > 0 then
-          for i := lMacros.Count - 1 downto 0 do begin
-            XmlNode := lMacros[i];
-            if XmlSameText(MacroName, XmlTrim(TDomElement(XmlNode).GetAttribute('Name'))) then begin
-              LoadFigure(XmlNode);
-              break;
-            end;
+    for k := 0 to n - 1 do begin
+      while MacroText <> '' do begin
+        MacroText := Trim(MacroText);
+        if MacroText = '' then
+          break;
+        SpacePos := Pos(' ', MacroText);
+        if SpacePos > 0 then begin
+          MacroName := Copy(MacroText, 1, SpacePos - 1);
+          Delete(MacroText, 1, SpacePos);
+        end else begin
+          MacroName := MacroText;
+          MacroText := '';
+        end;
+
+        for i := lMacros.Count - 1 downto 0 do begin
+          XmlNode := lMacros[i];
+          if XmlSameText(MacroName, XmlTrim(TDomElement(XmlNode).GetAttribute('Name'))) then begin
+            LoadFigure(XmlNode);
+            break;
           end;
+        end;
+      end;
+    end;
   end; // ExecMacro
 
   procedure Connect(XmlNode: TDomNode);
