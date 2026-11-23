@@ -619,7 +619,9 @@ end; // ClearFuncs
 
 procedure TScript.DefineConsts;
 begin
+  {$IFNDEF PAS2JS}
   SetValue('PI', Pi);
+  {$ENDIF}
 end; // DefineConsts
 
 procedure TScript.Error(Msg, Line: String; Code: integer);
@@ -3852,16 +3854,23 @@ begin
 end; // ExecuteScript
 
 function CalcExpression(Text: String; Default: extended = 0): extended;
+{$IFNDEF PAS2JS}
 var V: TVar;
+{$ENDIF}
 begin
   Result := Default;
-  if Text = '' then
-    exit;
-
+  if Text = '' then Exit;
+  {$IFDEF PAS2JS}
+  try
+    Result := JS.toNumber(JS.eval(Text));
+  except
+    Result := Default;
+  end;
+  {$ELSE}
   ExecuteScript('Result := ' + Text);
-
   if Calc.VarByName('Result', V) then
     Result := ScriptToFloat(V.Value);
+  {$ENDIF}
 end; // CalcExpression
 
 initialization
