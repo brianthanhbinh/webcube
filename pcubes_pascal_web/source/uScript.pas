@@ -273,7 +273,11 @@ uses
   {$IFNDEF PAS2JS}, Controls, Forms{$ENDIF};
 
 const
+  {$IFDEF PAS2JS}
+  SpaceSet: set of Char = [' ', #9, #10, #13];
+  {$ELSE}
   SpaceSet: set of AnsiChar = [' ', #9, #10, #13];
+  {$ENDIF}
 
 const
   errOK            = 0; // O.K.
