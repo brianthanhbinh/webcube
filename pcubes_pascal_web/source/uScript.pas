@@ -2829,9 +2829,12 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
+  {$IFDEF PAS2JS}
+  if not TryStrToFloat(Trim(JS.toString(Vars[0].Value)), x) then Exit;
+  {$ELSE}
   Val(Trim(Vars[0].Value), x, i);
-  if i <> 0 then
-    Exit;
+  if i <> 0 then Exit;
+  {$ENDIF}
   Res.value := x;
   Result := True;
 end; // fStrToFloat
@@ -2872,7 +2875,11 @@ begin
     or (Vars[2].Name <> 'VAR') then
     Exit;
 
+  {$IFDEF PAS2JS}
+  if TryStrToFloat(JS.toString(Vars[0].Value), x) then i := 0 else i := 1;
+  {$ELSE}
   Val(Vars[0].Value, x, i);
+  {$ENDIF}
 
   VTemp := Vars[1];
   VTemp.Value := x;
