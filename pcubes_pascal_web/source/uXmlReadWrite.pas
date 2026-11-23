@@ -13,7 +13,7 @@ unit uXmlReadWrite;
 
 interface
 
-uses SysUtils, Types,
+uses Types,
      uPuzzle, uVector, uPlane, uLine, uLayer, uAxis, uFace, uPart, uMacro, uTexture, uTurn,
      DOM, Graphics, Generics.Collections;
 
