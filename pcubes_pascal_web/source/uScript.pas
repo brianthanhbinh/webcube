@@ -3069,7 +3069,7 @@ begin
   if Vars.Count <> 1 then
     Exit;
   if FInteractiveFunctionsEnabled then
-    TUtils.Log(Vars[0].Value);
+    TUtils.Log(String(Vars[0].Value));
   Result := True;
 end; // fLog
 
