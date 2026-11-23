@@ -220,7 +220,7 @@ var
 
     Result := Calc.VarByName(ArrayName[Dim] + '[' + IntToStr(i) + ']', V);
     if Result then
-      vec[Dim] := V.Value
+      vec[Dim] := CalcExpression(ArrayName[Dim] + '[' + IntToStr(i) + ']')
     else
       vec[Dim] := 0;
   end; // GetArrayValue
