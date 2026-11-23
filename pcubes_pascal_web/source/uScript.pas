@@ -2320,7 +2320,11 @@ begin
   end;
 
   try
+    {$IFDEF PAS2JS}
+    b := JS.toBoolean(R.Value);
+    {$ELSE}
     b := R.Value;
+    {$ENDIF}
   except
     Error('Invalid condition type', e, errTypeCast);
     Exit;
