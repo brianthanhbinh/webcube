@@ -164,7 +164,7 @@ begin
       if Calc.VarByName(PS + '[0]', V) and (not Calc.VarByName(PS, V1)) and ((VarType(V.Value) = varDouble)) then begin
         i := 0;
         repeat
-          EList.Add(V.Value);
+          EList.Add(CalcExpression(PS + '[' + IntToStr(i) + ']'));
           //Axis.AddPlane(V.Value);
           Inc(i);
         until not (Calc.VarByName(PS + '[' + IntToStr(i) + ']', V) and (VarType(V.Value) = varDouble));
