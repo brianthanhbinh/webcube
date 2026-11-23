@@ -20,7 +20,11 @@ cd "$ROOT/web"
 # Add the Pas2JS core RTL, FPC XML parser, and supporting package units.
 RTL_FLAGS="-Fu$RTL_DIR"
 if [ -n "$PACKAGES_DIR" ] && [ -d "$PACKAGES_DIR" ]; then
-  RTL_FLAGS="$RTL_FLAGS -Fu$PACKAGES_DIR/*"
+  for UNIT_DIR in "$PACKAGES_DIR"/*; do
+    if [ -d "$UNIT_DIR" ]; then
+      RTL_FLAGS="$RTL_FLAGS -Fu$UNIT_DIR"
+    fi
+  done
 fi
 
 if [ -f "$RTL_DIR/rtl.js" ]; then
