@@ -1544,7 +1544,12 @@ rtl.module("System",[],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
-  rtl.recNewT($mod,"TGuid",function () {
+  this.LineEnding = "\n";
+  this.sLineBreak = this.LineEnding;
+  this.MaxLongint = 0x7fffffff;
+  this.Maxint = 2147483647;
+  this.TTextLineBreakStyle = {"0": "tlbsLF", tlbsLF: 0, "1": "tlbsCRLF", tlbsCRLF: 1, "2": "tlbsCR", tlbsCR: 2};
+  rtl.recNewT(this,"TGuid",function () {
     this.D1 = 0;
     this.D2 = 0;
     this.D3 = 0;
@@ -1564,7 +1569,7 @@ rtl.module("System",[],function () {
       return this;
     };
   });
-  rtl.createClass($mod,"TObject",null,function () {
+  rtl.createClass(this,"TObject",null,function () {
     this.$init = function () {
     };
     this.$final = function () {
@@ -1582,18 +1587,114 @@ rtl.module("System",[],function () {
     this.BeforeDestruction = function () {
     };
   });
-  rtl.createInterface($mod,"IUnknown","{00000000-0000-0000-C000-000000000046}",["QueryInterface","_AddRef","_Release"],null,function () {
+  rtl.createInterface(this,"IUnknown","{00000000-0000-0000-C000-000000000046}",["QueryInterface","_AddRef","_Release"],null,function () {
     this.$kind = "com";
-    var $r = this.$rtti;
-    $r.addMethod("QueryInterface",1,[["iid",$mod.$rtti["TGuid"],2],["obj",null,4]],rtl.longint);
-    $r.addMethod("_AddRef",1,null,rtl.longint);
-    $r.addMethod("_Release",1,null,rtl.longint);
   });
+  this.vtInteger = 0;
+  this.vtExtended = 3;
+  this.vtWideChar = 9;
+  this.vtCurrency = 12;
+  this.vtUnicodeString = 18;
+  this.vtNativeInt = 19;
+  rtl.recNewT(this,"TVarRec",function () {
+    this.VType = 0;
+    this.VJSValue = undefined;
+    this.$eq = function (b) {
+      return (this.VType === b.VType) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue);
+    };
+    this.$assign = function (s) {
+      this.VType = s.VType;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      return this;
+    };
+  });
+  this.VarRecs = function () {
+    var Result = [];
+    var i = 0;
+    var v = null;
+    Result = [];
+    while (i < arguments.length) {
+      v = $mod.TVarRec.$new();
+      v.VType = rtl.trunc(arguments[i]);
+      i += 1;
+      v.VJSValue = arguments[i];
+      i += 1;
+      Result.push($mod.TVarRec.$clone(v));
+    };
+    return Result;
+  };
   this.Random = function (Range) {
     return Math.floor(Math.random()*Range);
   };
   this.Sqr$1 = function (A) {
     return A*A;
+  };
+  this.Trunc = function (A) {
+    if (!Math.trunc) {
+      Math.trunc = function(v) {
+        v = +v;
+        if (!isFinite(v)) return v;
+        return (v - v % 1) || (v < 0 ? -0 : v === 0 ? v : 0);
+      };
+    }
+    $mod.Trunc = Math.trunc;
+    return Math.trunc(A);
+  };
+  this.DefaultTextLineBreakStyle = this.TTextLineBreakStyle.tlbsLF;
+  this.Int = function (A) {
+    var Result = 0.0;
+    Result = $mod.Trunc(A);
+    return Result;
+  };
+  this.Copy = function (S, Index, Size) {
+    if (Index<1) Index = 1;
+    return (Size>0) ? S.substring(Index-1,Index+Size-1) : "";
+  };
+  this.Copy$1 = function (S, Index) {
+    if (Index<1) Index = 1;
+    return S.substr(Index-1);
+  };
+  this.Delete = function (S, Index, Size) {
+    var h = "";
+    if ((Index < 1) || (Index > S.get().length) || (Size <= 0)) return;
+    h = S.get();
+    S.set($mod.Copy(h,1,Index - 1) + $mod.Copy$1(h,Index + Size));
+  };
+  this.Pos = function (Search, InString) {
+    return InString.indexOf(Search)+1;
+  };
+  this.Insert = function (Insertion, Target, Index) {
+    var t = "";
+    if (Insertion === "") return;
+    t = Target.get();
+    if (Index < 1) {
+      Target.set(Insertion + t)}
+     else if (Index > t.length) {
+      Target.set(t + Insertion)}
+     else Target.set($mod.Copy(t,1,Index - 1) + Insertion + $mod.Copy(t,Index,t.length));
+  };
+  this.upcase = function (c) {
+    return c.toUpperCase();
+  };
+  this.val = function (S, NI, Code) {
+    NI.set($impl.valint(S,-9007199254740991,9007199254740991,Code));
+  };
+  this.StringOfChar = function (c, l) {
+    var Result = "";
+    var i = 0;
+    if ((l>0) && c.repeat) return c.repeat(l);
+    Result = "";
+    for (var $l = 1, $end = l; $l <= $end; $l++) {
+      i = $l;
+      Result = Result + c;
+    };
+    return Result;
   };
   this.Writeln = function () {
     var i = 0;
@@ -1615,24 +1716,54 @@ rtl.module("System",[],function () {
       $impl.WriteBuf = "";
     };
   };
+  $mod.$implcode = function () {
+    $impl.WriteBuf = "";
+    $impl.WriteCallBack = null;
+    $impl.valint = function (S, MinVal, MaxVal, Code) {
+      var Result = 0;
+      var x = 0.0;
+      if (S === "") {
+        Code.set(1);
+        return Result;
+      };
+      x = Number(S);
+      if (isNaN(x)) {
+        var $tmp = $mod.Copy(S,1,1);
+        if ($tmp === "$") {
+          x = Number("0x" + $mod.Copy$1(S,2))}
+         else if ($tmp === "&") {
+          x = Number("0o" + $mod.Copy$1(S,2))}
+         else if ($tmp === "%") {
+          x = Number("0b" + $mod.Copy$1(S,2))}
+         else {
+          Code.set(1);
+          return Result;
+        };
+      };
+      if (isNaN(x) || (x !== $mod.Int(x))) {
+        Code.set(1)}
+       else if ((x < MinVal) || (x > MaxVal)) {
+        Code.set(2)}
+       else {
+        Result = $mod.Trunc(x);
+        Code.set(0);
+      };
+      return Result;
+    };
+  };
   $mod.$init = function () {
     rtl.exitcode = 0;
   };
-},null,function () {
-  "use strict";
-  var $mod = this;
-  var $impl = $mod.$impl;
-  $impl.WriteBuf = "";
-  $impl.WriteCallBack = null;
-});
+},[]);
 rtl.module("Types",["System"],function () {
   "use strict";
   var $mod = this;
+  this.TDuplicates = {"0": "dupIgnore", dupIgnore: 0, "1": "dupAccept", dupAccept: 1, "2": "dupError", dupError: 2};
 });
 rtl.module("JS",["System","Types"],function () {
   "use strict";
   var $mod = this;
-  rtl.createClass($mod,"EJS",pas.System.TObject,function () {
+  rtl.createClass(this,"EJS",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
       this.FMessage = "";
@@ -1666,6 +1797,32 @@ rtl.module("JS",["System","Types"],function () {
     };
     return Result;
   };
+  this.isBoolean = function (v) {
+    return typeof(v) == 'boolean';
+  };
+  this.isNull = function (v) {
+    return v === null;
+  };
+  this.isUndefined = function (v) {
+    return v == undefined;
+  };
+  this.toNumber = function (v) {
+    return v-0;
+  };
+  this.toBoolean = function (Value) {
+    var Result = false;
+    if ($mod.isBoolean(Value)) {
+      Result = !(Value == false)}
+     else Result = false;
+    return Result;
+  };
+  this.ToString = function (Value) {
+    var Result = "";
+    if (rtl.isString(Value)) {
+      Result = "" + Value}
+     else Result = "";
+    return Result;
+  };
 });
 rtl.module("weborworker",["System","JS","Types"],function () {
   "use strict";
@@ -1675,11 +1832,110 @@ rtl.module("Web",["System","Types","JS","weborworker"],function () {
   "use strict";
   var $mod = this;
 });
-rtl.module("SysUtils",["System","JS"],function () {
+rtl.module("RTLConsts",["System"],function () {
+  "use strict";
+  var $mod = this;
+  $mod.$resourcestrings = {SArgumentMissing: {org: 'Missing argument in format "%s"'}, SInvalidFormat: {org: 'Invalid format specifier : "%s"'}, SInvalidArgIndex: {org: 'Invalid argument index in format: "%s"'}, SListCapacityError: {org: "List capacity (%s) exceeded."}, SListIndexError: {org: "List index (%s) out of bounds"}, SSortedListError: {org: "Operation not allowed on sorted list"}, SDuplicateString: {org: "String list does not allow duplicates"}, SErrFindNeedsSortedList: {org: "Cannot use find on unsorted list"}, SErrInvalidInteger: {org: 'Invalid integer value: "%s"'}, SErrInvalidFloat: {org: 'Invalid floating-point value: "%s"'}};
+});
+rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
-  rtl.createClass($mod,"Exception",pas.System.TObject,function () {
+  this.FreeAndNil = function (Obj) {
+    var o = null;
+    o = Obj.get();
+    if (o === null) return;
+    Obj.set(null);
+    o.$destroy("Destroy");
+  };
+  rtl.recNewT(this,"TFormatSettings",function () {
+    this.CurrencyDecimals = 0;
+    this.CurrencyFormat = 0;
+    this.CurrencyString = "";
+    this.DateSeparator = "";
+    this.DecimalSeparator = "";
+    this.LongDateFormat = "";
+    this.LongTimeFormat = "";
+    this.NegCurrFormat = 0;
+    this.ShortDateFormat = "";
+    this.ShortTimeFormat = "";
+    this.ThousandSeparator = "";
+    this.TimeAMString = "";
+    this.TimePMString = "";
+    this.TimeSeparator = "";
+    this.TwoDigitYearCenturyWindow = 0;
+    this.InitLocaleHandler = null;
+    this.$new = function () {
+      var r = Object.create(this);
+      r.DateTimeToStrFormat = rtl.arraySetLength(null,"",2);
+      r.LongDayNames = rtl.arraySetLength(null,"",7);
+      r.LongMonthNames = rtl.arraySetLength(null,"",12);
+      r.ShortDayNames = rtl.arraySetLength(null,"",7);
+      r.ShortMonthNames = rtl.arraySetLength(null,"",12);
+      return r;
+    };
+    this.$eq = function (b) {
+      return (this.CurrencyDecimals === b.CurrencyDecimals) && (this.CurrencyFormat === b.CurrencyFormat) && (this.CurrencyString === b.CurrencyString) && (this.DateSeparator === b.DateSeparator) && rtl.arrayEq(this.DateTimeToStrFormat,b.DateTimeToStrFormat) && (this.DecimalSeparator === b.DecimalSeparator) && (this.LongDateFormat === b.LongDateFormat) && rtl.arrayEq(this.LongDayNames,b.LongDayNames) && rtl.arrayEq(this.LongMonthNames,b.LongMonthNames) && (this.LongTimeFormat === b.LongTimeFormat) && (this.NegCurrFormat === b.NegCurrFormat) && (this.ShortDateFormat === b.ShortDateFormat) && rtl.arrayEq(this.ShortDayNames,b.ShortDayNames) && rtl.arrayEq(this.ShortMonthNames,b.ShortMonthNames) && (this.ShortTimeFormat === b.ShortTimeFormat) && (this.ThousandSeparator === b.ThousandSeparator) && (this.TimeAMString === b.TimeAMString) && (this.TimePMString === b.TimePMString) && (this.TimeSeparator === b.TimeSeparator) && (this.TwoDigitYearCenturyWindow === b.TwoDigitYearCenturyWindow);
+    };
+    this.$assign = function (s) {
+      this.CurrencyDecimals = s.CurrencyDecimals;
+      this.CurrencyFormat = s.CurrencyFormat;
+      this.CurrencyString = s.CurrencyString;
+      this.DateSeparator = s.DateSeparator;
+      this.DateTimeToStrFormat = s.DateTimeToStrFormat.slice(0);
+      this.DecimalSeparator = s.DecimalSeparator;
+      this.LongDateFormat = s.LongDateFormat;
+      this.LongDayNames = s.LongDayNames.slice(0);
+      this.LongMonthNames = s.LongMonthNames.slice(0);
+      this.LongTimeFormat = s.LongTimeFormat;
+      this.NegCurrFormat = s.NegCurrFormat;
+      this.ShortDateFormat = s.ShortDateFormat;
+      this.ShortDayNames = s.ShortDayNames.slice(0);
+      this.ShortMonthNames = s.ShortMonthNames.slice(0);
+      this.ShortTimeFormat = s.ShortTimeFormat;
+      this.ThousandSeparator = s.ThousandSeparator;
+      this.TimeAMString = s.TimeAMString;
+      this.TimePMString = s.TimePMString;
+      this.TimeSeparator = s.TimeSeparator;
+      this.TwoDigitYearCenturyWindow = s.TwoDigitYearCenturyWindow;
+      return this;
+    };
+    this.GetJSLocale = function () {
+      return Intl.DateTimeFormat().resolvedOptions().locale;
+    };
+    this.Create = function () {
+      var Result = $mod.TFormatSettings.$new();
+      Result.$assign($mod.TFormatSettings.Create$1($mod.TFormatSettings.GetJSLocale()));
+      return Result;
+    };
+    this.Create$1 = function (ALocale) {
+      var Result = $mod.TFormatSettings.$new();
+      Result.LongDayNames = $impl.DefaultLongDayNames.slice(0);
+      Result.ShortDayNames = $impl.DefaultShortDayNames.slice(0);
+      Result.ShortMonthNames = $impl.DefaultShortMonthNames.slice(0);
+      Result.LongMonthNames = $impl.DefaultLongMonthNames.slice(0);
+      Result.DateTimeToStrFormat[0] = "c";
+      Result.DateTimeToStrFormat[1] = "f";
+      Result.DateSeparator = "-";
+      Result.TimeSeparator = ":";
+      Result.ShortDateFormat = "yyyy-mm-dd";
+      Result.LongDateFormat = "ddd, yyyy-mm-dd";
+      Result.ShortTimeFormat = "hh:nn";
+      Result.LongTimeFormat = "hh:nn:ss";
+      Result.DecimalSeparator = ".";
+      Result.ThousandSeparator = ",";
+      Result.TimeAMString = "AM";
+      Result.TimePMString = "PM";
+      Result.TwoDigitYearCenturyWindow = 50;
+      Result.CurrencyFormat = 0;
+      Result.NegCurrFormat = 0;
+      Result.CurrencyDecimals = 2;
+      Result.CurrencyString = "$";
+      if ($mod.TFormatSettings.InitLocaleHandler != null) $mod.TFormatSettings.InitLocaleHandler($mod.UpperCase(ALocale),$mod.TFormatSettings.$clone(Result));
+      return Result;
+    };
+  },true);
+  rtl.createClass(this,"Exception",pas.System.TObject,function () {
     this.LogMessageOnCreate = false;
     this.$init = function () {
       pas.System.TObject.$init.call(this);
@@ -1690,51 +1946,1457 @@ rtl.module("SysUtils",["System","JS"],function () {
       if (this.LogMessageOnCreate) pas.System.Writeln("Created exception ",this.$classname," with message: ",Msg);
       return this;
     };
+    this.CreateFmt = function (Msg, Args) {
+      this.Create$1($mod.Format(Msg,Args));
+      return this;
+    };
   });
-  rtl.createClass($mod,"EArgumentException",$mod.Exception,function () {
+  rtl.createClass(this,"EConvertError",this.Exception,function () {
   });
-  rtl.createClass($mod,"EArgumentOutOfRangeException",$mod.EArgumentException,function () {
+  rtl.createClass(this,"EArgumentException",this.Exception,function () {
+  });
+  rtl.createClass(this,"EArgumentOutOfRangeException",this.EArgumentException,function () {
   });
   this.Trim = function (S) {
     return S.replace(/^[\s\uFEFF\xA0\x00-\x1f]+/,'').replace(/[\s\uFEFF\xA0\x00-\x1f]+$/,'');
+  };
+  this.TrimLeft = function (S) {
+    return S.replace(/^[\s\uFEFF\xA0\x00-\x1f]+/,'');
+  };
+  this.UpperCase = function (s) {
+    return s.toUpperCase();
+  };
+  this.LowerCase = function (s) {
+    return s.toLowerCase();
+  };
+  this.CompareStr = function (s1, s2) {
+    var l1 = s1.length;
+    var l2 = s2.length;
+    if (l1<=l2){
+      var s = s2.substr(0,l1);
+      if (s1<s){ return -1;
+      } else if (s1>s){ return 1;
+      } else { return l1<l2 ? -1 : 0; };
+    } else {
+      var s = s1.substr(0,l2);
+      if (s<s2){ return -1;
+      } else { return 1; };
+    };
+  };
+  this.CompareText = function (s1, s2) {
+    var l1 = s1.toLowerCase();
+    var l2 = s2.toLowerCase();
+    if (l1>l2){ return 1;
+    } else if (l1<l2){ return -1;
+    } else { return 0; };
+  };
+  this.SameText = function (s1, s2) {
+    return s1.toLowerCase() == s2.toLowerCase();
+  };
+  this.Format = function (Fmt, Args) {
+    var Result = "";
+    Result = $mod.Format$1(Fmt,Args,$mod.FormatSettings);
+    return Result;
+  };
+  this.Format$1 = function (Fmt, Args, aSettings) {
+    var Result = "";
+    var ChPos = 0;
+    var OldPos = 0;
+    var ArgPos = 0;
+    var DoArg = 0;
+    var Len = 0;
+    var Hs = "";
+    var ToAdd = "";
+    var Index = 0;
+    var Width = 0;
+    var Prec = 0;
+    var Left = false;
+    var Fchar = "";
+    var vq = 0;
+    function ReadFormat() {
+      var Result = "";
+      var Value = 0;
+      function ReadInteger() {
+        var Code = 0;
+        var ArgN = 0;
+        if (Value !== -1) return;
+        OldPos = ChPos;
+        while ((ChPos <= Len) && (Fmt.charAt(ChPos - 1) <= "9") && (Fmt.charAt(ChPos - 1) >= "0")) ChPos += 1;
+        if (ChPos > Len) $impl.DoFormatError(1,Fmt);
+        if (Fmt.charAt(ChPos - 1) === "*") {
+          if (Index === 255) {
+            ArgN = ArgPos}
+           else {
+            ArgN = Index;
+            Index += 1;
+          };
+          if ((ChPos > OldPos) || (ArgN > (rtl.length(Args) - 1))) $impl.DoFormatError(1,Fmt);
+          ArgPos = ArgN + 1;
+          var $tmp = Args[ArgN].VType;
+          if ($tmp === 0) {
+            Value = Args[ArgN].VJSValue}
+           else if ($tmp === 19) {
+            Value = Args[ArgN].VJSValue}
+           else {
+            $impl.DoFormatError(1,Fmt);
+          };
+          ChPos += 1;
+        } else {
+          if (OldPos < ChPos) {
+            pas.System.val(pas.System.Copy(Fmt,OldPos,ChPos - OldPos),{get: function () {
+                return Value;
+              }, set: function (v) {
+                Value = v;
+              }},{get: function () {
+                return Code;
+              }, set: function (v) {
+                Code = v;
+              }});
+            if (Code > 0) $impl.DoFormatError(1,Fmt);
+          } else Value = -1;
+        };
+      };
+      function ReadIndex() {
+        if (Fmt.charAt(ChPos - 1) !== ":") {
+          ReadInteger()}
+         else Value = 0;
+        if (Fmt.charAt(ChPos - 1) === ":") {
+          if (Value === -1) $impl.DoFormatError(2,Fmt);
+          Index = Value;
+          Value = -1;
+          ChPos += 1;
+        };
+      };
+      function ReadLeft() {
+        if (Fmt.charAt(ChPos - 1) === "-") {
+          Left = true;
+          ChPos += 1;
+        } else Left = false;
+      };
+      function ReadWidth() {
+        ReadInteger();
+        if (Value !== -1) {
+          Width = Value;
+          Value = -1;
+        };
+      };
+      function ReadPrec() {
+        if (Fmt.charAt(ChPos - 1) === ".") {
+          ChPos += 1;
+          ReadInteger();
+          if (Value === -1) Value = 0;
+          Prec = Value;
+        };
+      };
+      Index = 255;
+      Width = -1;
+      Prec = -1;
+      Value = -1;
+      ChPos += 1;
+      if (Fmt.charAt(ChPos - 1) === "%") {
+        Result = "%";
+        return Result;
+      };
+      ReadIndex();
+      ReadLeft();
+      ReadWidth();
+      ReadPrec();
+      Result = pas.System.upcase(Fmt.charAt(ChPos - 1));
+      return Result;
+    };
+    function Checkarg(AT, err) {
+      var Result = false;
+      Result = false;
+      if (Index === 255) {
+        DoArg = ArgPos}
+       else DoArg = Index;
+      ArgPos = DoArg + 1;
+      if ((DoArg > (rtl.length(Args) - 1)) || (Args[DoArg].VType !== AT)) {
+        if (err) $impl.DoFormatError(3,Fmt);
+        ArgPos -= 1;
+        return Result;
+      };
+      Result = true;
+      return Result;
+    };
+    Result = "";
+    Len = Fmt.length;
+    ChPos = 1;
+    OldPos = 1;
+    ArgPos = 0;
+    while (ChPos <= Len) {
+      while ((ChPos <= Len) && (Fmt.charAt(ChPos - 1) !== "%")) ChPos += 1;
+      if (ChPos > OldPos) Result = Result + pas.System.Copy(Fmt,OldPos,ChPos - OldPos);
+      if (ChPos < Len) {
+        Fchar = ReadFormat();
+        var $tmp = Fchar;
+        if ($tmp === "D") {
+          if (Checkarg(0,false)) {
+            ToAdd = $mod.IntToStr(Args[DoArg].VJSValue)}
+           else if (Checkarg(19,true)) ToAdd = $mod.IntToStr(Args[DoArg].VJSValue);
+          Width = Math.abs(Width);
+          Index = Prec - ToAdd.length;
+          if (ToAdd.charAt(0) !== "-") {
+            ToAdd = pas.System.StringOfChar("0",Index) + ToAdd}
+           else pas.System.Insert(pas.System.StringOfChar("0",Index + 1),{get: function () {
+              return ToAdd;
+            }, set: function (v) {
+              ToAdd = v;
+            }},2);
+        } else if ($tmp === "U") {
+          if (Checkarg(0,false)) {
+            ToAdd = $mod.IntToStr(Args[DoArg].VJSValue >>> 0)}
+           else if (Checkarg(19,true)) ToAdd = $mod.IntToStr(Args[DoArg].VJSValue);
+          Width = Math.abs(Width);
+          Index = Prec - ToAdd.length;
+          ToAdd = pas.System.StringOfChar("0",Index) + ToAdd;
+        } else if ($tmp === "E") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffExponent,3,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffExponent,3,Prec,aSettings);
+        } else if ($tmp === "F") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffFixed,9999,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffFixed,9999,Prec,aSettings);
+        } else if ($tmp === "G") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffGeneral,Prec,3,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffGeneral,Prec,3,aSettings);
+        } else if ($tmp === "N") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffNumber,9999,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffNumber,9999,Prec,aSettings);
+        } else if ($tmp === "M") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffCurrency,9999,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffCurrency,9999,Prec,aSettings);
+        } else if ($tmp === "S") {
+          if (Checkarg(18,false)) {
+            Hs = Args[DoArg].VJSValue}
+           else if (Checkarg(9,true)) Hs = Args[DoArg].VJSValue;
+          Index = Hs.length;
+          if ((Prec !== -1) && (Index > Prec)) Index = Prec;
+          ToAdd = pas.System.Copy(Hs,1,Index);
+        } else if ($tmp === "P") {
+          if (Checkarg(0,false)) {
+            ToAdd = $mod.IntToHex(Args[DoArg].VJSValue,8)}
+           else if (Checkarg(0,true)) ToAdd = $mod.IntToHex(Args[DoArg].VJSValue,16);
+        } else if ($tmp === "X") {
+          if (Checkarg(0,false)) {
+            vq = Args[DoArg].VJSValue;
+            Index = 16;
+          } else if (Checkarg(19,true)) {
+            vq = Args[DoArg].VJSValue;
+            Index = 31;
+          };
+          if (Prec > Index) {
+            ToAdd = $mod.IntToHex(vq,Index)}
+           else {
+            Index = 1;
+            while ((rtl.shl(1,Index * 4) <= vq) && (Index < 16)) Index += 1;
+            if (Index > Prec) Prec = Index;
+            ToAdd = $mod.IntToHex(vq,Prec);
+          };
+        } else if ($tmp === "%") ToAdd = "%";
+        if (Width !== -1) if (ToAdd.length < Width) if (!Left) {
+          ToAdd = pas.System.StringOfChar(" ",Width - ToAdd.length) + ToAdd}
+         else ToAdd = ToAdd + pas.System.StringOfChar(" ",Width - ToAdd.length);
+        Result = Result + ToAdd;
+      };
+      ChPos += 1;
+      OldPos = ChPos;
+    };
+    return Result;
+  };
+  this.TStringReplaceFlag = {"0": "rfReplaceAll", rfReplaceAll: 0, "1": "rfIgnoreCase", rfIgnoreCase: 1};
+  this.StringReplace = function (aOriginal, aSearch, aReplace, Flags) {
+    var Result = "";
+    var REFlags = "";
+    var REString = "";
+    REFlags = "";
+    if ($mod.TStringReplaceFlag.rfReplaceAll in Flags) REFlags = "g";
+    if ($mod.TStringReplaceFlag.rfIgnoreCase in Flags) REFlags = REFlags + "i";
+    REString = aSearch.replace(new RegExp($impl.RESpecials,"g"),"\\$1");
+    Result = aOriginal.replace(new RegExp(REString,REFlags),aReplace);
+    return Result;
   };
   this.IntToStr = function (Value) {
     var Result = "";
     Result = "" + Value;
     return Result;
   };
+  this.TryStrToInt$2 = function (S, res) {
+    var Result = false;
+    Result = $impl.IntTryStrToInt(S,res,$mod.FormatSettings.DecimalSeparator);
+    return Result;
+  };
+  this.StrToIntDef = function (S, aDef) {
+    var Result = 0;
+    var R = 0;
+    if ($mod.TryStrToInt$2(S,{get: function () {
+        return R;
+      }, set: function (v) {
+        R = v;
+      }})) {
+      Result = R}
+     else Result = aDef;
+    return Result;
+  };
+  this.StrToInt = function (S) {
+    var Result = 0;
+    var R = 0;
+    if (!$mod.TryStrToInt$2(S,{get: function () {
+        return R;
+      }, set: function (v) {
+        R = v;
+      }})) throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SErrInvalidInteger"),pas.System.VarRecs(18,S)]);
+    Result = R;
+    return Result;
+  };
+  this.IntToHex = function (Value, Digits) {
+    var Result = "";
+    Result = "";
+    if (Value < 0) if (Value<0) Value = 0xFFFFFFFF + Value + 1;
+    Result=Value.toString(16);
+    Result = $mod.UpperCase(Result);
+    while (Result.length < Digits) Result = "0" + Result;
+    return Result;
+  };
+  this.TFloatFormat = {"0": "ffFixed", ffFixed: 0, "1": "ffGeneral", ffGeneral: 1, "2": "ffExponent", ffExponent: 2, "3": "ffNumber", ffNumber: 3, "4": "ffCurrency", ffCurrency: 4};
+  this.FloatToStr = function (Value) {
+    var Result = "";
+    Result = $mod.FloatToStr$1(Value,$mod.FormatSettings);
+    return Result;
+  };
+  this.FloatToStr$1 = function (Value, aSettings) {
+    var Result = "";
+    Result = $mod.FloatToStrF$1(Value,$mod.TFloatFormat.ffGeneral,15,0,aSettings);
+    return Result;
+  };
+  this.FloatToStrF$1 = function (Value, format, Precision, Digits, aSettings) {
+    var Result = "";
+    var TS = "";
+    var DS = "";
+    DS = aSettings.DecimalSeparator;
+    TS = aSettings.ThousandSeparator;
+    var $tmp = format;
+    if ($tmp === $mod.TFloatFormat.ffGeneral) {
+      Result = $impl.FormatGeneralFloat(Value,Precision,DS)}
+     else if ($tmp === $mod.TFloatFormat.ffExponent) {
+      Result = $impl.FormatExponentFloat(Value,Precision,Digits,DS)}
+     else if ($tmp === $mod.TFloatFormat.ffFixed) {
+      Result = $impl.FormatFixedFloat(Value,Digits,DS)}
+     else if ($tmp === $mod.TFloatFormat.ffNumber) {
+      Result = $impl.FormatNumberFloat(Value,Digits,DS,TS)}
+     else if ($tmp === $mod.TFloatFormat.ffCurrency) Result = $impl.FormatNumberCurrency(Value * 10000,Digits,aSettings);
+    if ((format !== $mod.TFloatFormat.ffCurrency) && (Result.length > 1) && (Result.charAt(0) === "-")) $impl.RemoveLeadingNegativeSign({get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},DS,TS);
+    return Result;
+  };
+  this.TryStrToFloat = function (S, res) {
+    var Result = false;
+    Result = $mod.TryStrToFloat$2(S,res);
+    return Result;
+  };
+  this.TryStrToFloat$2 = function (S, res) {
+    var Result = false;
+    Result = $mod.TryStrToFloat$3(S,res,$mod.FormatSettings);
+    return Result;
+  };
+  var TDecimalPart = {"0": "dpDigit", dpDigit: 0, "1": "dpSignificand", dpSignificand: 1, "2": "dpExp", dpExp: 2};
+  this.TryStrToFloat$3 = function (S, res, aSettings) {
+    var Result = false;
+    var J = undefined;
+    var I = 0;
+    var aStart = 0;
+    var Len = 0;
+    var N = "";
+    var p = 0;
+    Result = false;
+    N = S;
+    if (aSettings.ThousandSeparator !== "") N = $mod.StringReplace(N,aSettings.ThousandSeparator,"",rtl.createSet($mod.TStringReplaceFlag.rfReplaceAll));
+    if (aSettings.DecimalSeparator !== ".") N = $mod.StringReplace(N,aSettings.DecimalSeparator,".",{});
+    p = TDecimalPart.dpDigit;
+    I = 1;
+    aStart = 1;
+    Len = N.length;
+    while (I <= Len) {
+      var $tmp = N.charAt(I - 1);
+      if (($tmp === "+") || ($tmp === "-")) {
+        var $tmp1 = p;
+        if ($tmp1 === TDecimalPart.dpSignificand) {
+          return Result}
+         else if ($tmp1 === TDecimalPart.dpDigit) {
+          if (I > aStart) return Result}
+         else if ($tmp1 === TDecimalPart.dpExp) if (I > (aStart + 1)) return Result;
+      } else if (($tmp >= "0") && ($tmp <= "9")) {}
+      else if ($tmp === ".") {
+        if (p !== TDecimalPart.dpDigit) return Result;
+        p = TDecimalPart.dpSignificand;
+        aStart = I;
+      } else if (($tmp === "E") || ($tmp === "e")) {
+        if (p === TDecimalPart.dpExp) {
+          return Result}
+         else {
+          p = TDecimalPart.dpExp;
+          aStart = I;
+        };
+      } else {
+        return Result;
+      };
+      I += 1;
+    };
+    J = parseFloat(N);
+    Result = !isNaN(J);
+    if (Result) res.set(rtl.getNumber(J));
+    return Result;
+  };
+  this.StrToFloat = function (S) {
+    var Result = 0.0;
+    Result = $mod.StrToFloat$1(S,$mod.FormatSettings);
+    return Result;
+  };
+  this.StrToFloat$1 = function (S, aSettings) {
+    var Result = 0.0;
+    if (!$mod.TryStrToFloat$3(S,{get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},aSettings)) throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SErrInvalidFloat"),pas.System.VarRecs(18,S)]);
+    return Result;
+  };
+  this.TimeSeparator = "";
+  this.DateSeparator = "";
+  this.ShortDateFormat = "";
+  this.LongDateFormat = "";
+  this.ShortTimeFormat = "";
+  this.LongTimeFormat = "";
+  this.DecimalSeparator = "";
+  this.ThousandSeparator = "";
+  this.TimeAMString = "";
+  this.TimePMString = "";
   this.ShortMonthNames = rtl.arraySetLength(null,"",12);
   this.LongMonthNames = rtl.arraySetLength(null,"",12);
   this.ShortDayNames = rtl.arraySetLength(null,"",7);
   this.LongDayNames = rtl.arraySetLength(null,"",7);
+  this.FormatSettings = this.TFormatSettings.$new();
+  this.CurrencyFormat = 0;
+  this.NegCurrFormat = 0;
+  this.CurrencyDecimals = 0;
+  this.CurrencyString = "";
+  this.TStringSplitOptions = {"0": "None", None: 0, "1": "ExcludeEmpty", ExcludeEmpty: 1};
+  rtl.createHelper(this,"TStringHelper",null,function () {
+    this.GetLength = function () {
+      var Result = 0;
+      Result = this.get().length;
+      return Result;
+    };
+    this.IndexOfAny$3 = function (AnyOf, StartIndex) {
+      var Result = 0;
+      Result = $mod.TStringHelper.IndexOfAny$5.call(this,AnyOf,StartIndex,$mod.TStringHelper.GetLength.call(this));
+      return Result;
+    };
+    this.IndexOfAny$5 = function (AnyOf, StartIndex, ACount) {
+      var Result = 0;
+      var i = 0;
+      var L = 0;
+      i = StartIndex + 1;
+      L = (i + ACount) - 1;
+      if (L > $mod.TStringHelper.GetLength.call(this)) L = $mod.TStringHelper.GetLength.call(this);
+      Result = -1;
+      while ((Result === -1) && (i <= L)) {
+        if ($impl.HaveChar(this.get().charAt(i - 1),AnyOf)) Result = i - 1;
+        i += 1;
+      };
+      return Result;
+    };
+    this.IndexOfAnyUnquoted$1 = function (AnyOf, StartQuote, EndQuote, StartIndex) {
+      var Result = 0;
+      Result = $mod.TStringHelper.IndexOfAnyUnquoted$2.call(this,AnyOf,StartQuote,EndQuote,StartIndex,$mod.TStringHelper.GetLength.call(this));
+      return Result;
+    };
+    this.IndexOfAnyUnquoted$2 = function (AnyOf, StartQuote, EndQuote, StartIndex, ACount) {
+      var Result = 0;
+      var I = 0;
+      var L = 0;
+      var Q = 0;
+      Result = -1;
+      L = (StartIndex + ACount) - 1;
+      if (L > $mod.TStringHelper.GetLength.call(this)) L = $mod.TStringHelper.GetLength.call(this);
+      I = StartIndex + 1;
+      Q = 0;
+      if (StartQuote === EndQuote) {
+        while ((Result === -1) && (I <= L)) {
+          if (this.get().charAt(I - 1) === StartQuote) Q = 1 - Q;
+          if ((Q === 0) && $impl.HaveChar(this.get().charAt(I - 1),AnyOf)) Result = I - 1;
+          I += 1;
+        };
+      } else {
+        while ((Result === -1) && (I <= L)) {
+          if (this.get().charAt(I - 1) === StartQuote) {
+            Q += 1}
+           else if ((this.get().charAt(I - 1) === EndQuote) && (Q > 0)) Q -= 1;
+          if ((Q === 0) && $impl.HaveChar(this.get().charAt(I - 1),AnyOf)) Result = I - 1;
+          I += 1;
+        };
+      };
+      return Result;
+    };
+    this.Split = function (Separators) {
+      var Result = [];
+      Result = $mod.TStringHelper.Split$1.call(this,$mod.TStringHelper.ToCharArray$1.call({get: function () {
+          return Separators;
+        }, set: function (v) {
+          rtl.raiseE("EPropReadOnly");
+        }}));
+      return Result;
+    };
+    this.Split$1 = function (Separators) {
+      var Result = [];
+      Result = $mod.TStringHelper.Split$21.call(this,Separators,"\x00","\x00",$mod.TStringHelper.GetLength.call(this) + 1,$mod.TStringSplitOptions.None);
+      return Result;
+    };
+    var BlockSize = 10;
+    this.Split$21 = function (Separators, AQuoteStart, AQuoteEnd, ACount, Options) {
+      var $Self = this;
+      var Result = [];
+      var S = "";
+      function NextSep(StartIndex) {
+        var Result = 0;
+        if (AQuoteStart !== "\x00") {
+          Result = $mod.TStringHelper.IndexOfAnyUnquoted$1.call({get: function () {
+              return S;
+            }, set: function (v) {
+              S = v;
+            }},Separators,AQuoteStart,AQuoteEnd,StartIndex)}
+         else Result = $mod.TStringHelper.IndexOfAny$3.call({get: function () {
+            return S;
+          }, set: function (v) {
+            S = v;
+          }},Separators,StartIndex);
+        return Result;
+      };
+      function MaybeGrow(Curlen) {
+        if (rtl.length(Result) <= Curlen) Result = rtl.arraySetLength(Result,"",rtl.length(Result) + 10);
+      };
+      var Sep = 0;
+      var LastSep = 0;
+      var Len = 0;
+      var T = "";
+      S = $Self.get();
+      Result = rtl.arraySetLength(Result,"",10);
+      Len = 0;
+      LastSep = 0;
+      Sep = NextSep(0);
+      while ((Sep !== -1) && ((ACount === 0) || (Len < ACount))) {
+        T = $mod.TStringHelper.Substring$1.call($Self,LastSep,Sep - LastSep);
+        if ((T !== "") || !($mod.TStringSplitOptions.ExcludeEmpty === Options)) {
+          MaybeGrow(Len);
+          Result[Len] = T;
+          Len += 1;
+        };
+        LastSep = Sep + 1;
+        Sep = NextSep(LastSep);
+      };
+      if ((LastSep <= $mod.TStringHelper.GetLength.call($Self)) && ((ACount === 0) || (Len < ACount))) {
+        T = $mod.TStringHelper.Substring.call($Self,LastSep);
+        if ((T !== "") || !($mod.TStringSplitOptions.ExcludeEmpty === Options)) {
+          MaybeGrow(Len);
+          Result[Len] = T;
+          Len += 1;
+        };
+      };
+      Result = rtl.arraySetLength(Result,"",Len);
+      return Result;
+    };
+    this.Substring = function (AStartIndex) {
+      var Result = "";
+      Result = $mod.TStringHelper.Substring$1.call(this,AStartIndex,$mod.TStringHelper.GetLength.call(this) - AStartIndex);
+      return Result;
+    };
+    this.Substring$1 = function (AStartIndex, ALen) {
+      var Result = "";
+      Result = pas.System.Copy(this.get(),AStartIndex + 1,ALen);
+      return Result;
+    };
+    this.ToCharArray$1 = function () {
+      var Result = [];
+      Result = $mod.TStringHelper.ToCharArray$2.call(this,0,$mod.TStringHelper.GetLength.call(this));
+      return Result;
+    };
+    this.ToCharArray$2 = function (AStartIndex, ALen) {
+      var Result = [];
+      var I = 0;
+      Result = rtl.arraySetLength(Result,"",ALen);
+      for (var $l = 0, $end = ALen - 1; $l <= $end; $l++) {
+        I = $l;
+        Result[I] = this.get().charAt((AStartIndex + I + 1) - 1);
+      };
+      return Result;
+    };
+  });
+  $mod.$implcode = function () {
+    $impl.DefaultShortMonthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    $impl.DefaultLongMonthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    $impl.DefaultShortDayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    $impl.DefaultLongDayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    $impl.feInvalidFormat = 1;
+    $impl.feMissingArgument = 2;
+    $impl.feInvalidArgIndex = 3;
+    $impl.DoFormatError = function (ErrCode, fmt) {
+      var $tmp = ErrCode;
+      if ($tmp === 1) {
+        throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SInvalidFormat"),pas.System.VarRecs(18,fmt)])}
+       else if ($tmp === 2) {
+        throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SArgumentMissing"),pas.System.VarRecs(18,fmt)])}
+       else if ($tmp === 3) throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SInvalidArgIndex"),pas.System.VarRecs(18,fmt)]);
+    };
+    $impl.maxdigits = 15;
+    $impl.ReplaceDecimalSep = function (S, DS) {
+      var Result = "";
+      var P = 0;
+      P = pas.System.Pos(".",S);
+      if (P > 0) {
+        Result = pas.System.Copy(S,1,P - 1) + DS + pas.System.Copy(S,P + 1,S.length - P)}
+       else Result = S;
+      return Result;
+    };
+    $impl.FormatGeneralFloat = function (Value, Precision, DS) {
+      var Result = "";
+      var P = 0;
+      var PE = 0;
+      var Q = 0;
+      var Exponent = 0;
+      if ((Precision === -1) || (Precision > 15)) Precision = 15;
+      Result = rtl.floatToStr(Value,Precision + 7);
+      Result = $mod.TrimLeft(Result);
+      P = pas.System.Pos(".",Result);
+      if (P === 0) return Result;
+      PE = pas.System.Pos("E",Result);
+      if (PE === 0) {
+        Result = $impl.ReplaceDecimalSep(Result,DS);
+        return Result;
+      };
+      Q = PE + 2;
+      Exponent = 0;
+      while (Q <= Result.length) {
+        Exponent = ((Exponent * 10) + Result.charCodeAt(Q - 1)) - 48;
+        Q += 1;
+      };
+      if (Result.charAt((PE + 1) - 1) === "-") Exponent = -Exponent;
+      if (((P + Exponent) < PE) && (Exponent > -6)) {
+        Result = rtl.strSetLength(Result,PE - 1);
+        if (Exponent >= 0) {
+          for (var $l = 0, $end = Exponent - 1; $l <= $end; $l++) {
+            Q = $l;
+            Result = rtl.setCharAt(Result,P - 1,Result.charAt((P + 1) - 1));
+            P += 1;
+          };
+          Result = rtl.setCharAt(Result,P - 1,".");
+          P = 1;
+          if (Result.charAt(P - 1) === "-") P += 1;
+          while ((Result.charAt(P - 1) === "0") && (P < Result.length) && (pas.System.Copy(Result,P + 1,DS.length) !== DS)) pas.System.Delete({get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},P,1);
+        } else {
+          pas.System.Insert(pas.System.Copy("00000",1,-Exponent),{get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},P - 1);
+          Result = rtl.setCharAt(Result,P - Exponent - 1,Result.charAt(P - Exponent - 1 - 1));
+          Result = rtl.setCharAt(Result,P - 1,".");
+          if (Exponent !== -1) Result = rtl.setCharAt(Result,P - Exponent - 1 - 1,"0");
+        };
+        Q = Result.length;
+        while ((Q > 0) && (Result.charAt(Q - 1) === "0")) Q -= 1;
+        if (Result.charAt(Q - 1) === ".") Q -= 1;
+        if ((Q === 0) || ((Q === 1) && (Result.charAt(0) === "-"))) {
+          Result = "0"}
+         else Result = rtl.strSetLength(Result,Q);
+      } else {
+        while (Result.charAt(PE - 1 - 1) === "0") {
+          pas.System.Delete({get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},PE - 1,1);
+          PE -= 1;
+        };
+        if (Result.charAt(PE - 1 - 1) === DS) {
+          pas.System.Delete({get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},PE - 1,1);
+          PE -= 1;
+        };
+        if (Result.charAt((PE + 1) - 1) === "+") {
+          pas.System.Delete({get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},PE + 1,1)}
+         else PE += 1;
+        while (Result.charAt((PE + 1) - 1) === "0") pas.System.Delete({get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},PE + 1,1);
+      };
+      Result = $impl.ReplaceDecimalSep(Result,DS);
+      return Result;
+    };
+    $impl.FormatExponentFloat = function (Value, Precision, Digits, DS) {
+      var Result = "";
+      var P = 0;
+      DS = $mod.FormatSettings.DecimalSeparator;
+      if ((Precision === -1) || (Precision > 15)) Precision = 15;
+      Result = rtl.floatToStr(Value,Precision + 7);
+      while (Result.charAt(0) === " ") pas.System.Delete({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},1,1);
+      P = pas.System.Pos("E",Result);
+      if (P === 0) {
+        Result = $impl.ReplaceDecimalSep(Result,DS);
+        return Result;
+      };
+      P += 2;
+      if (Digits > 4) Digits = 4;
+      Digits = (Result.length - P - Digits) + 1;
+      if (Digits < 0) {
+        pas.System.Insert(pas.System.Copy("0000",1,-Digits),{get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},P)}
+       else while ((Digits > 0) && (Result.charAt(P - 1) === "0")) {
+        pas.System.Delete({get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},P,1);
+        if (P > Result.length) {
+          pas.System.Delete({get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},P - 2,2);
+          break;
+        };
+        Digits -= 1;
+      };
+      Result = $impl.ReplaceDecimalSep(Result,DS);
+      return Result;
+    };
+    $impl.FormatFixedFloat = function (Value, Digits, DS) {
+      var Result = "";
+      if (Digits === -1) {
+        Digits = 2}
+       else if (Digits > 18) Digits = 18;
+      Result = rtl.floatToStr(Value,0,Digits);
+      if ((Result !== "") && (Result.charAt(0) === " ")) pas.System.Delete({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},1,1);
+      Result = $impl.ReplaceDecimalSep(Result,DS);
+      return Result;
+    };
+    $impl.FormatNumberFloat = function (Value, Digits, DS, TS) {
+      var Result = "";
+      var P = 0;
+      if (Digits === -1) {
+        Digits = 2}
+       else if (Digits > 15) Digits = 15;
+      Result = rtl.floatToStr(Value,0,Digits);
+      if ((Result !== "") && (Result.charAt(0) === " ")) pas.System.Delete({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},1,1);
+      P = pas.System.Pos(".",Result);
+      if (P <= 0) P = Result.length + 1;
+      Result = $impl.ReplaceDecimalSep(Result,DS);
+      P -= 3;
+      if ((TS !== "") && (TS !== "\x00")) while (P > 1) {
+        if (Result.charAt(P - 1 - 1) !== "-") pas.System.Insert(TS,{get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},P);
+        P -= 3;
+      };
+      return Result;
+    };
+    $impl.RemoveLeadingNegativeSign = function (AValue, DS, aThousandSeparator) {
+      var Result = false;
+      var i = 0;
+      var TS = "";
+      var StartPos = 0;
+      Result = false;
+      StartPos = 2;
+      TS = aThousandSeparator;
+      for (var $l = StartPos, $end = AValue.get().length; $l <= $end; $l++) {
+        i = $l;
+        Result = (AValue.get().charCodeAt(i - 1) in rtl.createSet(48,DS.charCodeAt(),69,43)) || (AValue.get().charAt(i - 1) === TS);
+        if (!Result) break;
+      };
+      if (Result && (AValue.get().charAt(0) === "-")) pas.System.Delete(AValue,1,1);
+      return Result;
+    };
+    $impl.FormatNumberCurrency = function (Value, Digits, aSettings) {
+      var Result = "";
+      var Negative = false;
+      var P = 0;
+      var CS = "";
+      var DS = "";
+      var TS = "";
+      DS = aSettings.DecimalSeparator;
+      TS = aSettings.ThousandSeparator;
+      CS = aSettings.CurrencyString;
+      if (Digits === -1) {
+        Digits = aSettings.CurrencyDecimals}
+       else if (Digits > 18) Digits = 18;
+      Result = rtl.floatToStr(Value / 10000,0,Digits);
+      Negative = Result.charAt(0) === "-";
+      if (Negative) pas.System.Delete({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},1,1);
+      P = pas.System.Pos(".",Result);
+      if (TS !== "") {
+        if (P !== 0) {
+          Result = $impl.ReplaceDecimalSep(Result,DS)}
+         else P = Result.length + 1;
+        P -= 3;
+        while (P > 1) {
+          pas.System.Insert(TS,{get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},P);
+          P -= 3;
+        };
+      };
+      if (Negative) $impl.RemoveLeadingNegativeSign({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},DS,TS);
+      if (!Negative) {
+        var $tmp = aSettings.CurrencyFormat;
+        if ($tmp === 0) {
+          Result = CS + Result}
+         else if ($tmp === 1) {
+          Result = Result + CS}
+         else if ($tmp === 2) {
+          Result = CS + " " + Result}
+         else if ($tmp === 3) Result = Result + " " + CS;
+      } else {
+        var $tmp1 = aSettings.NegCurrFormat;
+        if ($tmp1 === 0) {
+          Result = "(" + CS + Result + ")"}
+         else if ($tmp1 === 1) {
+          Result = "-" + CS + Result}
+         else if ($tmp1 === 2) {
+          Result = CS + "-" + Result}
+         else if ($tmp1 === 3) {
+          Result = CS + Result + "-"}
+         else if ($tmp1 === 4) {
+          Result = "(" + Result + CS + ")"}
+         else if ($tmp1 === 5) {
+          Result = "-" + Result + CS}
+         else if ($tmp1 === 6) {
+          Result = Result + "-" + CS}
+         else if ($tmp1 === 7) {
+          Result = Result + CS + "-"}
+         else if ($tmp1 === 8) {
+          Result = "-" + Result + " " + CS}
+         else if ($tmp1 === 9) {
+          Result = "-" + CS + " " + Result}
+         else if ($tmp1 === 10) {
+          Result = Result + " " + CS + "-"}
+         else if ($tmp1 === 11) {
+          Result = CS + " " + Result + "-"}
+         else if ($tmp1 === 12) {
+          Result = CS + " " + "-" + Result}
+         else if ($tmp1 === 13) {
+          Result = Result + "-" + " " + CS}
+         else if ($tmp1 === 14) {
+          Result = "(" + CS + " " + Result + ")"}
+         else if ($tmp1 === 15) Result = "(" + Result + " " + CS + ")";
+      };
+      return Result;
+    };
+    $impl.RESpecials = "([\\$\\+\\[\\]\\(\\)\\\\\\.\\*\\^\\?\\|])";
+    $impl.IntTryStrToInt = function (S, res, aSep) {
+      var Result = false;
+      var Radix = 10;
+      var N = "";
+      var J = undefined;
+      N = S;
+      if ((pas.System.Pos(aSep,N) !== 0) || (pas.System.Pos(".",N) !== 0)) return false;
+      var $tmp = pas.System.Copy(N,1,1);
+      if ($tmp === "$") {
+        Radix = 16}
+       else if ($tmp === "&") {
+        Radix = 8}
+       else if ($tmp === "%") Radix = 2;
+      if ((Radix !== 16) && (pas.System.Pos("e",$mod.LowerCase(N)) !== 0)) return false;
+      if (Radix !== 10) pas.System.Delete({get: function () {
+          return N;
+        }, set: function (v) {
+          N = v;
+        }},1,1);
+      J = parseInt(N,Radix);
+      Result = !isNaN(J);
+      if (Result) res.set(rtl.trunc(J));
+      return Result;
+    };
+    $impl.InitGlobalFormatSettings = function () {
+      $mod.FormatSettings.$assign($mod.TFormatSettings.Create());
+      $mod.TimeSeparator = $mod.FormatSettings.TimeSeparator;
+      $mod.DateSeparator = $mod.FormatSettings.DateSeparator;
+      $mod.ShortDateFormat = $mod.FormatSettings.ShortDateFormat;
+      $mod.LongDateFormat = $mod.FormatSettings.LongDateFormat;
+      $mod.ShortTimeFormat = $mod.FormatSettings.ShortTimeFormat;
+      $mod.LongTimeFormat = $mod.FormatSettings.LongTimeFormat;
+      $mod.DecimalSeparator = $mod.FormatSettings.DecimalSeparator;
+      $mod.ThousandSeparator = $mod.FormatSettings.ThousandSeparator;
+      $mod.TimeAMString = $mod.FormatSettings.TimeAMString;
+      $mod.TimePMString = $mod.FormatSettings.TimePMString;
+      $mod.CurrencyFormat = $mod.FormatSettings.CurrencyFormat;
+      $mod.NegCurrFormat = $mod.FormatSettings.NegCurrFormat;
+      $mod.CurrencyDecimals = $mod.FormatSettings.CurrencyDecimals;
+      $mod.CurrencyString = $mod.FormatSettings.CurrencyString;
+    };
+    $impl.HaveChar = function (AChar, AList) {
+      var Result = false;
+      var I = 0;
+      I = 0;
+      Result = false;
+      while (!Result && (I < rtl.length(AList))) {
+        Result = AList[I] === AChar;
+        I += 1;
+      };
+      return Result;
+    };
+  };
   $mod.$init = function () {
+    (function () {
+      $impl.InitGlobalFormatSettings();
+    })();
     $mod.ShortMonthNames = $impl.DefaultShortMonthNames.slice(0);
     $mod.LongMonthNames = $impl.DefaultLongMonthNames.slice(0);
     $mod.ShortDayNames = $impl.DefaultShortDayNames.slice(0);
     $mod.LongDayNames = $impl.DefaultLongDayNames.slice(0);
   };
-},null,function () {
+},[]);
+rtl.module("DOM",["System","JS","Web","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  var $impl = $mod.$impl;
-  $impl.DefaultShortMonthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  $impl.DefaultLongMonthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  $impl.DefaultShortDayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  $impl.DefaultLongDayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  rtl.createClass(this,"TDomNodeList",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FItems = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.GetItem = function (Index) {
+      var Result = null;
+      Result = this.FItems[Index];
+      return Result;
+    };
+    this.Create$1 = function (ANodes) {
+      var I = 0;
+      pas.System.TObject.Create.call(this);
+      this.FItems = rtl.arraySetLength(this.FItems,null,ANodes.length);
+      for (var $l = 0, $end = ANodes.length - 1; $l <= $end; $l++) {
+        I = $l;
+        this.FItems[I] = $mod.WrapDomNode(ANodes.item(I));
+      };
+      return this;
+    };
+    this.Count = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TDomNamedNodeMap",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FItems = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.GetItem = function (Index) {
+      var Result = null;
+      Result = this.FItems[Index];
+      return Result;
+    };
+    this.Create$1 = function (AAttributes) {
+      var I = 0;
+      var N = 0;
+      pas.System.TObject.Create.call(this);
+      if (AAttributes === null) {
+        N = 0}
+       else N = rtl.trunc(AAttributes["length"]);
+      this.FItems = rtl.arraySetLength(this.FItems,null,N);
+      for (var $l = 0, $end = N - 1; $l <= $end; $l++) {
+        I = $l;
+        this.FItems[I] = $mod.TDomNode.$create("Create$1",[AAttributes.item(I)]);
+      };
+      return this;
+    };
+    this.Length = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TDomNode",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FNode = null;
+    };
+    this.$final = function () {
+      this.FNode = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function (ANode) {
+      pas.System.TObject.Create.call(this);
+      this.FNode = ANode;
+      return this;
+    };
+    this.FindNode = function (AName) {
+      var Result = null;
+      var I = 0;
+      var Nodes = null;
+      var Child = null;
+      Result = null;
+      Nodes = this.GetChildNodes();
+      for (var $l = 0, $end = Nodes.Count() - 1; $l <= $end; $l++) {
+        I = $l;
+        Child = Nodes.GetItem(I);
+        if (pas.SysUtils.SameText(Child.GetNodeName(),AName)) return Child;
+      };
+      return Result;
+    };
+    this.CompareName = function (AName) {
+      var Result = 0;
+      if (pas.SysUtils.SameText(this.GetNodeName(),AName)) {
+        Result = 0}
+       else Result = 1;
+      return Result;
+    };
+    this.GetAttributes = function () {
+      var Result = null;
+      if (this.FNode.nodeType === 1) {
+        Result = $mod.TDomNamedNodeMap.$create("Create$1",[this.FNode.attributes])}
+       else Result = $mod.TDomNamedNodeMap.$create("Create$1",[null]);
+      return Result;
+    };
+    this.GetChildNodes = function () {
+      var Result = null;
+      Result = $mod.TDomNodeList.$create("Create$1",[this.FNode.childNodes]);
+      return Result;
+    };
+    this.GetParentNode = function () {
+      var Result = null;
+      Result = $mod.WrapDomNode(this.FNode.parentNode);
+      return Result;
+    };
+    this.GetNodeName = function () {
+      var Result = "";
+      Result = this.FNode.nodeName;
+      return Result;
+    };
+    this.GetNodeValue = function () {
+      var Result = "";
+      Result = this.FNode.nodeValue;
+      return Result;
+    };
+    this.GetTextContent = function () {
+      var Result = "";
+      Result = this.FNode.textContent;
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TDomElement",this.TDomNode,function () {
+    this.GetAttribute = function (AName) {
+      var Result = "";
+      Result = this.FNode.getAttribute(AName);
+      return Result;
+    };
+    this.Create$2 = function (ANode) {
+      $mod.TDomNode.Create$1.call(this,ANode);
+      return this;
+    };
+  });
+  rtl.createClass(this,"TXmlDocument",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FDocument = null;
+    };
+    this.$final = function () {
+      this.FDocument = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.GetDocumentElement = function () {
+      var Result = null;
+      Result = $mod.WrapDomNode(this.FDocument.documentElement);
+      return Result;
+    };
+  });
+  this.WrapDomNode = function (ANode) {
+    var Result = null;
+    if (ANode === null) return null;
+    if (ANode.nodeType === 1) {
+      Result = $mod.TDomElement.$create("Create$2",[ANode])}
+     else Result = $mod.TDomNode.$create("Create$1",[ANode]);
+    return Result;
+  };
 });
-rtl.module("Classes",["System","Types","SysUtils","JS"],function () {
+rtl.module("Classes",["System","RTLConsts","Types","SysUtils","JS"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  rtl.createClass(this,"EListError",pas.SysUtils.Exception,function () {
+  });
+  rtl.createClass(this,"EStringListError",this.EListError,function () {
+  });
+  rtl.createClass(this,"TPersistent",pas.System.TObject,function () {
+  });
+  rtl.createClass(this,"TStrings",this.TPersistent,function () {
+    this.$init = function () {
+      $mod.TPersistent.$init.call(this);
+      this.FSpecialCharsInited = false;
+      this.FAlwaysQuote = false;
+      this.FQuoteChar = "";
+      this.FDelimiter = "";
+      this.FNameValueSeparator = "";
+      this.FUpdateCount = 0;
+      this.FLBS = 0;
+      this.FLineBreak = "";
+    };
+    this.DoSetTextStr = function (Value, DoClear) {
+      var S = "";
+      var P = 0;
+      try {
+        this.BeginUpdate();
+        if (DoClear) this.Clear();
+        P = 1;
+        while (this.GetNextLinebreak(Value,{get: function () {
+            return S;
+          }, set: function (v) {
+            S = v;
+          }},{get: function () {
+            return P;
+          }, set: function (v) {
+            P = v;
+          }})) this.Add(S);
+      } finally {
+        this.EndUpdate();
+      };
+    };
+    this.Error = function (Msg, Data) {
+      throw $mod.EStringListError.$create("CreateFmt",[Msg,pas.System.VarRecs(18,pas.SysUtils.IntToStr(Data))]);
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = this.GetCount();
+      return Result;
+    };
+    this.SetTextStr = function (Value) {
+      this.CheckSpecialChars();
+      this.DoSetTextStr(Value,true);
+    };
+    this.SetUpdateState = function (Updating) {
+      if (Updating) ;
+    };
+    this.CheckSpecialChars = function () {
+      if (!this.FSpecialCharsInited) {
+        this.FQuoteChar = '"';
+        this.FDelimiter = ",";
+        this.FNameValueSeparator = "=";
+        this.FLBS = pas.System.DefaultTextLineBreakStyle;
+        this.FSpecialCharsInited = true;
+        this.FLineBreak = pas.System.sLineBreak;
+      };
+    };
+    this.GetNextLinebreak = function (Value, S, P) {
+      var Result = false;
+      var PPLF = 0;
+      var PPCR = 0;
+      var PP = 0;
+      var PL = 0;
+      S.set("");
+      Result = false;
+      if ((Value.length - P.get()) < 0) return Result;
+      PPLF = Value.indexOf("\n",P.get() - 1) + 1;
+      PPCR = Value.indexOf("\r",P.get() - 1) + 1;
+      PL = 1;
+      if ((PPLF > 0) && (PPCR > 0)) {
+        if ((PPLF - PPCR) === 1) PL = 2;
+        if (PPLF < PPCR) {
+          PP = PPLF}
+         else PP = PPCR;
+      } else if ((PPLF > 0) && (PPCR < 1)) {
+        PP = PPLF}
+       else if ((PPCR > 0) && (PPLF < 1)) {
+        PP = PPCR}
+       else PP = Value.length + 1;
+      S.set(pas.System.Copy(Value,P.get(),PP - P.get()));
+      P.set(PP + PL);
+      Result = true;
+      return Result;
+    };
+    this.Create$1 = function () {
+      pas.System.TObject.Create.call(this);
+      this.FAlwaysQuote = false;
+      return this;
+    };
+    this.Destroy = function () {
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.Add = function (S) {
+      var Result = 0;
+      Result = this.GetCount();
+      this.Insert(this.GetCount(),S);
+      return Result;
+    };
+    this.BeginUpdate = function () {
+      if (this.FUpdateCount === 0) this.SetUpdateState(true);
+      this.FUpdateCount += 1;
+    };
+    this.EndUpdate = function () {
+      if (this.FUpdateCount > 0) this.FUpdateCount -= 1;
+      if (this.FUpdateCount === 0) this.SetUpdateState(false);
+    };
+  });
+  rtl.recNewT(this,"TStringItem",function () {
+    this.FString = "";
+    this.FObject = null;
+    this.$eq = function (b) {
+      return (this.FString === b.FString) && (this.FObject === b.FObject);
+    };
+    this.$assign = function (s) {
+      this.FString = s.FString;
+      this.FObject = s.FObject;
+      return this;
+    };
+  });
+  this.TStringsSortStyle = {"0": "sslNone", sslNone: 0, "1": "sslUser", sslUser: 1, "2": "sslAuto", sslAuto: 2};
+  rtl.createClass(this,"TStringList",this.TStrings,function () {
+    this.$init = function () {
+      $mod.TStrings.$init.call(this);
+      this.FList = [];
+      this.FCount = 0;
+      this.FOnChange = null;
+      this.FOnChanging = null;
+      this.FDuplicates = 0;
+      this.FCaseSensitive = false;
+      this.FOwnsObjects = false;
+      this.FSortStyle = 0;
+    };
+    this.$final = function () {
+      this.FList = undefined;
+      this.FOnChange = undefined;
+      this.FOnChanging = undefined;
+      $mod.TStrings.$final.call(this);
+    };
+    this.GetSorted = function () {
+      var Result = false;
+      Result = this.FSortStyle in rtl.createSet($mod.TStringsSortStyle.sslUser,$mod.TStringsSortStyle.sslAuto);
+      return Result;
+    };
+    this.Grow = function () {
+      var NC = 0;
+      NC = this.GetCapacity();
+      if (NC >= 256) {
+        NC = NC + rtl.trunc(NC / 4)}
+       else if (NC === 0) {
+        NC = 4}
+       else NC = NC * 4;
+      this.SetCapacity(NC);
+    };
+    this.InternalClear = function (FromIndex, ClearOnly) {
+      var I = 0;
+      if (FromIndex < this.FCount) {
+        if (this.FOwnsObjects) {
+          for (var $l = FromIndex, $end = this.FCount - 1; $l <= $end; $l++) {
+            I = $l;
+            this.FList[I].FString = "";
+            pas.SysUtils.FreeAndNil({p: this.FList[I], get: function () {
+                return this.p.FObject;
+              }, set: function (v) {
+                this.p.FObject = v;
+              }});
+          };
+        } else {
+          for (var $l1 = FromIndex, $end1 = this.FCount - 1; $l1 <= $end1; $l1++) {
+            I = $l1;
+            this.FList[I].FString = "";
+          };
+        };
+        this.FCount = FromIndex;
+      };
+      if (!ClearOnly) this.SetCapacity(0);
+    };
+    this.CheckIndex = function (AIndex) {
+      if ((AIndex < 0) || (AIndex >= this.FCount)) this.Error(rtl.getResStr(pas.RTLConsts,"SListIndexError"),AIndex);
+    };
+    this.Changed = function () {
+      if (this.FUpdateCount === 0) {
+        if (this.FOnChange != null) this.FOnChange(this);
+      };
+    };
+    this.Changing = function () {
+      if (this.FUpdateCount === 0) if (this.FOnChanging != null) this.FOnChanging(this);
+    };
+    this.Get = function (Index) {
+      var Result = "";
+      this.CheckIndex(Index);
+      Result = this.FList[Index].FString;
+      return Result;
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = rtl.length(this.FList);
+      return Result;
+    };
+    this.GetCount = function () {
+      var Result = 0;
+      Result = this.FCount;
+      return Result;
+    };
+    this.SetCapacity = function (NewCapacity) {
+      if (NewCapacity < 0) this.Error(rtl.getResStr(pas.RTLConsts,"SListCapacityError"),NewCapacity);
+      if (NewCapacity !== this.GetCapacity()) this.FList = rtl.arraySetLength(this.FList,$mod.TStringItem,NewCapacity);
+    };
+    this.SetUpdateState = function (Updating) {
+      if (Updating) {
+        this.Changing()}
+       else this.Changed();
+    };
+    this.InsertItem = function (Index, S) {
+      this.InsertItem$1(Index,S,null);
+    };
+    this.InsertItem$1 = function (Index, S, O) {
+      var It = $mod.TStringItem.$new();
+      this.Changing();
+      if (this.FCount === this.GetCapacity()) this.Grow();
+      It.FString = S;
+      It.FObject = O;
+      this.FList.splice(Index,0,It);
+      this.FCount += 1;
+      this.Changed();
+    };
+    this.DoCompareText = function (s1, s2) {
+      var Result = 0;
+      if (this.FCaseSensitive) {
+        Result = pas.SysUtils.CompareStr(s1,s2)}
+       else Result = pas.SysUtils.CompareText(s1,s2);
+      return Result;
+    };
+    this.Destroy = function () {
+      this.InternalClear(0,false);
+      $mod.TStrings.Destroy.call(this);
+    };
+    this.Add = function (S) {
+      var Result = 0;
+      if (!(this.FSortStyle === $mod.TStringsSortStyle.sslAuto)) {
+        Result = this.FCount}
+       else if (this.Find(S,{get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }})) {
+        var $tmp = this.FDuplicates;
+        if ($tmp === pas.Types.TDuplicates.dupIgnore) {
+          return Result}
+         else if ($tmp === pas.Types.TDuplicates.dupError) this.Error(rtl.getResStr(pas.RTLConsts,"SDuplicateString"),0);
+      };
+      this.InsertItem(Result,S);
+      return Result;
+    };
+    this.Clear = function () {
+      if (this.FCount === 0) return;
+      this.Changing();
+      this.InternalClear(0,false);
+      this.Changed();
+    };
+    this.Delete = function (Index) {
+      this.CheckIndex(Index);
+      this.Changing();
+      if (this.FOwnsObjects) pas.SysUtils.FreeAndNil({p: this.FList[Index], get: function () {
+          return this.p.FObject;
+        }, set: function (v) {
+          this.p.FObject = v;
+        }});
+      this.FList.splice(Index,1);
+      this.FList[this.GetCount() - 1].FString = "";
+      this.FList[this.GetCount() - 1].FObject = null;
+      this.FCount -= 1;
+      this.Changed();
+    };
+    this.Find = function (S, Index) {
+      var Result = false;
+      var L = 0;
+      var R = 0;
+      var I = 0;
+      var CompareRes = 0;
+      Result = false;
+      Index.set(-1);
+      if (!this.GetSorted()) throw $mod.EListError.$create("Create$1",[rtl.getResStr(pas.RTLConsts,"SErrFindNeedsSortedList")]);
+      L = 0;
+      R = this.GetCount() - 1;
+      while (L <= R) {
+        I = L + rtl.trunc((R - L) / 2);
+        CompareRes = this.DoCompareText(S,this.FList[I].FString);
+        if (CompareRes > 0) {
+          L = I + 1}
+         else {
+          R = I - 1;
+          if (CompareRes === 0) {
+            Result = true;
+            if (this.FDuplicates !== pas.Types.TDuplicates.dupAccept) L = I;
+          };
+        };
+      };
+      Index.set(L);
+      return Result;
+    };
+    this.Insert = function (Index, S) {
+      if (this.FSortStyle === $mod.TStringsSortStyle.sslAuto) {
+        this.Error(rtl.getResStr(pas.RTLConsts,"SSortedListError"),0)}
+       else {
+        if ((Index < 0) || (Index > this.FCount)) this.Error(rtl.getResStr(pas.RTLConsts,"SListIndexError"),Index);
+        this.InsertItem(Index,S);
+      };
+    };
+  });
+  $mod.$implcode = function () {
+    $impl.ClassList = null;
+  };
   $mod.$init = function () {
     $impl.ClassList = new Object();
   };
-},[],function () {
-  "use strict";
-  var $mod = this;
-  var $impl = $mod.$impl;
-  $impl.ClassList = null;
-});
+},[]);
 rtl.module("Generics.Strings",["System"],function () {
   "use strict";
   var $mod = this;
@@ -1743,75 +3405,27 @@ rtl.module("Generics.Strings",["System"],function () {
 rtl.module("Generics.Defaults",["System"],function () {
   "use strict";
   var $mod = this;
-  rtl.createInterface($mod,"IComparer$G25","{505778ED-F783-4456-9691-32F419CC5E18}",["Compare"],pas.System.IUnknown);
+  rtl.createInterface(this,"IComparer$G23","{505778ED-F783-4456-9691-32F419CC5E18}",["Compare"],pas.System.IUnknown,"IComparer<System.Longint>");
+  rtl.createInterface(this,"IComparer$G27","{505778ED-F783-4456-9691-32F419CC5E18}",["Compare"],pas.System.IUnknown,"IComparer<uPart.TPart>");
+  rtl.createInterface(this,"IComparer$G36","{505778ED-F783-4456-9691-32F419CC5E18}",["Compare"],pas.System.IUnknown,"IComparer<System.String>");
 });
-rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","Generics.Strings","Generics.Defaults"],function () {
+rtl.module("Generics.Collections",["System","Classes","SysUtils","RTLConsts","Types","JS","Generics.Strings","Generics.Defaults"],function () {
   "use strict";
   var $mod = this;
-  $mod.$rtti.$Class("TEnumerator$G19");
-  $mod.$rtti.$Class("TEnumerable$G18");
-  $mod.$rtti.$Class("TCustomList$G11");
-  $mod.$rtti.$Class("TCustomListEnumerator$G9");
-  $mod.$rtti.$Class("TList$G4");
-  $mod.$rtti.$Class("TEnumerator$G20");
-  $mod.$rtti.$Class("TEnumerable$G19");
-  $mod.$rtti.$Class("TCustomList$G12");
-  $mod.$rtti.$Class("TCustomListEnumerator$G10");
-  $mod.$rtti.$Class("TList$G5");
-  $mod.$rtti.$Class("TEnumerable$G20");
-  $mod.$rtti.$Class("TCustomList$G13");
-  $mod.$rtti.$Class("TList$G6");
-  $mod.$rtti.$Class("TEnumerable$G21");
-  $mod.$rtti.$Class("TCustomList$G14");
-  $mod.$rtti.$Class("TList$G7");
-  $mod.$rtti.$Class("TEnumerator$G23");
-  $mod.$rtti.$Class("TEnumerable$G22");
-  $mod.$rtti.$Class("TCustomList$G15");
-  $mod.$rtti.$Class("TCustomListEnumerator$G13");
-  $mod.$rtti.$Class("TList$G8");
-  $mod.$rtti.$Class("TEnumerator$G25");
-  $mod.$rtti.$Class("TEnumerable$G24");
-  $mod.$rtti.$Class("TCustomList$G17");
-  $mod.$rtti.$Class("TCustomListEnumerator$G15");
-  $mod.$rtti.$Class("TList$G10");
-  $mod.$rtti.$Class("TEnumerator$G26");
-  $mod.$rtti.$Class("TEnumerable$G25");
-  $mod.$rtti.$Class("TCustomList$G18");
-  $mod.$rtti.$Class("TCustomListEnumerator$G16");
-  $mod.$rtti.$Class("TList$G11");
-  $mod.$rtti.$Class("TEnumerator$G27");
-  $mod.$rtti.$Class("TEnumerable$G26");
-  $mod.$rtti.$Class("TCustomList$G19");
-  $mod.$rtti.$Class("TCustomListEnumerator$G17");
-  $mod.$rtti.$Class("TList$G12");
-  $mod.$rtti.$Class("TEnumerable$G27");
-  $mod.$rtti.$Class("TCustomList$G20");
-  $mod.$rtti.$Class("TList$G13");
-  $mod.$rtti.$Class("TEnumerable$G28");
-  $mod.$rtti.$Class("TCustomList$G21");
-  $mod.$rtti.$Class("TList$G14");
-  $mod.$rtti.$Class("TEnumerable$G29");
-  $mod.$rtti.$Class("TCustomList$G22");
-  $mod.$rtti.$Class("TList$G15");
-  $mod.$rtti.$Class("TEnumerable$G30");
-  $mod.$rtti.$Class("TCustomList$G23");
-  $mod.$rtti.$Class("TList$G16");
-  $mod.$rtti.$Class("TEnumerator$G32");
-  $mod.$rtti.$Class("TEnumerable$G31");
-  $mod.$rtti.$Class("TCustomList$G24");
-  $mod.$rtti.$Class("TCustomListEnumerator$G22");
-  $mod.$rtti.$Class("TList$G17");
+  var $impl = $mod.$impl;
   this.TCollectionNotification = {"0": "cnAdded", cnAdded: 0, "1": "cnRemoved", cnRemoved: 1, "2": "cnExtracted", cnExtracted: 2};
-  rtl.createClass($mod,"TEnumerator$G19",pas.System.TObject,function () {
+  rtl.createClass(this,"EDictionary",pas.SysUtils.Exception,function () {
+  });
+  rtl.createClass(this,"TEnumerator$G19",pas.System.TObject,function () {
     this.MoveNext = function () {
       var Result = false;
       Result = this.DoMoveNext();
       return Result;
     };
-  });
-  rtl.createClass($mod,"TEnumerable$G18",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G11",$mod.TEnumerable$G18,function () {
+  },"TEnumerator<uVectorImage.TVectorCommand>");
+  rtl.createClass(this,"TEnumerable$G18",pas.System.TObject,function () {
+  },"TEnumerable<uVectorImage.TVectorCommand>");
+  rtl.createClass(this,"TCustomList$G11",this.TEnumerable$G18,function () {
     this.$init = function () {
       $mod.TEnumerable$G18.$init.call(this);
       this.FOnNotify = null;
@@ -1831,8 +3445,8 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
     this.Notify = function (AValue, ACollectionNotification) {
       if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
     };
-  });
-  rtl.createClass($mod,"TCustomListEnumerator$G9",$mod.TEnumerator$G19,function () {
+  },"TCustomList<uVectorImage.TVectorCommand>");
+  rtl.createClass(this,"TCustomListEnumerator$G9",this.TEnumerator$G19,function () {
     this.$init = function () {
       $mod.TEnumerator$G19.$init.call(this);
       this.FList = null;
@@ -1864,10 +3478,10 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.FList = AList;
       return this;
     };
-  });
-  rtl.createClass($mod,"TList$G4",$mod.TCustomList$G11,function () {
+  },"TCustomListEnumerator<uVectorImage.TVectorCommand>");
+  rtl.createClass(this,"TList$G4",this.TCustomList$G11,function () {
     rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G9,function () {
-    });
+    },"TList<uVectorImage.TVectorCommand>.TEnumerator");
     this.SetCapacity = function (AValue) {
       if (AValue < this.FLength) this.SetCount(AValue);
       this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
@@ -1903,17 +3517,10 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.SetCount(0);
       this.SetCapacity(0);
     };
-  });
-  rtl.createClass($mod,"TEnumerator$G20",pas.System.TObject,function () {
-    this.MoveNext = function () {
-      var Result = false;
-      Result = this.DoMoveNext();
-      return Result;
-    };
-  });
-  rtl.createClass($mod,"TEnumerable$G19",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G12",$mod.TEnumerable$G19,function () {
+  },"TList<uVectorImage.TVectorCommand>");
+  rtl.createClass(this,"TEnumerable$G19",pas.System.TObject,function () {
+  },"TEnumerable<uSolvedState.TFaceProperties>");
+  rtl.createClass(this,"TCustomList$G12",this.TEnumerable$G19,function () {
     this.$init = function () {
       $mod.TEnumerable$G19.$init.call(this);
       this.FOnNotify = null;
@@ -1930,19 +3537,206 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       Result = rtl.length(this.FItems);
       return Result;
     };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(null);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
     this.Notify = function (AValue, ACollectionNotification) {
       if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
     };
-  });
-  rtl.createClass($mod,"TCustomListEnumerator$G10",$mod.TEnumerator$G20,function () {
+  },"TCustomList<uSolvedState.TFaceProperties>");
+  rtl.createClass(this,"TList$G5",this.TCustomList$G12,function () {
+    this.SetCapacity = function (AValue) {
+      if (AValue < this.FLength) this.SetCount(AValue);
+      this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
+    };
+    this.SetCount = function (AValue) {
+      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      if (AValue > this.GetCapacity()) {
+        this.SetCapacity(AValue)}
+       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
+      this.FLength = AValue;
+    };
+    this.InitializeList = function () {
+    };
+    this.GetItem = function (AIndex) {
+      var Result = null;
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result = this.FItems[AIndex];
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
+    this.Destroy = function () {
+      this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
+    this.DeleteRange = function (AIndex, ACount) {
+      var LDeleted = [];
+      var i = 0;
+      if (ACount === 0) return;
+      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      LDeleted = this.FItems.splice(AIndex,this.FLength);
+      this.FLength -= ACount;
+      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
+      };
+    };
+  },"TList<uSolvedState.TFaceProperties>");
+  rtl.createClass(this,"TEnumerable$G20",pas.System.TObject,function () {
+  },"TEnumerable<uSolvedState.TSolvedState>");
+  rtl.createClass(this,"TCustomList$G13",this.TEnumerable$G20,function () {
     this.$init = function () {
-      $mod.TEnumerator$G20.$init.call(this);
+      $mod.TEnumerable$G20.$init.call(this);
+      this.FOnNotify = null;
+      this.FLength = 0;
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FOnNotify = undefined;
+      this.FItems = undefined;
+      $mod.TEnumerable$G20.$final.call(this);
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(null);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
+    this.Notify = function (AValue, ACollectionNotification) {
+      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
+    };
+  },"TCustomList<uSolvedState.TSolvedState>");
+  rtl.createClass(this,"TList$G6",this.TCustomList$G13,function () {
+    this.SetCapacity = function (AValue) {
+      if (AValue < this.FLength) this.SetCount(AValue);
+      this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
+    };
+    this.SetCount = function (AValue) {
+      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      if (AValue > this.GetCapacity()) {
+        this.SetCapacity(AValue)}
+       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
+      this.FLength = AValue;
+    };
+    this.InitializeList = function () {
+    };
+    this.GetItem = function (AIndex) {
+      var Result = null;
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result = this.FItems[AIndex];
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
+    this.Destroy = function () {
+      this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
+    this.DeleteRange = function (AIndex, ACount) {
+      var LDeleted = [];
+      var i = 0;
+      if (ACount === 0) return;
+      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      LDeleted = this.FItems.splice(AIndex,this.FLength);
+      this.FLength -= ACount;
+      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
+      };
+    };
+    this.Clear = function () {
+      this.SetCount(0);
+      this.SetCapacity(0);
+    };
+  },"TList<uSolvedState.TSolvedState>");
+  rtl.createClass(this,"TEnumerator$G22",pas.System.TObject,function () {
+    this.MoveNext = function () {
+      var Result = false;
+      Result = this.DoMoveNext();
+      return Result;
+    };
+  },"TEnumerator<uVector.TVector>");
+  rtl.createClass(this,"TEnumerable$G21",pas.System.TObject,function () {
+    this.GetEnumerator = function () {
+      var Result = null;
+      Result = this.DoGetEnumerator();
+      return Result;
+    };
+  },"TEnumerable<uVector.TVector>");
+  rtl.createClass(this,"TCustomList$G14",this.TEnumerable$G21,function () {
+    this.$init = function () {
+      $mod.TEnumerable$G21.$init.call(this);
+      this.FOnNotify = null;
+      this.FLength = 0;
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FOnNotify = undefined;
+      this.FItems = undefined;
+      $mod.TEnumerable$G21.$final.call(this);
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(pas.uVector.TVector.$new());
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
+    this.Notify = function (AValue, ACollectionNotification) {
+      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
+    };
+    this.DoRemove = function (AIndex, ACollectionNotification) {
+      var Result = pas.uVector.TVector.$new();
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result.$assign(this.FItems[AIndex]);
+      this.FLength -= 1;
+      this.FItems[AIndex].$assign(pas.uVector.TVector.$new());
+      this.FItems.splice(AIndex,1);
+      this.Notify(Result,ACollectionNotification);
+      return Result;
+    };
+  },"TCustomList<uVector.TVector>");
+  rtl.createClass(this,"TCustomListEnumerator$G12",this.TEnumerator$G22,function () {
+    this.$init = function () {
+      $mod.TEnumerator$G22.$init.call(this);
       this.FList = null;
       this.FIndex = 0;
     };
     this.$final = function () {
       this.FList = undefined;
-      $mod.TEnumerator$G20.$final.call(this);
+      $mod.TEnumerator$G22.$final.call(this);
     };
     this.DoMoveNext = function () {
       var Result = false;
@@ -1966,10 +3760,10 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.FList = AList;
       return this;
     };
-  });
-  rtl.createClass($mod,"TList$G5",$mod.TCustomList$G12,function () {
-    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G10,function () {
-    });
+  },"TCustomListEnumerator<uVector.TVector>");
+  rtl.createClass(this,"TList$G7",this.TCustomList$G14,function () {
+    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G12,function () {
+    },"TList<uVector.TVector>.TEnumerator");
     this.SetCapacity = function (AValue) {
       if (AValue < this.FLength) this.SetCount(AValue);
       this.FItems = rtl.arraySetLength(this.FItems,pas.uVector.TVector,AValue);
@@ -1980,6 +3774,13 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
         this.SetCapacity(AValue)}
        else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
       this.FLength = AValue;
+    };
+    this.InitializeList = function () {
+    };
+    this.DoGetEnumerator = function () {
+      var Result = null;
+      Result = this.GetEnumerator$1();
+      return Result;
     };
     this.GetItem = function (AIndex) {
       var Result = pas.uVector.TVector.$new();
@@ -1998,63 +3799,6 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       Result = this.TEnumerator.$create("Create$1",[this]);
       return Result;
     };
-    this.Destroy = function () {
-      this.SetCapacity(0);
-    };
-    this.DeleteRange = function (AIndex, ACount) {
-      var LDeleted = [];
-      var i = 0;
-      if (ACount === 0) return;
-      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      LDeleted = this.FItems.splice(AIndex,this.FLength);
-      this.FLength -= ACount;
-      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
-        i = $l;
-        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
-      };
-    };
-    this.Clear = function () {
-      this.SetCount(0);
-      this.SetCapacity(0);
-    };
-  });
-  rtl.createClass($mod,"TEnumerable$G20",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G13",$mod.TEnumerable$G20,function () {
-    this.$init = function () {
-      $mod.TEnumerable$G20.$init.call(this);
-      this.FOnNotify = null;
-      this.FLength = 0;
-      this.FItems = [];
-    };
-    this.$final = function () {
-      this.FOnNotify = undefined;
-      this.FItems = undefined;
-      $mod.TEnumerable$G20.$final.call(this);
-    };
-    this.GetCapacity = function () {
-      var Result = 0;
-      Result = rtl.length(this.FItems);
-      return Result;
-    };
-    this.Notify = function (AValue, ACollectionNotification) {
-      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
-    };
-  });
-  rtl.createClass($mod,"TList$G6",$mod.TCustomList$G13,function () {
-    this.SetCapacity = function (AValue) {
-      if (AValue < this.FLength) this.SetCount(AValue);
-      this.FItems = rtl.arraySetLength(this.FItems,0,AValue);
-    };
-    this.SetCount = function (AValue) {
-      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      if (AValue > this.GetCapacity()) {
-        this.SetCapacity(AValue)}
-       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
-      this.FLength = AValue;
-    };
-    this.InitializeList = function () {
-    };
     this.Create$1 = function () {
       this.InitializeList();
       return this;
@@ -2062,60 +3806,27 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
     this.Destroy = function () {
       this.SetCapacity(0);
     };
-    this.DeleteRange = function (AIndex, ACount) {
-      var LDeleted = [];
-      var i = 0;
-      if (ACount === 0) return;
-      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      LDeleted = this.FItems.splice(AIndex,this.FLength);
-      this.FLength -= ACount;
-      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
-        i = $l;
-        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
-      };
-    };
-    this.Clear = function () {
-      this.SetCount(0);
-      this.SetCapacity(0);
-    };
-  });
-  rtl.createClass($mod,"TEnumerable$G21",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G14",$mod.TEnumerable$G21,function () {
-    this.$init = function () {
-      $mod.TEnumerable$G21.$init.call(this);
-      this.FOnNotify = null;
-      this.FLength = 0;
-      this.FItems = [];
-    };
-    this.$final = function () {
-      this.FOnNotify = undefined;
-      this.FItems = undefined;
-      $mod.TEnumerable$G21.$final.call(this);
-    };
-    this.GetCapacity = function () {
+    this.Add = function (AValue) {
       var Result = 0;
-      Result = rtl.length(this.FItems);
+      Result = this.PrepareAddingItem();
+      this.FItems[Result].$assign(AValue);
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
       return Result;
     };
-    this.Notify = function (AValue, ACollectionNotification) {
-      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
+    this.AddRange$2 = function (AEnumerable) {
+      var LValue = pas.uVector.TVector.$new();
+      var $in = AEnumerable.GetEnumerator();
+      try {
+        while ($in.MoveNext()) {
+          LValue = $in.DoGetCurrent();
+          this.Add(LValue);
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
     };
-  });
-  rtl.createClass($mod,"TList$G7",$mod.TCustomList$G14,function () {
-    this.SetCapacity = function (AValue) {
-      if (AValue < this.FLength) this.SetCount(AValue);
-      this.FItems = rtl.arraySetLength(this.FItems,pas.uFace.TFaceVertex,AValue);
-    };
-    this.SetCount = function (AValue) {
-      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      if (AValue > this.GetCapacity()) {
-        this.SetCapacity(AValue)}
-       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
-      this.FLength = AValue;
-    };
-    this.Destroy = function () {
-      this.SetCapacity(0);
+    this.Delete = function (AIndex) {
+      this.DoRemove(AIndex,$mod.TCollectionNotification.cnRemoved);
     };
     this.DeleteRange = function (AIndex, ACount) {
       var LDeleted = [];
@@ -2133,17 +3844,22 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.SetCount(0);
       this.SetCapacity(0);
     };
-  });
-  rtl.createClass($mod,"TEnumerator$G23",pas.System.TObject,function () {
+  },"TList<uVector.TVector>");
+  rtl.createClass(this,"TEnumerator$G23",pas.System.TObject,function () {
     this.MoveNext = function () {
       var Result = false;
       Result = this.DoMoveNext();
       return Result;
     };
-  });
-  rtl.createClass($mod,"TEnumerable$G22",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G15",$mod.TEnumerable$G22,function () {
+  },"TEnumerator<System.Longint>");
+  rtl.createClass(this,"TEnumerable$G22",pas.System.TObject,function () {
+    this.GetEnumerator = function () {
+      var Result = null;
+      Result = this.DoGetEnumerator();
+      return Result;
+    };
+  },"TEnumerable<System.Longint>");
+  rtl.createClass(this,"TCustomList$G15",this.TEnumerable$G22,function () {
     this.$init = function () {
       $mod.TEnumerable$G22.$init.call(this);
       this.FOnNotify = null;
@@ -2160,11 +3876,28 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       Result = rtl.length(this.FItems);
       return Result;
     };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(-2147483648);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
     this.Notify = function (AValue, ACollectionNotification) {
       if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
     };
-  });
-  rtl.createClass($mod,"TCustomListEnumerator$G13",$mod.TEnumerator$G23,function () {
+    this.DoRemove = function (AIndex, ACollectionNotification) {
+      var Result = 0;
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result = this.FItems[AIndex];
+      this.FLength -= 1;
+      this.FItems[AIndex] = -2147483648;
+      this.FItems.splice(AIndex,1);
+      this.Notify(Result,ACollectionNotification);
+      return Result;
+    };
+  },"TCustomList<System.Longint>");
+  rtl.createClass(this,"TCustomListEnumerator$G13",this.TEnumerator$G23,function () {
     this.$init = function () {
       $mod.TEnumerator$G23.$init.call(this);
       this.FList = null;
@@ -2181,12 +3914,12 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       return Result;
     };
     this.DoGetCurrent = function () {
-      var Result = null;
+      var Result = 0;
       Result = this.GetCurrent();
       return Result;
     };
     this.GetCurrent = function () {
-      var Result = null;
+      var Result = 0;
       Result = this.FList.FItems[this.FIndex];
       return Result;
     };
@@ -2196,13 +3929,28 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.FList = AList;
       return this;
     };
-  });
-  rtl.createClass($mod,"TList$G8",$mod.TCustomList$G15,function () {
+  },"TCustomListEnumerator<System.Longint>");
+  rtl.createClass(this,"TList$G8",this.TCustomList$G15,function () {
     rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G13,function () {
-    });
+    },"TList<System.Longint>.TEnumerator");
+    this.$init = function () {
+      $mod.TCustomList$G15.$init.call(this);
+      this.FComparer = null;
+    };
+    this.$final = function () {
+      rtl.setIntfP(this,"FComparer",null);
+      $mod.TCustomList$G15.$final.call(this);
+    };
+    this.SameValue = function (Left, Right) {
+      var Result = false;
+      if (this.FComparer != null) {
+        Result = this.FComparer.Compare(Left,Right) === 0}
+       else Result = Left === Right;
+      return Result;
+    };
     this.SetCapacity = function (AValue) {
       if (AValue < this.FLength) this.SetCount(AValue);
-      this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
+      this.FItems = rtl.arraySetLength(this.FItems,0,AValue);
     };
     this.SetCount = function (AValue) {
       if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
@@ -2211,13 +3959,49 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
        else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
       this.FLength = AValue;
     };
+    this.InitializeList = function () {
+    };
+    this.DoGetEnumerator = function () {
+      var Result = null;
+      Result = this.GetEnumerator$1();
+      return Result;
+    };
     this.GetEnumerator$1 = function () {
       var Result = null;
       Result = this.TEnumerator.$create("Create$1",[this]);
       return Result;
     };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
     this.Destroy = function () {
       this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
+    this.AddRange$2 = function (AEnumerable) {
+      var LValue = 0;
+      var $in = AEnumerable.GetEnumerator();
+      try {
+        while ($in.MoveNext()) {
+          LValue = $in.DoGetCurrent();
+          this.Add(LValue);
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+    };
+    this.Remove = function (AValue) {
+      var Result = 0;
+      Result = this.IndexOf(AValue);
+      if (Result >= 0) this.DoRemove(Result,$mod.TCollectionNotification.cnRemoved);
+      return Result;
     };
     this.DeleteRange = function (AIndex, ACount) {
       var LDeleted = [];
@@ -2235,17 +4019,225 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.SetCount(0);
       this.SetCapacity(0);
     };
-  });
-  rtl.createClass($mod,"TEnumerator$G25",pas.System.TObject,function () {
+    this.Contains = function (AValue) {
+      var Result = false;
+      Result = this.IndexOf(AValue) >= 0;
+      return Result;
+    };
+    this.IndexOf = function (AValue) {
+      var Result = 0;
+      var i = 0;
+      for (var $l = 0, $end = this.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        if (this.SameValue(AValue,this.FItems[i])) return i;
+      };
+      Result = -1;
+      return Result;
+    };
+  },"TList<System.Longint>");
+  rtl.createClass(this,"TEnumerator$G24",pas.System.TObject,function () {
     this.MoveNext = function () {
       var Result = false;
       Result = this.DoMoveNext();
       return Result;
     };
-  });
-  rtl.createClass($mod,"TEnumerable$G24",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G17",$mod.TEnumerable$G24,function () {
+  },"TEnumerator<uFace.TFaceVertex>");
+  rtl.createClass(this,"TEnumerable$G23",pas.System.TObject,function () {
+    this.GetEnumerator = function () {
+      var Result = null;
+      Result = this.DoGetEnumerator();
+      return Result;
+    };
+  },"TEnumerable<uFace.TFaceVertex>");
+  rtl.createClass(this,"TCustomList$G16",this.TEnumerable$G23,function () {
+    this.$init = function () {
+      $mod.TEnumerable$G23.$init.call(this);
+      this.FOnNotify = null;
+      this.FLength = 0;
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FOnNotify = undefined;
+      this.FItems = undefined;
+      $mod.TEnumerable$G23.$final.call(this);
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(pas.uFace.TFaceVertex.$new());
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
+    this.Notify = function (AValue, ACollectionNotification) {
+      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
+    };
+    this.DoRemove = function (AIndex, ACollectionNotification) {
+      var Result = pas.uFace.TFaceVertex.$new();
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result.$assign(this.FItems[AIndex]);
+      this.FLength -= 1;
+      this.FItems[AIndex].$assign(pas.uFace.TFaceVertex.$new());
+      this.FItems.splice(AIndex,1);
+      this.Notify(Result,ACollectionNotification);
+      return Result;
+    };
+  },"TCustomList<uFace.TFaceVertex>");
+  rtl.createClass(this,"TCustomListEnumerator$G14",this.TEnumerator$G24,function () {
+    this.$init = function () {
+      $mod.TEnumerator$G24.$init.call(this);
+      this.FList = null;
+      this.FIndex = 0;
+    };
+    this.$final = function () {
+      this.FList = undefined;
+      $mod.TEnumerator$G24.$final.call(this);
+    };
+    this.DoMoveNext = function () {
+      var Result = false;
+      this.FIndex += 1;
+      Result = (this.FList.FLength > 0) && (this.FIndex < this.FList.FLength);
+      return Result;
+    };
+    this.DoGetCurrent = function () {
+      var Result = pas.uFace.TFaceVertex.$new();
+      Result.$assign(this.GetCurrent());
+      return Result;
+    };
+    this.GetCurrent = function () {
+      var Result = pas.uFace.TFaceVertex.$new();
+      Result.$assign(this.FList.FItems[this.FIndex]);
+      return Result;
+    };
+    this.Create$1 = function (AList) {
+      pas.System.TObject.Create.call(this);
+      this.FIndex = -1;
+      this.FList = AList;
+      return this;
+    };
+  },"TCustomListEnumerator<uFace.TFaceVertex>");
+  rtl.createClass(this,"TList$G9",this.TCustomList$G16,function () {
+    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G14,function () {
+    },"TList<uFace.TFaceVertex>.TEnumerator");
+    this.SetCapacity = function (AValue) {
+      if (AValue < this.FLength) this.SetCount(AValue);
+      this.FItems = rtl.arraySetLength(this.FItems,pas.uFace.TFaceVertex,AValue);
+    };
+    this.SetCount = function (AValue) {
+      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      if (AValue > this.GetCapacity()) {
+        this.SetCapacity(AValue)}
+       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
+      this.FLength = AValue;
+    };
+    this.InitializeList = function () {
+    };
+    this.DoGetEnumerator = function () {
+      var Result = null;
+      Result = this.GetEnumerator$1();
+      return Result;
+    };
+    this.GetItem = function (AIndex) {
+      var Result = pas.uFace.TFaceVertex.$new();
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result.$assign(this.FItems[AIndex]);
+      return Result;
+    };
+    this.SetItem = function (AIndex, AValue) {
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      this.Notify(this.FItems[AIndex],$mod.TCollectionNotification.cnRemoved);
+      this.FItems[AIndex].$assign(AValue);
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+    };
+    this.GetEnumerator$1 = function () {
+      var Result = null;
+      Result = this.TEnumerator.$create("Create$1",[this]);
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
+    this.Destroy = function () {
+      this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result].$assign(AValue);
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
+    this.AddRange$2 = function (AEnumerable) {
+      var LValue = pas.uFace.TFaceVertex.$new();
+      var $in = AEnumerable.GetEnumerator();
+      try {
+        while ($in.MoveNext()) {
+          LValue = $in.DoGetCurrent();
+          this.Add(LValue);
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+    };
+    this.Delete = function (AIndex) {
+      this.DoRemove(AIndex,$mod.TCollectionNotification.cnRemoved);
+    };
+    this.DeleteRange = function (AIndex, ACount) {
+      var LDeleted = [];
+      var i = 0;
+      if (ACount === 0) return;
+      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      LDeleted = this.FItems.splice(AIndex,this.FLength);
+      this.FLength -= ACount;
+      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
+      };
+    };
+    this.Move = function (AIndex, ANewIndex) {
+      var Arr = null;
+      var LTemp = undefined;
+      var i = 0;
+      if (ANewIndex === AIndex) return;
+      if ((ANewIndex < 0) || (ANewIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Arr = this.FItems;
+      LTemp = Arr[AIndex];
+      if (AIndex < ANewIndex) {
+        for (var $l = AIndex, $end = ANewIndex - 1; $l <= $end; $l++) {
+          i = $l;
+          Arr[i] = Arr[i + 1];
+        }}
+       else for (var $l1 = AIndex, $end1 = ANewIndex + 1; $l1 >= $end1; $l1--) {
+        i = $l1;
+        Arr[i] = Arr[i - 1];
+      };
+      Arr[ANewIndex] = LTemp;
+    };
+    this.Clear = function () {
+      this.SetCount(0);
+      this.SetCapacity(0);
+    };
+  },"TList<uFace.TFaceVertex>");
+  rtl.createClass(this,"TEnumerator$G25",pas.System.TObject,function () {
+    this.MoveNext = function () {
+      var Result = false;
+      Result = this.DoMoveNext();
+      return Result;
+    };
+  },"TEnumerator<uFace.TFace>");
+  rtl.createClass(this,"TEnumerable$G24",pas.System.TObject,function () {
+    this.GetEnumerator = function () {
+      var Result = null;
+      Result = this.DoGetEnumerator();
+      return Result;
+    };
+  },"TEnumerable<uFace.TFace>");
+  rtl.createClass(this,"TCustomList$G17",this.TEnumerable$G24,function () {
     this.$init = function () {
       $mod.TEnumerable$G24.$init.call(this);
       this.FOnNotify = null;
@@ -2272,8 +4264,8 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
     this.Notify = function (AValue, ACollectionNotification) {
       if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
     };
-  });
-  rtl.createClass($mod,"TCustomListEnumerator$G15",$mod.TEnumerator$G25,function () {
+  },"TCustomList<uFace.TFace>");
+  rtl.createClass(this,"TCustomListEnumerator$G15",this.TEnumerator$G25,function () {
     this.$init = function () {
       $mod.TEnumerator$G25.$init.call(this);
       this.FList = null;
@@ -2305,17 +4297,318 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.FList = AList;
       return this;
     };
-  });
-  rtl.createClass($mod,"TList$G10",$mod.TCustomList$G17,function () {
+  },"TCustomListEnumerator<uFace.TFace>");
+  rtl.createClass(this,"TList$G10",this.TCustomList$G17,function () {
     rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G15,function () {
-    });
+    },"TList<uFace.TFace>.TEnumerator");
+    this.SetCapacity = function (AValue) {
+      if (AValue < this.FLength) this.SetCount(AValue);
+      this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
+    };
+    this.SetCount = function (AValue) {
+      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      if (AValue > this.GetCapacity()) {
+        this.SetCapacity(AValue)}
+       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
+      this.FLength = AValue;
+    };
+    this.InitializeList = function () {
+    };
+    this.DoGetEnumerator = function () {
+      var Result = null;
+      Result = this.GetEnumerator$1();
+      return Result;
+    };
+    this.GetItem = function (AIndex) {
+      var Result = null;
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result = this.FItems[AIndex];
+      return Result;
+    };
+    this.GetEnumerator$1 = function () {
+      var Result = null;
+      Result = this.TEnumerator.$create("Create$1",[this]);
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
+    this.Destroy = function () {
+      this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
+    this.AddRange$2 = function (AEnumerable) {
+      var LValue = null;
+      var $in = AEnumerable.GetEnumerator();
+      try {
+        while ($in.MoveNext()) {
+          LValue = $in.DoGetCurrent();
+          this.Add(LValue);
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+    };
+    this.DeleteRange = function (AIndex, ACount) {
+      var LDeleted = [];
+      var i = 0;
+      if (ACount === 0) return;
+      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      LDeleted = this.FItems.splice(AIndex,this.FLength);
+      this.FLength -= ACount;
+      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
+      };
+    };
+    this.Clear = function () {
+      this.SetCount(0);
+      this.SetCapacity(0);
+    };
+  },"TList<uFace.TFace>");
+  rtl.createClass(this,"TEnumerator$G26",pas.System.TObject,function () {
+    this.MoveNext = function () {
+      var Result = false;
+      Result = this.DoMoveNext();
+      return Result;
+    };
+  },"TEnumerator<uFaceUtils.TVertex>");
+  rtl.createClass(this,"TEnumerable$G25",pas.System.TObject,function () {
+  },"TEnumerable<uFaceUtils.TVertex>");
+  rtl.createClass(this,"TCustomList$G18",this.TEnumerable$G25,function () {
     this.$init = function () {
-      $mod.TCustomList$G17.$init.call(this);
+      $mod.TEnumerable$G25.$init.call(this);
+      this.FOnNotify = null;
+      this.FLength = 0;
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FOnNotify = undefined;
+      this.FItems = undefined;
+      $mod.TEnumerable$G25.$final.call(this);
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(null);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
+    this.Notify = function (AValue, ACollectionNotification) {
+      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
+    };
+  },"TCustomList<uFaceUtils.TVertex>");
+  rtl.createClass(this,"TCustomListEnumerator$G16",this.TEnumerator$G26,function () {
+    this.$init = function () {
+      $mod.TEnumerator$G26.$init.call(this);
+      this.FList = null;
+      this.FIndex = 0;
+    };
+    this.$final = function () {
+      this.FList = undefined;
+      $mod.TEnumerator$G26.$final.call(this);
+    };
+    this.DoMoveNext = function () {
+      var Result = false;
+      this.FIndex += 1;
+      Result = (this.FList.FLength > 0) && (this.FIndex < this.FList.FLength);
+      return Result;
+    };
+    this.DoGetCurrent = function () {
+      var Result = null;
+      Result = this.GetCurrent();
+      return Result;
+    };
+    this.GetCurrent = function () {
+      var Result = null;
+      Result = this.FList.FItems[this.FIndex];
+      return Result;
+    };
+    this.Create$1 = function (AList) {
+      pas.System.TObject.Create.call(this);
+      this.FIndex = -1;
+      this.FList = AList;
+      return this;
+    };
+  },"TCustomListEnumerator<uFaceUtils.TVertex>");
+  rtl.createClass(this,"TList$G11",this.TCustomList$G18,function () {
+    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G16,function () {
+    },"TList<uFaceUtils.TVertex>.TEnumerator");
+    this.SetCapacity = function (AValue) {
+      if (AValue < this.FLength) this.SetCount(AValue);
+      this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
+    };
+    this.SetCount = function (AValue) {
+      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      if (AValue > this.GetCapacity()) {
+        this.SetCapacity(AValue)}
+       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
+      this.FLength = AValue;
+    };
+    this.InitializeList = function () {
+    };
+    this.InternalInsert = function (AIndex, AValue) {
+      if ((AIndex < 0) || (AIndex > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      this.FItems.splice(AIndex,0,AValue);
+      this.FLength += 1;
+      this.FItems[AIndex] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+    };
+    this.GetItem = function (AIndex) {
+      var Result = null;
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result = this.FItems[AIndex];
+      return Result;
+    };
+    this.SetItem = function (AIndex, AValue) {
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      this.Notify(this.FItems[AIndex],$mod.TCollectionNotification.cnRemoved);
+      this.FItems[AIndex] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+    };
+    this.GetEnumerator$1 = function () {
+      var Result = null;
+      Result = this.TEnumerator.$create("Create$1",[this]);
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
+    this.Destroy = function () {
+      this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
+    this.Insert = function (AIndex, AValue) {
+      if ((AIndex < 0) || (AIndex > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      this.InternalInsert(AIndex,AValue);
+    };
+    this.DeleteRange = function (AIndex, ACount) {
+      var LDeleted = [];
+      var i = 0;
+      if (ACount === 0) return;
+      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      LDeleted = this.FItems.splice(AIndex,this.FLength);
+      this.FLength -= ACount;
+      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
+      };
+    };
+  },"TList<uFaceUtils.TVertex>");
+  rtl.createClass(this,"TEnumerator$G27",pas.System.TObject,function () {
+    this.MoveNext = function () {
+      var Result = false;
+      Result = this.DoMoveNext();
+      return Result;
+    };
+  },"TEnumerator<uPart.TPart>");
+  rtl.createClass(this,"TEnumerable$G26",pas.System.TObject,function () {
+    this.GetEnumerator = function () {
+      var Result = null;
+      Result = this.DoGetEnumerator();
+      return Result;
+    };
+  },"TEnumerable<uPart.TPart>");
+  rtl.createClass(this,"TCustomList$G19",this.TEnumerable$G26,function () {
+    this.$init = function () {
+      $mod.TEnumerable$G26.$init.call(this);
+      this.FOnNotify = null;
+      this.FLength = 0;
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FOnNotify = undefined;
+      this.FItems = undefined;
+      $mod.TEnumerable$G26.$final.call(this);
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(null);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
+    this.Notify = function (AValue, ACollectionNotification) {
+      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
+    };
+    this.DoRemove = function (AIndex, ACollectionNotification) {
+      var Result = null;
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result = this.FItems[AIndex];
+      this.FLength -= 1;
+      this.FItems[AIndex] = null;
+      this.FItems.splice(AIndex,1);
+      this.Notify(Result,ACollectionNotification);
+      return Result;
+    };
+  },"TCustomList<uPart.TPart>");
+  rtl.createClass(this,"TCustomListEnumerator$G17",this.TEnumerator$G27,function () {
+    this.$init = function () {
+      $mod.TEnumerator$G27.$init.call(this);
+      this.FList = null;
+      this.FIndex = 0;
+    };
+    this.$final = function () {
+      this.FList = undefined;
+      $mod.TEnumerator$G27.$final.call(this);
+    };
+    this.DoMoveNext = function () {
+      var Result = false;
+      this.FIndex += 1;
+      Result = (this.FList.FLength > 0) && (this.FIndex < this.FList.FLength);
+      return Result;
+    };
+    this.DoGetCurrent = function () {
+      var Result = null;
+      Result = this.GetCurrent();
+      return Result;
+    };
+    this.GetCurrent = function () {
+      var Result = null;
+      Result = this.FList.FItems[this.FIndex];
+      return Result;
+    };
+    this.Create$1 = function (AList) {
+      pas.System.TObject.Create.call(this);
+      this.FIndex = -1;
+      this.FList = AList;
+      return this;
+    };
+  },"TCustomListEnumerator<uPart.TPart>");
+  rtl.createClass(this,"TList$G12",this.TCustomList$G19,function () {
+    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G17,function () {
+    },"TList<uPart.TPart>.TEnumerator");
+    this.$init = function () {
+      $mod.TCustomList$G19.$init.call(this);
       this.FComparer = null;
     };
     this.$final = function () {
-      this.FComparer = undefined;
-      $mod.TCustomList$G17.$final.call(this);
+      rtl.setIntfP(this,"FComparer",null);
+      $mod.TCustomList$G19.$final.call(this);
     };
     this.SameValue = function (Left, Right) {
       var Result = false;
@@ -2324,6 +4617,175 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
        else Result = Left === Right;
       return Result;
     };
+    this.SetCapacity = function (AValue) {
+      if (AValue < this.FLength) this.SetCount(AValue);
+      this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
+    };
+    this.SetCount = function (AValue) {
+      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      if (AValue > this.GetCapacity()) {
+        this.SetCapacity(AValue)}
+       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
+      this.FLength = AValue;
+    };
+    this.InitializeList = function () {
+    };
+    this.InternalInsert = function (AIndex, AValue) {
+      if ((AIndex < 0) || (AIndex > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      this.FItems.splice(AIndex,0,AValue);
+      this.FLength += 1;
+      this.FItems[AIndex] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+    };
+    this.DoGetEnumerator = function () {
+      var Result = null;
+      Result = this.GetEnumerator$1();
+      return Result;
+    };
+    this.GetItem = function (AIndex) {
+      var Result = null;
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result = this.FItems[AIndex];
+      return Result;
+    };
+    this.GetEnumerator$1 = function () {
+      var Result = null;
+      Result = this.TEnumerator.$create("Create$1",[this]);
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
+    this.Destroy = function () {
+      this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
+    this.InsertRange$2 = function (AIndex, AEnumerable) {
+      var LValue = null;
+      var i = 0;
+      if ((AIndex < 0) || (AIndex > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      i = 0;
+      var $in = AEnumerable.GetEnumerator();
+      try {
+        while ($in.MoveNext()) {
+          LValue = $in.DoGetCurrent();
+          this.InternalInsert(AIndex + i,LValue);
+          i += 1;
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+    };
+    this.Delete = function (AIndex) {
+      this.DoRemove(AIndex,$mod.TCollectionNotification.cnRemoved);
+    };
+    this.DeleteRange = function (AIndex, ACount) {
+      var LDeleted = [];
+      var i = 0;
+      if (ACount === 0) return;
+      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      LDeleted = this.FItems.splice(AIndex,this.FLength);
+      this.FLength -= ACount;
+      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
+      };
+    };
+    this.Clear = function () {
+      this.SetCount(0);
+      this.SetCapacity(0);
+    };
+    this.IndexOf = function (AValue) {
+      var Result = 0;
+      var i = 0;
+      for (var $l = 0, $end = this.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        if (this.SameValue(AValue,this.FItems[i])) return i;
+      };
+      Result = -1;
+      return Result;
+    };
+  },"TList<uPart.TPart>");
+  rtl.createClass(this,"TEnumerator$G28",pas.System.TObject,function () {
+    this.MoveNext = function () {
+      var Result = false;
+      Result = this.DoMoveNext();
+      return Result;
+    };
+  },"TEnumerator<uLayer.TLayer>");
+  rtl.createClass(this,"TEnumerable$G27",pas.System.TObject,function () {
+  },"TEnumerable<uLayer.TLayer>");
+  rtl.createClass(this,"TCustomList$G20",this.TEnumerable$G27,function () {
+    this.$init = function () {
+      $mod.TEnumerable$G27.$init.call(this);
+      this.FOnNotify = null;
+      this.FLength = 0;
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FOnNotify = undefined;
+      this.FItems = undefined;
+      $mod.TEnumerable$G27.$final.call(this);
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(null);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
+    this.Notify = function (AValue, ACollectionNotification) {
+      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
+    };
+  },"TCustomList<uLayer.TLayer>");
+  rtl.createClass(this,"TCustomListEnumerator$G18",this.TEnumerator$G28,function () {
+    this.$init = function () {
+      $mod.TEnumerator$G28.$init.call(this);
+      this.FList = null;
+      this.FIndex = 0;
+    };
+    this.$final = function () {
+      this.FList = undefined;
+      $mod.TEnumerator$G28.$final.call(this);
+    };
+    this.DoMoveNext = function () {
+      var Result = false;
+      this.FIndex += 1;
+      Result = (this.FList.FLength > 0) && (this.FIndex < this.FList.FLength);
+      return Result;
+    };
+    this.DoGetCurrent = function () {
+      var Result = null;
+      Result = this.GetCurrent();
+      return Result;
+    };
+    this.GetCurrent = function () {
+      var Result = null;
+      Result = this.FList.FItems[this.FIndex];
+      return Result;
+    };
+    this.Create$1 = function (AList) {
+      pas.System.TObject.Create.call(this);
+      this.FIndex = -1;
+      this.FList = AList;
+      return this;
+    };
+  },"TCustomListEnumerator<uLayer.TLayer>");
+  rtl.createClass(this,"TList$G13",this.TCustomList$G20,function () {
+    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G18,function () {
+    },"TList<uLayer.TLayer>.TEnumerator");
     this.SetCapacity = function (AValue) {
       if (AValue < this.FLength) this.SetCount(AValue);
       this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
@@ -2378,309 +4840,17 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.SetCount(0);
       this.SetCapacity(0);
     };
-    this.IndexOf = function (AValue) {
-      var Result = 0;
-      var i = 0;
-      for (var $l = 0, $end = this.FLength - 1; $l <= $end; $l++) {
-        i = $l;
-        if (this.SameValue(AValue,this.FItems[i])) return i;
-      };
-      Result = -1;
-      return Result;
-    };
-  });
-  rtl.createClass($mod,"TEnumerator$G26",pas.System.TObject,function () {
+  },"TList<uLayer.TLayer>");
+  rtl.createClass(this,"TEnumerator$G29",pas.System.TObject,function () {
     this.MoveNext = function () {
       var Result = false;
       Result = this.DoMoveNext();
       return Result;
     };
-  });
-  rtl.createClass($mod,"TEnumerable$G25",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G18",$mod.TEnumerable$G25,function () {
-    this.$init = function () {
-      $mod.TEnumerable$G25.$init.call(this);
-      this.FOnNotify = null;
-      this.FLength = 0;
-      this.FItems = [];
-    };
-    this.$final = function () {
-      this.FOnNotify = undefined;
-      this.FItems = undefined;
-      $mod.TEnumerable$G25.$final.call(this);
-    };
-    this.GetCapacity = function () {
-      var Result = 0;
-      Result = rtl.length(this.FItems);
-      return Result;
-    };
-    this.Notify = function (AValue, ACollectionNotification) {
-      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
-    };
-  });
-  rtl.createClass($mod,"TCustomListEnumerator$G16",$mod.TEnumerator$G26,function () {
-    this.$init = function () {
-      $mod.TEnumerator$G26.$init.call(this);
-      this.FList = null;
-      this.FIndex = 0;
-    };
-    this.$final = function () {
-      this.FList = undefined;
-      $mod.TEnumerator$G26.$final.call(this);
-    };
-    this.DoMoveNext = function () {
-      var Result = false;
-      this.FIndex += 1;
-      Result = (this.FList.FLength > 0) && (this.FIndex < this.FList.FLength);
-      return Result;
-    };
-    this.DoGetCurrent = function () {
-      var Result = null;
-      Result = this.GetCurrent();
-      return Result;
-    };
-    this.GetCurrent = function () {
-      var Result = null;
-      Result = this.FList.FItems[this.FIndex];
-      return Result;
-    };
-    this.Create$1 = function (AList) {
-      pas.System.TObject.Create.call(this);
-      this.FIndex = -1;
-      this.FList = AList;
-      return this;
-    };
-  });
-  rtl.createClass($mod,"TList$G11",$mod.TCustomList$G18,function () {
-    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G16,function () {
-    });
-    this.SetCapacity = function (AValue) {
-      if (AValue < this.FLength) this.SetCount(AValue);
-      this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
-    };
-    this.SetCount = function (AValue) {
-      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      if (AValue > this.GetCapacity()) {
-        this.SetCapacity(AValue)}
-       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
-      this.FLength = AValue;
-    };
-    this.GetItem = function (AIndex) {
-      var Result = null;
-      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      Result = this.FItems[AIndex];
-      return Result;
-    };
-    this.GetEnumerator$1 = function () {
-      var Result = null;
-      Result = this.TEnumerator.$create("Create$1",[this]);
-      return Result;
-    };
-    this.Destroy = function () {
-      this.SetCapacity(0);
-    };
-    this.DeleteRange = function (AIndex, ACount) {
-      var LDeleted = [];
-      var i = 0;
-      if (ACount === 0) return;
-      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      LDeleted = this.FItems.splice(AIndex,this.FLength);
-      this.FLength -= ACount;
-      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
-        i = $l;
-        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
-      };
-    };
-    this.Clear = function () {
-      this.SetCount(0);
-      this.SetCapacity(0);
-    };
-  });
-  rtl.createClass($mod,"TEnumerator$G27",pas.System.TObject,function () {
-    this.MoveNext = function () {
-      var Result = false;
-      Result = this.DoMoveNext();
-      return Result;
-    };
-  });
-  rtl.createClass($mod,"TEnumerable$G26",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G19",$mod.TEnumerable$G26,function () {
-    this.$init = function () {
-      $mod.TEnumerable$G26.$init.call(this);
-      this.FOnNotify = null;
-      this.FLength = 0;
-      this.FItems = [];
-    };
-    this.$final = function () {
-      this.FOnNotify = undefined;
-      this.FItems = undefined;
-      $mod.TEnumerable$G26.$final.call(this);
-    };
-    this.GetCapacity = function () {
-      var Result = 0;
-      Result = rtl.length(this.FItems);
-      return Result;
-    };
-    this.Notify = function (AValue, ACollectionNotification) {
-      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
-    };
-  });
-  rtl.createClass($mod,"TCustomListEnumerator$G17",$mod.TEnumerator$G27,function () {
-    this.$init = function () {
-      $mod.TEnumerator$G27.$init.call(this);
-      this.FList = null;
-      this.FIndex = 0;
-    };
-    this.$final = function () {
-      this.FList = undefined;
-      $mod.TEnumerator$G27.$final.call(this);
-    };
-    this.DoMoveNext = function () {
-      var Result = false;
-      this.FIndex += 1;
-      Result = (this.FList.FLength > 0) && (this.FIndex < this.FList.FLength);
-      return Result;
-    };
-    this.DoGetCurrent = function () {
-      var Result = null;
-      Result = this.GetCurrent();
-      return Result;
-    };
-    this.GetCurrent = function () {
-      var Result = null;
-      Result = this.FList.FItems[this.FIndex];
-      return Result;
-    };
-    this.Create$1 = function (AList) {
-      pas.System.TObject.Create.call(this);
-      this.FIndex = -1;
-      this.FList = AList;
-      return this;
-    };
-  });
-  rtl.createClass($mod,"TList$G12",$mod.TCustomList$G19,function () {
-    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G17,function () {
-    });
-    this.SetCapacity = function (AValue) {
-      if (AValue < this.FLength) this.SetCount(AValue);
-      this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
-    };
-    this.SetCount = function (AValue) {
-      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      if (AValue > this.GetCapacity()) {
-        this.SetCapacity(AValue)}
-       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
-      this.FLength = AValue;
-    };
-    this.InitializeList = function () {
-    };
-    this.GetItem = function (AIndex) {
-      var Result = null;
-      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      Result = this.FItems[AIndex];
-      return Result;
-    };
-    this.GetEnumerator$1 = function () {
-      var Result = null;
-      Result = this.TEnumerator.$create("Create$1",[this]);
-      return Result;
-    };
-    this.Create$1 = function () {
-      this.InitializeList();
-      return this;
-    };
-    this.Destroy = function () {
-      this.SetCapacity(0);
-    };
-    this.DeleteRange = function (AIndex, ACount) {
-      var LDeleted = [];
-      var i = 0;
-      if (ACount === 0) return;
-      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      LDeleted = this.FItems.splice(AIndex,this.FLength);
-      this.FLength -= ACount;
-      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
-        i = $l;
-        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
-      };
-    };
-    this.Clear = function () {
-      this.SetCount(0);
-      this.SetCapacity(0);
-    };
-  });
-  rtl.createClass($mod,"TEnumerable$G27",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G20",$mod.TEnumerable$G27,function () {
-    this.$init = function () {
-      $mod.TEnumerable$G27.$init.call(this);
-      this.FOnNotify = null;
-      this.FLength = 0;
-      this.FItems = [];
-    };
-    this.$final = function () {
-      this.FOnNotify = undefined;
-      this.FItems = undefined;
-      $mod.TEnumerable$G27.$final.call(this);
-    };
-    this.GetCapacity = function () {
-      var Result = 0;
-      Result = rtl.length(this.FItems);
-      return Result;
-    };
-    this.Notify = function (AValue, ACollectionNotification) {
-      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
-    };
-  });
-  rtl.createClass($mod,"TList$G13",$mod.TCustomList$G20,function () {
-    this.SetCapacity = function (AValue) {
-      if (AValue < this.FLength) this.SetCount(AValue);
-      this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
-    };
-    this.SetCount = function (AValue) {
-      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      if (AValue > this.GetCapacity()) {
-        this.SetCapacity(AValue)}
-       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
-      this.FLength = AValue;
-    };
-    this.InitializeList = function () {
-    };
-    this.GetItem = function (AIndex) {
-      var Result = null;
-      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      Result = this.FItems[AIndex];
-      return Result;
-    };
-    this.Create$1 = function () {
-      this.InitializeList();
-      return this;
-    };
-    this.Destroy = function () {
-      this.SetCapacity(0);
-    };
-    this.DeleteRange = function (AIndex, ACount) {
-      var LDeleted = [];
-      var i = 0;
-      if (ACount === 0) return;
-      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      LDeleted = this.FItems.splice(AIndex,this.FLength);
-      this.FLength -= ACount;
-      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
-        i = $l;
-        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
-      };
-    };
-    this.Clear = function () {
-      this.SetCount(0);
-      this.SetCapacity(0);
-    };
-  });
-  rtl.createClass($mod,"TEnumerable$G28",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G21",$mod.TEnumerable$G28,function () {
+  },"TEnumerator<uAxis.TAxis>");
+  rtl.createClass(this,"TEnumerable$G28",pas.System.TObject,function () {
+  },"TEnumerable<uAxis.TAxis>");
+  rtl.createClass(this,"TCustomList$G21",this.TEnumerable$G28,function () {
     this.$init = function () {
       $mod.TEnumerable$G28.$init.call(this);
       this.FOnNotify = null;
@@ -2697,11 +4867,53 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       Result = rtl.length(this.FItems);
       return Result;
     };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(null);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
     this.Notify = function (AValue, ACollectionNotification) {
       if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
     };
-  });
-  rtl.createClass($mod,"TList$G14",$mod.TCustomList$G21,function () {
+  },"TCustomList<uAxis.TAxis>");
+  rtl.createClass(this,"TCustomListEnumerator$G19",this.TEnumerator$G29,function () {
+    this.$init = function () {
+      $mod.TEnumerator$G29.$init.call(this);
+      this.FList = null;
+      this.FIndex = 0;
+    };
+    this.$final = function () {
+      this.FList = undefined;
+      $mod.TEnumerator$G29.$final.call(this);
+    };
+    this.DoMoveNext = function () {
+      var Result = false;
+      this.FIndex += 1;
+      Result = (this.FList.FLength > 0) && (this.FIndex < this.FList.FLength);
+      return Result;
+    };
+    this.DoGetCurrent = function () {
+      var Result = null;
+      Result = this.GetCurrent();
+      return Result;
+    };
+    this.GetCurrent = function () {
+      var Result = null;
+      Result = this.FList.FItems[this.FIndex];
+      return Result;
+    };
+    this.Create$1 = function (AList) {
+      pas.System.TObject.Create.call(this);
+      this.FIndex = -1;
+      this.FList = AList;
+      return this;
+    };
+  },"TCustomListEnumerator<uAxis.TAxis>");
+  rtl.createClass(this,"TList$G14",this.TCustomList$G21,function () {
+    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G19,function () {
+    },"TList<uAxis.TAxis>.TEnumerator");
     this.SetCapacity = function (AValue) {
       if (AValue < this.FLength) this.SetCount(AValue);
       this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
@@ -2713,14 +4925,32 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
        else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
       this.FLength = AValue;
     };
+    this.InitializeList = function () {
+    };
     this.GetItem = function (AIndex) {
       var Result = null;
       if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
       Result = this.FItems[AIndex];
       return Result;
     };
+    this.GetEnumerator$1 = function () {
+      var Result = null;
+      Result = this.TEnumerator.$create("Create$1",[this]);
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
     this.Destroy = function () {
       this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
     };
     this.DeleteRange = function (AIndex, ACount) {
       var LDeleted = [];
@@ -2734,10 +4964,14 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
         this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
       };
     };
-  });
-  rtl.createClass($mod,"TEnumerable$G29",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G22",$mod.TEnumerable$G29,function () {
+    this.Clear = function () {
+      this.SetCount(0);
+      this.SetCapacity(0);
+    };
+  },"TList<uAxis.TAxis>");
+  rtl.createClass(this,"TEnumerable$G29",pas.System.TObject,function () {
+  },"TEnumerable<uTexture.TTexture>");
+  rtl.createClass(this,"TCustomList$G22",this.TEnumerable$G29,function () {
     this.$init = function () {
       $mod.TEnumerable$G29.$init.call(this);
       this.FOnNotify = null;
@@ -2754,11 +4988,18 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       Result = rtl.length(this.FItems);
       return Result;
     };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(null);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
     this.Notify = function (AValue, ACollectionNotification) {
       if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
     };
-  });
-  rtl.createClass($mod,"TList$G15",$mod.TCustomList$G22,function () {
+  },"TCustomList<uTexture.TTexture>");
+  rtl.createClass(this,"TList$G15",this.TCustomList$G22,function () {
     this.SetCapacity = function (AValue) {
       if (AValue < this.FLength) this.SetCount(AValue);
       this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
@@ -2785,6 +5026,13 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
     this.Destroy = function () {
       this.SetCapacity(0);
     };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
     this.DeleteRange = function (AIndex, ACount) {
       var LDeleted = [];
       var i = 0;
@@ -2801,10 +5049,10 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.SetCount(0);
       this.SetCapacity(0);
     };
-  });
-  rtl.createClass($mod,"TEnumerable$G30",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G23",$mod.TEnumerable$G30,function () {
+  },"TList<uTexture.TTexture>");
+  rtl.createClass(this,"TEnumerable$G30",pas.System.TObject,function () {
+  },"TEnumerable<uMacro.TMacro>");
+  rtl.createClass(this,"TCustomList$G23",this.TEnumerable$G30,function () {
     this.$init = function () {
       $mod.TEnumerable$G30.$init.call(this);
       this.FOnNotify = null;
@@ -2821,11 +5069,18 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       Result = rtl.length(this.FItems);
       return Result;
     };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(null);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
     this.Notify = function (AValue, ACollectionNotification) {
       if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
     };
-  });
-  rtl.createClass($mod,"TList$G16",$mod.TCustomList$G23,function () {
+  },"TCustomList<uMacro.TMacro>");
+  rtl.createClass(this,"TList$G16",this.TCustomList$G23,function () {
     this.SetCapacity = function (AValue) {
       if (AValue < this.FLength) this.SetCount(AValue);
       this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
@@ -2852,6 +5107,13 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
     this.Destroy = function () {
       this.SetCapacity(0);
     };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
     this.DeleteRange = function (AIndex, ACount) {
       var LDeleted = [];
       var i = 0;
@@ -2868,17 +5130,17 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.SetCount(0);
       this.SetCapacity(0);
     };
-  });
-  rtl.createClass($mod,"TEnumerator$G32",pas.System.TObject,function () {
+  },"TList<uMacro.TMacro>");
+  rtl.createClass(this,"TEnumerator$G32",pas.System.TObject,function () {
     this.MoveNext = function () {
       var Result = false;
       Result = this.DoMoveNext();
       return Result;
     };
-  });
-  rtl.createClass($mod,"TEnumerable$G31",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TCustomList$G24",$mod.TEnumerable$G31,function () {
+  },"TEnumerator<uTurn.TTurn>");
+  rtl.createClass(this,"TEnumerable$G31",pas.System.TObject,function () {
+  },"TEnumerable<uTurn.TTurn>");
+  rtl.createClass(this,"TCustomList$G24",this.TEnumerable$G31,function () {
     this.$init = function () {
       $mod.TEnumerable$G31.$init.call(this);
       this.FOnNotify = null;
@@ -2915,8 +5177,8 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.Notify(Result,ACollectionNotification);
       return Result;
     };
-  });
-  rtl.createClass($mod,"TCustomListEnumerator$G22",$mod.TEnumerator$G32,function () {
+  },"TCustomList<uTurn.TTurn>");
+  rtl.createClass(this,"TCustomListEnumerator$G22",this.TEnumerator$G32,function () {
     this.$init = function () {
       $mod.TEnumerator$G32.$init.call(this);
       this.FList = null;
@@ -2948,10 +5210,10 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.FList = AList;
       return this;
     };
-  });
-  rtl.createClass($mod,"TList$G17",$mod.TCustomList$G24,function () {
+  },"TCustomListEnumerator<uTurn.TTurn>");
+  rtl.createClass(this,"TList$G17",this.TCustomList$G24,function () {
     rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G22,function () {
-    });
+    },"TList<uTurn.TTurn>.TEnumerator");
     this.SetCapacity = function (AValue) {
       if (AValue < this.FLength) this.SetCount(AValue);
       this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
@@ -3009,12 +5271,805 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","Types","JS","G
       this.SetCount(0);
       this.SetCapacity(0);
     };
+  },"TList<uTurn.TTurn>");
+  rtl.createClass(this,"TEnumerator$G34",pas.System.TObject,function () {
+    this.MoveNext = function () {
+      var Result = false;
+      Result = this.DoMoveNext();
+      return Result;
+    };
+  },"TEnumerator<DOM.TDomNode>");
+  rtl.createClass(this,"TEnumerable$G33",pas.System.TObject,function () {
+  },"TEnumerable<DOM.TDomNode>");
+  rtl.createClass(this,"TCustomList$G26",this.TEnumerable$G33,function () {
+    this.$init = function () {
+      $mod.TEnumerable$G33.$init.call(this);
+      this.FOnNotify = null;
+      this.FLength = 0;
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FOnNotify = undefined;
+      this.FItems = undefined;
+      $mod.TEnumerable$G33.$final.call(this);
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(null);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
+    this.Notify = function (AValue, ACollectionNotification) {
+      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
+    };
+  },"TCustomList<DOM.TDomNode>");
+  rtl.createClass(this,"TCustomListEnumerator$G24",this.TEnumerator$G34,function () {
+    this.$init = function () {
+      $mod.TEnumerator$G34.$init.call(this);
+      this.FList = null;
+      this.FIndex = 0;
+    };
+    this.$final = function () {
+      this.FList = undefined;
+      $mod.TEnumerator$G34.$final.call(this);
+    };
+    this.DoMoveNext = function () {
+      var Result = false;
+      this.FIndex += 1;
+      Result = (this.FList.FLength > 0) && (this.FIndex < this.FList.FLength);
+      return Result;
+    };
+    this.DoGetCurrent = function () {
+      var Result = null;
+      Result = this.GetCurrent();
+      return Result;
+    };
+    this.GetCurrent = function () {
+      var Result = null;
+      Result = this.FList.FItems[this.FIndex];
+      return Result;
+    };
+    this.Create$1 = function (AList) {
+      pas.System.TObject.Create.call(this);
+      this.FIndex = -1;
+      this.FList = AList;
+      return this;
+    };
+  },"TCustomListEnumerator<DOM.TDomNode>");
+  rtl.createClass(this,"TList$G19",this.TCustomList$G26,function () {
+    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G24,function () {
+    },"TList<DOM.TDomNode>.TEnumerator");
+    this.SetCapacity = function (AValue) {
+      if (AValue < this.FLength) this.SetCount(AValue);
+      this.FItems = rtl.arraySetLength(this.FItems,null,AValue);
+    };
+    this.SetCount = function (AValue) {
+      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      if (AValue > this.GetCapacity()) {
+        this.SetCapacity(AValue)}
+       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
+      this.FLength = AValue;
+    };
+    this.InitializeList = function () {
+    };
+    this.GetItem = function (AIndex) {
+      var Result = null;
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result = this.FItems[AIndex];
+      return Result;
+    };
+    this.GetEnumerator$1 = function () {
+      var Result = null;
+      Result = this.TEnumerator.$create("Create$1",[this]);
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
+    this.Destroy = function () {
+      this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
+    this.DeleteRange = function (AIndex, ACount) {
+      var LDeleted = [];
+      var i = 0;
+      if (ACount === 0) return;
+      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      LDeleted = this.FItems.splice(AIndex,this.FLength);
+      this.FLength -= ACount;
+      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
+      };
+    };
+  },"TList<DOM.TDomNode>");
+  rtl.createClass(this,"TEnumerable$G34",pas.System.TObject,function () {
+  },"TEnumerable<uScript.TVar>");
+  rtl.createClass(this,"TCustomList$G27",this.TEnumerable$G34,function () {
+    this.$init = function () {
+      $mod.TEnumerable$G34.$init.call(this);
+      this.FOnNotify = null;
+      this.FLength = 0;
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FOnNotify = undefined;
+      this.FItems = undefined;
+      $mod.TEnumerable$G34.$final.call(this);
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(pas.uScript.TVar.$new());
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
+    this.Notify = function (AValue, ACollectionNotification) {
+      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
+    };
+  },"TCustomList<uScript.TVar>");
+  rtl.createClass(this,"TList$G20",this.TCustomList$G27,function () {
+    this.SetCapacity = function (AValue) {
+      if (AValue < this.FLength) this.SetCount(AValue);
+      this.FItems = rtl.arraySetLength(this.FItems,pas.uScript.TVar,AValue);
+    };
+    this.SetCount = function (AValue) {
+      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      if (AValue > this.GetCapacity()) {
+        this.SetCapacity(AValue)}
+       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
+      this.FLength = AValue;
+    };
+    this.InitializeList = function () {
+    };
+    this.GetItem = function (AIndex) {
+      var Result = pas.uScript.TVar.$new();
+      if ((AIndex < 0) || (AIndex >= this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      Result.$assign(this.FItems[AIndex]);
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
+    this.Destroy = function () {
+      this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result].$assign(AValue);
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
+    this.DeleteRange = function (AIndex, ACount) {
+      var LDeleted = [];
+      var i = 0;
+      if (ACount === 0) return;
+      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      LDeleted = this.FItems.splice(AIndex,this.FLength);
+      this.FLength -= ACount;
+      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
+      };
+    };
+  },"TList<uScript.TVar>");
+  rtl.recNewT(this,"TPair$G3",function () {
+    this.$eq = function (b) {
+      return true;
+    };
+    this.$assign = function (s) {
+      return this;
+    };
   });
-});
+  rtl.createClass(this,"TEnumerable$G35",pas.System.TObject,function () {
+  },"TEnumerable<Generics.Collections.TPair<System.String,System.JSValue>>");
+  rtl.createClass(this,"TEnumerator$G37",pas.System.TObject,function () {
+  },"TEnumerator<System.String>");
+  rtl.createClass(this,"TEnumerable$G36",pas.System.TObject,function () {
+  },"TEnumerable<System.JSValue>");
+  rtl.createClass(this,"TEnumerable$G37",pas.System.TObject,function () {
+  },"TEnumerable<System.String>");
+  rtl.createClass(this,"TDictionary$G2",this.TEnumerable$G35,function () {
+    rtl.createClass(this,"TKeyEnumerator",$mod.TEnumerator$G37,function () {
+      this.$init = function () {
+        $mod.TEnumerator$G37.$init.call(this);
+        this.FIter = null;
+        this.FVal = null;
+      };
+      this.$final = function () {
+        this.FIter = undefined;
+        this.FVal = undefined;
+        $mod.TEnumerator$G37.$final.call(this);
+      };
+      this.GetCurrent = function () {
+        var Result = "";
+        Result = this.DoGetCurrent();
+        return Result;
+      };
+      this.DoGetCurrent = function () {
+        var Result = "";
+        Result = "" + this.FVal.value;
+        return Result;
+      };
+      this.DoMoveNext = function () {
+        var Result = false;
+        this.FVal = this.FIter.next();
+        Result = !this.FVal.done;
+        return Result;
+      };
+      this.Create$1 = function (AIter) {
+        this.FIter = AIter;
+        return this;
+      };
+      this.MoveNext$1 = function () {
+        var Result = false;
+        Result = this.DoMoveNext();
+        return Result;
+      };
+    },"TDictionary<System.String,System.JSValue>.TKeyEnumerator");
+    rtl.createClass(this,"TValueCollection",$mod.TEnumerable$G36,function () {
+    },"TDictionary<System.String,System.JSValue>.TValueCollection");
+    rtl.createClass(this,"TKeyCollection",$mod.TEnumerable$G37,function () {
+      this.$init = function () {
+        $mod.TEnumerable$G37.$init.call(this);
+        this.FMap = null;
+      };
+      this.$final = function () {
+        this.FMap = undefined;
+        $mod.TEnumerable$G37.$final.call(this);
+      };
+      this.Create$1 = function (ADictionary) {
+        this.FMap = ADictionary.FMap;
+        return this;
+      };
+      this.GetEnumerator$1 = function () {
+        var Result = null;
+        Result = $mod.TDictionary$G2.TKeyEnumerator.$create("Create$1",[this.FMap.keys()]);
+        return Result;
+      };
+    },"TDictionary<System.String,System.JSValue>.TKeyCollection");
+    this.$init = function () {
+      $mod.TEnumerable$G35.$init.call(this);
+      this.FMap = null;
+      this.FComparer = null;
+      this.FOnKeyNotify = null;
+      this.FOnValueNotify = null;
+      this.FKeyCollection = null;
+      this.FValueCollection = null;
+    };
+    this.$final = function () {
+      this.FMap = undefined;
+      rtl.setIntfP(this,"FComparer",null);
+      this.FOnKeyNotify = undefined;
+      this.FOnValueNotify = undefined;
+      this.FKeyCollection = undefined;
+      this.FValueCollection = undefined;
+      $mod.TEnumerable$G35.$final.call(this);
+    };
+    this.GetEffectiveKey = function (Key) {
+      var Result = "";
+      var it = null;
+      var v = null;
+      if (!(this.FComparer != null)) return Key;
+      it = this.FMap.keys();
+      v = it.next();
+      while (!v.done) {
+        Result = "" + v.value;
+        if (this.FComparer.Compare(Result,Key) === 0) return Result;
+        v = it.next();
+      };
+      Result = Key;
+      return Result;
+    };
+    this.SetItem = function (Key, Value) {
+      var V = undefined;
+      V = this.FMap.get(this.GetEffectiveKey(Key));
+      if (!pas.JS.isUndefined(V)) this.ValueNotify(V,$mod.TCollectionNotification.cnRemoved);
+      this.FMap.set(Key,Value);
+      this.ValueNotify(Value,$mod.TCollectionNotification.cnAdded);
+    };
+    this.DoAdd = function (Key, Value) {
+      this.FMap.set(this.GetEffectiveKey(Key),Value);
+      this.KeyNotify(Key,$mod.TCollectionNotification.cnAdded);
+      this.ValueNotify(Value,$mod.TCollectionNotification.cnAdded);
+    };
+    this.DoRemove = function (Key, Notification) {
+      var Result = undefined;
+      var V = undefined;
+      var K = "";
+      K = this.GetEffectiveKey(Key);
+      V = this.FMap.get(K);
+      if (!pas.JS.isUndefined(V)) {
+        this.FMap.delete(K);
+        Result = V;
+        this.KeyNotify(Key,Notification);
+        this.ValueNotify(Result,Notification);
+      };
+      return Result;
+    };
+    this.CanClearMap = function () {
+      var Result = false;
+      Result = (this.FOnKeyNotify === null) && (this.FOnValueNotify === null);
+      return Result;
+    };
+    this.PairNotify = function (Key, Value, Action) {
+      this.KeyNotify(Key,Action);
+      this.ValueNotify(Value,Action);
+    };
+    this.KeyNotify = function (Key, Action) {
+      if (this.FOnKeyNotify != null) this.FOnKeyNotify(this,Key,Action);
+    };
+    this.ValueNotify = function (Value, Action) {
+      if (this.FOnValueNotify != null) this.FOnValueNotify(this,Value,Action);
+    };
+    this.Destroy = function () {
+      pas.SysUtils.FreeAndNil({p: this, get: function () {
+          return this.p.FKeyCollection;
+        }, set: function (v) {
+          this.p.FKeyCollection = v;
+        }});
+      pas.SysUtils.FreeAndNil({p: this, get: function () {
+          return this.p.FValueCollection;
+        }, set: function (v) {
+          this.p.FValueCollection = v;
+        }});
+      this.Clear();
+      this.FMap = null;
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.Remove = function (Key) {
+      this.DoRemove(Key,$mod.TCollectionNotification.cnRemoved);
+    };
+    this.Clear = function () {
+      var Iter = null;
+      var IVal = null;
+      var A = [];
+      var K = "";
+      var V = undefined;
+      if (this.CanClearMap()) {
+        this.FMap.clear()}
+       else {
+        Iter = this.FMap.entries();
+        do {
+          IVal = Iter.next();
+          if (!IVal.done) {
+            A = IVal.value;
+            K = "" + A[0];
+            V = A[1];
+            this.FMap.delete(K);
+            this.PairNotify(K,V,$mod.TCollectionNotification.cnRemoved);
+          };
+        } while (!IVal.done);
+      };
+    };
+    this.TryGetValue = function (Key, Value) {
+      var Result = false;
+      var K = "";
+      K = this.GetEffectiveKey(Key);
+      Result = this.FMap.has(K);
+      if (Result) Value.set(this.FMap.get(K));
+      return Result;
+    };
+    this.AddOrSetValue = function (Key, Value) {
+      var k = "";
+      k = this.GetEffectiveKey(Key);
+      if (!this.FMap.has(k)) {
+        this.DoAdd(Key,Value)}
+       else this.SetItem(k,Value);
+    };
+    this.ContainsKey = function (Key) {
+      var Result = false;
+      Result = this.FMap.has(this.GetEffectiveKey(Key));
+      return Result;
+    };
+    this.GetKeys = function () {
+      var Result = null;
+      if (this.FKeyCollection === null) this.FKeyCollection = this.TKeyCollection.$create("Create$1",[this]);
+      Result = this.FKeyCollection;
+      return Result;
+    };
+  },"TDictionary<System.String,System.JSValue>");
+  rtl.recNewT(this,"TPair$G4",function () {
+    this.$eq = function (b) {
+      return true;
+    };
+    this.$assign = function (s) {
+      return this;
+    };
+  });
+  rtl.createClass(this,"TEnumerable$G38",pas.System.TObject,function () {
+  },"TEnumerable<Generics.Collections.TPair<System.String,uScript.TFunc>>");
+  rtl.createClass(this,"TEnumerable$G39",pas.System.TObject,function () {
+  },"TEnumerable<uScript.TFunc>");
+  rtl.createClass(this,"TDictionary$G3",this.TEnumerable$G38,function () {
+    rtl.createClass(this,"TValueCollection",$mod.TEnumerable$G39,function () {
+    },"TDictionary<System.String,uScript.TFunc>.TValueCollection");
+    rtl.createClass(this,"TKeyCollection",$mod.TEnumerable$G37,function () {
+    },"TDictionary<System.String,uScript.TFunc>.TKeyCollection");
+    this.$init = function () {
+      $mod.TEnumerable$G38.$init.call(this);
+      this.FMap = null;
+      this.FComparer = null;
+      this.FOnKeyNotify = null;
+      this.FOnValueNotify = null;
+      this.FKeyCollection = null;
+      this.FValueCollection = null;
+    };
+    this.$final = function () {
+      this.FMap = undefined;
+      rtl.setIntfP(this,"FComparer",null);
+      this.FOnKeyNotify = undefined;
+      this.FOnValueNotify = undefined;
+      this.FKeyCollection = undefined;
+      this.FValueCollection = undefined;
+      $mod.TEnumerable$G38.$final.call(this);
+    };
+    this.GetEffectiveKey = function (Key) {
+      var Result = "";
+      var it = null;
+      var v = null;
+      if (!(this.FComparer != null)) return Key;
+      it = this.FMap.keys();
+      v = it.next();
+      while (!v.done) {
+        Result = "" + v.value;
+        if (this.FComparer.Compare(Result,Key) === 0) return Result;
+        v = it.next();
+      };
+      Result = Key;
+      return Result;
+    };
+    this.GetItem = function (Key) {
+      var Result = pas.uScript.TFunc.$new();
+      var V = undefined;
+      V = this.FMap.get(this.GetEffectiveKey(Key));
+      if (pas.JS.isUndefined(V)) throw $mod.EDictionary.$create("Create$1",[rtl.getResStr($mod,"SErrDictKeyNotFound")]);
+      Result.$assign(rtl.getObject(V));
+      return Result;
+    };
+    this.CanClearMap = function () {
+      var Result = false;
+      Result = (this.FOnKeyNotify === null) && (this.FOnValueNotify === null);
+      return Result;
+    };
+    this.PairNotify = function (Key, Value, Action) {
+      this.KeyNotify(Key,Action);
+      this.ValueNotify(Value,Action);
+    };
+    this.KeyNotify = function (Key, Action) {
+      if (this.FOnKeyNotify != null) this.FOnKeyNotify(this,Key,Action);
+    };
+    this.ValueNotify = function (Value, Action) {
+      if (this.FOnValueNotify != null) this.FOnValueNotify(this,Value,Action);
+    };
+    this.Destroy = function () {
+      pas.SysUtils.FreeAndNil({p: this, get: function () {
+          return this.p.FKeyCollection;
+        }, set: function (v) {
+          this.p.FKeyCollection = v;
+        }});
+      pas.SysUtils.FreeAndNil({p: this, get: function () {
+          return this.p.FValueCollection;
+        }, set: function (v) {
+          this.p.FValueCollection = v;
+        }});
+      this.Clear();
+      this.FMap = null;
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.Clear = function () {
+      var Iter = null;
+      var IVal = null;
+      var A = [];
+      var K = "";
+      var V = pas.uScript.TFunc.$new();
+      if (this.CanClearMap()) {
+        this.FMap.clear()}
+       else {
+        Iter = this.FMap.entries();
+        do {
+          IVal = Iter.next();
+          if (!IVal.done) {
+            A = IVal.value;
+            K = "" + A[0];
+            V.$assign(rtl.getObject(A[1]));
+            this.FMap.delete(K);
+            this.PairNotify(K,pas.uScript.TFunc.$clone(V),$mod.TCollectionNotification.cnRemoved);
+          };
+        } while (!IVal.done);
+      };
+    };
+    this.ContainsKey = function (Key) {
+      var Result = false;
+      Result = this.FMap.has(this.GetEffectiveKey(Key));
+      return Result;
+    };
+  },"TDictionary<System.String,uScript.TFunc>");
+  rtl.recNewT(this,"TPair$G5",function () {
+    this.$eq = function (b) {
+      return true;
+    };
+    this.$assign = function (s) {
+      return this;
+    };
+  });
+  rtl.createClass(this,"TEnumerable$G40",pas.System.TObject,function () {
+  },"TEnumerable<Generics.Collections.TPair<System.String,uScript.TProcedure>>");
+  rtl.createClass(this,"TEnumerable$G41",pas.System.TObject,function () {
+  },"TEnumerable<uScript.TProcedure>");
+  rtl.createClass(this,"TDictionary$G4",this.TEnumerable$G40,function () {
+    rtl.createClass(this,"TValueCollection",$mod.TEnumerable$G41,function () {
+    },"TDictionary<System.String,uScript.TProcedure>.TValueCollection");
+    rtl.createClass(this,"TKeyCollection",$mod.TEnumerable$G37,function () {
+    },"TDictionary<System.String,uScript.TProcedure>.TKeyCollection");
+    this.$init = function () {
+      $mod.TEnumerable$G40.$init.call(this);
+      this.FMap = null;
+      this.FComparer = null;
+      this.FOnKeyNotify = null;
+      this.FOnValueNotify = null;
+      this.FKeyCollection = null;
+      this.FValueCollection = null;
+    };
+    this.$final = function () {
+      this.FMap = undefined;
+      rtl.setIntfP(this,"FComparer",null);
+      this.FOnKeyNotify = undefined;
+      this.FOnValueNotify = undefined;
+      this.FKeyCollection = undefined;
+      this.FValueCollection = undefined;
+      $mod.TEnumerable$G40.$final.call(this);
+    };
+    this.GetEffectiveKey = function (Key) {
+      var Result = "";
+      var it = null;
+      var v = null;
+      if (!(this.FComparer != null)) return Key;
+      it = this.FMap.keys();
+      v = it.next();
+      while (!v.done) {
+        Result = "" + v.value;
+        if (this.FComparer.Compare(Result,Key) === 0) return Result;
+        v = it.next();
+      };
+      Result = Key;
+      return Result;
+    };
+    this.CanClearMap = function () {
+      var Result = false;
+      Result = (this.FOnKeyNotify === null) && (this.FOnValueNotify === null);
+      return Result;
+    };
+    this.PairNotify = function (Key, Value, Action) {
+      this.KeyNotify(Key,Action);
+      this.ValueNotify(Value,Action);
+    };
+    this.KeyNotify = function (Key, Action) {
+      if (this.FOnKeyNotify != null) this.FOnKeyNotify(this,Key,Action);
+    };
+    this.ValueNotify = function (Value, Action) {
+      if (this.FOnValueNotify != null) this.FOnValueNotify(this,Value,Action);
+    };
+    this.Destroy = function () {
+      pas.SysUtils.FreeAndNil({p: this, get: function () {
+          return this.p.FKeyCollection;
+        }, set: function (v) {
+          this.p.FKeyCollection = v;
+        }});
+      pas.SysUtils.FreeAndNil({p: this, get: function () {
+          return this.p.FValueCollection;
+        }, set: function (v) {
+          this.p.FValueCollection = v;
+        }});
+      this.Clear();
+      this.FMap = null;
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.Clear = function () {
+      var Iter = null;
+      var IVal = null;
+      var A = [];
+      var K = "";
+      var V = pas.uScript.TProcedure.$new();
+      if (this.CanClearMap()) {
+        this.FMap.clear()}
+       else {
+        Iter = this.FMap.entries();
+        do {
+          IVal = Iter.next();
+          if (!IVal.done) {
+            A = IVal.value;
+            K = "" + A[0];
+            V.$assign(rtl.getObject(A[1]));
+            this.FMap.delete(K);
+            this.PairNotify(K,pas.uScript.TProcedure.$clone(V),$mod.TCollectionNotification.cnRemoved);
+          };
+        } while (!IVal.done);
+      };
+    };
+    this.TryGetValue = function (Key, Value) {
+      var Result = false;
+      var K = "";
+      K = this.GetEffectiveKey(Key);
+      Result = this.FMap.has(K);
+      if (Result) Value.$assign(rtl.getObject(this.FMap.get(K)));
+      return Result;
+    };
+    this.ContainsKey = function (Key) {
+      var Result = false;
+      Result = this.FMap.has(this.GetEffectiveKey(Key));
+      return Result;
+    };
+  },"TDictionary<System.String,uScript.TProcedure>");
+  rtl.createClass(this,"TEnumerator$G43",pas.System.TObject,function () {
+    this.MoveNext = function () {
+      var Result = false;
+      Result = this.DoMoveNext();
+      return Result;
+    };
+  },"TEnumerator<System.Double>");
+  rtl.createClass(this,"TEnumerable$G42",pas.System.TObject,function () {
+    this.GetEnumerator = function () {
+      var Result = null;
+      Result = this.DoGetEnumerator();
+      return Result;
+    };
+    this.ToArray = function () {
+      var Result = [];
+      var LEnumerator = null;
+      Result = [];
+      LEnumerator = this.GetEnumerator();
+      try {
+        while (LEnumerator.MoveNext()) Result.push(LEnumerator.DoGetCurrent());
+      } finally {
+        LEnumerator = rtl.freeLoc(LEnumerator);
+      };
+      return Result;
+    };
+  },"TEnumerable<System.Double>");
+  rtl.createClass(this,"TCustomList$G28",this.TEnumerable$G42,function () {
+    this.$init = function () {
+      $mod.TEnumerable$G42.$init.call(this);
+      this.FOnNotify = null;
+      this.FLength = 0;
+      this.FItems = [];
+    };
+    this.$final = function () {
+      this.FOnNotify = undefined;
+      this.FItems = undefined;
+      $mod.TEnumerable$G42.$final.call(this);
+    };
+    this.GetCapacity = function () {
+      var Result = 0;
+      Result = rtl.length(this.FItems);
+      return Result;
+    };
+    this.PrepareAddingItem = function () {
+      var Result = 0;
+      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(0.0);
+      Result = this.FLength;
+      this.FLength += 1;
+      return Result;
+    };
+    this.Notify = function (AValue, ACollectionNotification) {
+      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
+    };
+  },"TCustomList<System.Double>");
+  rtl.createClass(this,"TCustomListEnumerator$G26",this.TEnumerator$G43,function () {
+    this.$init = function () {
+      $mod.TEnumerator$G43.$init.call(this);
+      this.FList = null;
+      this.FIndex = 0;
+    };
+    this.$final = function () {
+      this.FList = undefined;
+      $mod.TEnumerator$G43.$final.call(this);
+    };
+    this.DoMoveNext = function () {
+      var Result = false;
+      this.FIndex += 1;
+      Result = (this.FList.FLength > 0) && (this.FIndex < this.FList.FLength);
+      return Result;
+    };
+    this.DoGetCurrent = function () {
+      var Result = 0.0;
+      Result = this.GetCurrent();
+      return Result;
+    };
+    this.GetCurrent = function () {
+      var Result = 0.0;
+      Result = this.FList.FItems[this.FIndex];
+      return Result;
+    };
+    this.Create$1 = function (AList) {
+      pas.System.TObject.Create.call(this);
+      this.FIndex = -1;
+      this.FList = AList;
+      return this;
+    };
+  },"TCustomListEnumerator<System.Double>");
+  rtl.createClass(this,"TList$G21",this.TCustomList$G28,function () {
+    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G26,function () {
+    },"TList<System.Double>.TEnumerator");
+    this.SetCapacity = function (AValue) {
+      if (AValue < this.FLength) this.SetCount(AValue);
+      this.FItems = rtl.arraySetLength(this.FItems,0.0,AValue);
+    };
+    this.SetCount = function (AValue) {
+      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      if (AValue > this.GetCapacity()) {
+        this.SetCapacity(AValue)}
+       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
+      this.FLength = AValue;
+    };
+    this.InitializeList = function () {
+    };
+    this.DoGetEnumerator = function () {
+      var Result = null;
+      Result = this.GetEnumerator$1();
+      return Result;
+    };
+    this.GetEnumerator$1 = function () {
+      var Result = null;
+      Result = this.TEnumerator.$create("Create$1",[this]);
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.InitializeList();
+      return this;
+    };
+    this.Destroy = function () {
+      this.SetCapacity(0);
+    };
+    this.Add = function (AValue) {
+      var Result = 0;
+      Result = this.PrepareAddingItem();
+      this.FItems[Result] = AValue;
+      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
+      return Result;
+    };
+    this.DeleteRange = function (AIndex, ACount) {
+      var LDeleted = [];
+      var i = 0;
+      if (ACount === 0) return;
+      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
+      LDeleted = this.FItems.splice(AIndex,this.FLength);
+      this.FLength -= ACount;
+      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
+      };
+    };
+  },"TList<System.Double>");
+  $mod.$implcode = function () {
+    $mod.$resourcestrings = {SErrDictKeyNotFound: {org: "Key value not found"}};
+  };
+},[]);
 rtl.module("uVector",["System","Classes","Generics.Collections"],function () {
   "use strict";
   var $mod = this;
-  rtl.recNewT($mod,"TVector",function () {
+  var $impl = $mod.$impl;
+  rtl.recNewT(this,"TVector",function () {
     this.x = 0.0;
     this.y = 0.0;
     this.z = 0.0;
@@ -3041,7 +6096,24 @@ rtl.module("uVector",["System","Classes","Generics.Collections"],function () {
       this.y = this.y / L;
       this.z = this.z / L;
     };
+    this.IsNear = function (Vect) {
+      var Result = false;
+      Result = (Math.abs(this.x - Vect.x) + Math.abs(this.y - Vect.y) + Math.abs(this.z - Vect.z)) < 1E-4;
+      return Result;
+    };
+    this.IsNearOpposite = function (Vect) {
+      var Result = false;
+      Result = (Math.abs(this.x + Vect.x) + Math.abs(this.y + Vect.y) + Math.abs(this.z + Vect.z)) < 1E-4;
+      return Result;
+    };
   });
+  this.Vector = function (x, y, z) {
+    var Result = $mod.TVector.$new();
+    Result.x = x;
+    Result.y = y;
+    Result.z = z;
+    return Result;
+  };
   this.VectorAdd = function (ALeft, ARight) {
     var Result = $mod.TVector.$new();
     Result.x = ALeft.x + ARight.x;
@@ -3063,68 +6135,50 @@ rtl.module("uVector",["System","Classes","Generics.Collections"],function () {
     Result.z = ALeft.z - ARight.z;
     return Result;
   };
+  this.VectorScale = function (V, Scalar) {
+    var Result = $mod.TVector.$new();
+    Result.x = V.x * Scalar;
+    Result.y = V.y * Scalar;
+    Result.z = V.z * Scalar;
+    return Result;
+  };
+  this.VectorCross = function (ALeft, ARight) {
+    var Result = $mod.TVector.$new();
+    Result.x = (ALeft.y * ARight.z) - (ALeft.z * ARight.y);
+    Result.y = (ALeft.z * ARight.x) - (ALeft.x * ARight.z);
+    Result.z = (ALeft.x * ARight.y) - (ALeft.y * ARight.x);
+    return Result;
+  };
+  this.VectorDivide = function (V, Scalar) {
+    var Result = $mod.TVector.$new();
+    Result.x = V.x / Scalar;
+    Result.y = V.y / Scalar;
+    Result.z = V.z / Scalar;
+    return Result;
+  };
   this.VectorDot = function (ALeft, ARight) {
     var Result = 0.0;
     Result = (ALeft.x * ARight.x) + (ALeft.y * ARight.y) + (ALeft.z * ARight.z);
     return Result;
   };
-});
-rtl.module("Graphics",["System"],function () {
-  "use strict";
-  var $mod = this;
-});
-rtl.module("uFace",["System","uVector","Graphics","Generics.Collections"],function () {
-  "use strict";
-  var $mod = this;
-  this.TFaceType = {"0": "ftUnknown", ftUnknown: 0, "1": "ftConvex", ftConvex: 1, "2": "ftReflex", ftReflex: 2};
-  rtl.recNewT($mod,"TFaceVertex",function () {
-    this.$eq = function (b) {
-      return true;
-    };
-    this.$assign = function (s) {
-      return this;
-    };
-  });
-  rtl.createClass($mod,"TFace",pas.System.TObject,function () {
-    this.$init = function () {
-      pas.System.TObject.$init.call(this);
-      this.FSpikes = null;
-      this.FConvexity = 0;
-      this.FVertices = null;
-      this.Color = 0;
-      this.TextureId = 0;
-    };
-    this.$final = function () {
-      this.FSpikes = undefined;
-      this.FVertices = undefined;
-      pas.System.TObject.$final.call(this);
-    };
-    this.Destroy = function () {
-      this.Clear();
-      rtl.free(this,"FSpikes");
-      rtl.free(this,"FVertices");
-      pas.System.TObject.Destroy.call(this);
-    };
-    this.Clear = function () {
-      this.Color = -1;
-      this.FSpikes.Clear();
-      this.FVertices.Clear();
-      this.TextureId = -1;
-      this.Invalidate();
-    };
-    this.Invalidate = function () {
-      this.FConvexity = $mod.TFaceType.ftUnknown;
-    };
-  });
+  $mod.$implcode = function () {
+    $impl.DELTA = 1e-4;
+  };
 },[]);
 rtl.module("uMatrix",["System","uVector"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
-  rtl.createClass($mod,"TMatrix",pas.System.TObject,function () {
+  this.T4x4Matrix$clone = function (a) {
+    var b = [];
+    b.length = 4;
+    for (var c = 0; c < 4; c++) b[c] = a[c].slice(0);
+    return b;
+  };
+  rtl.createClass(this,"TMatrix",pas.System.TObject,function () {
     this.GetMoveMatrix = function (d) {
       var Result = rtl.arraySetLength(null,0.0,4,4);
-      Result = $impl.FSingleMatrix.slice(0);
+      Result = $mod.T4x4Matrix$clone($impl.FSingleMatrix);
       Result[3][0] = d.x;
       Result[3][1] = d.y;
       Result[3][2] = d.z;
@@ -3138,7 +6192,7 @@ rtl.module("uMatrix",["System","uVector"],function () {
       s = Math.sin(Al);
       c = Math.cos(Al);
       t = 1 - c;
-      Result = $impl.FSingleMatrix.slice(0);
+      Result = $mod.T4x4Matrix$clone($impl.FSingleMatrix);
       Result[0][0] = (t * V.x * V.x) + c;
       Result[1][0] = (t * V.x * V.y) - (s * V.z);
       Result[2][0] = (t * V.x * V.z) + (s * V.y);
@@ -3148,6 +6202,14 @@ rtl.module("uMatrix",["System","uVector"],function () {
       Result[0][2] = (t * V.x * V.z) - (s * V.y);
       Result[1][2] = (t * V.z * V.y) + (s * V.x);
       Result[2][2] = (t * V.z * V.z) + c;
+      return Result;
+    };
+    this.GetScaleMatrix = function (dx, dy, dz) {
+      var Result = rtl.arraySetLength(null,0.0,4,4);
+      Result = $mod.T4x4Matrix$clone($impl.FSingleMatrix);
+      Result[0][0] = dx;
+      Result[1][1] = dy;
+      Result[2][2] = dz;
       return Result;
     };
     this.Mult = function (a, b) {
@@ -3185,117 +6247,14 @@ rtl.module("uMatrix",["System","uVector"],function () {
       return Result;
     };
   });
-},["SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  var $impl = $mod.$impl;
-  $impl.FSingleMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
-});
-rtl.module("uPart",["System","uMatrix","uVector","uFace","Generics.Collections"],function () {
-  "use strict";
-  var $mod = this;
-  rtl.createClass($mod,"TPart",pas.System.TObject,function () {
-    this.$init = function () {
-      pas.System.TObject.$init.call(this);
-      this.FVertices = null;
-      this.FFaces = null;
-      this.FVisible = false;
-    };
-    this.$final = function () {
-      this.FVertices = undefined;
-      this.FFaces = undefined;
-      pas.System.TObject.$final.call(this);
-    };
-    this.Destroy = function () {
-      this.Clear();
-      rtl.free(this,"FFaces");
-      rtl.free(this,"FVertices");
-      pas.System.TObject.Destroy.call(this);
-    };
-    this.Clear = function () {
-      var Face = null;
-      this.FVertices.Clear();
-      var $in = this.FFaces.GetEnumerator$1();
-      try {
-        while ($in.MoveNext()) {
-          Face = $in.DoGetCurrent();
-          Face = rtl.freeLoc(Face);
-        }
-      } finally {
-        $in = rtl.freeLoc($in)
-      };
-      this.FFaces.Clear();
-      this.FVisible = true;
-    };
-    this.Trans = function (Matrix) {
-      var i = 0;
-      for (var $l = 0, $end = this.FVertices.FLength - 1; $l <= $end; $l++) {
-        i = $l;
-        this.FVertices.SetItem(i,pas.uMatrix.TMatrix.VectorMul(Matrix,this.FVertices.GetItem(i)));
-      };
-    };
-  });
+  $mod.$implcode = function () {
+    $impl.FSingleMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+  };
 },["SysUtils"]);
-rtl.module("uSolvedState",["System","Generics.Collections","uVector"],function () {
-  "use strict";
-  var $mod = this;
-  rtl.createClass($mod,"TFaceProperties",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"TSolvedState",pas.System.TObject,function () {
-    this.$init = function () {
-      pas.System.TObject.$init.call(this);
-      this.FacesProperties = null;
-    };
-    this.$final = function () {
-      this.FacesProperties = undefined;
-      pas.System.TObject.$final.call(this);
-    };
-    this.Destroy = function () {
-      var i = 0;
-      var FacePropertiesItem = null;
-      for (var $l = 0, $end = this.FacesProperties.FLength - 1; $l <= $end; $l++) {
-        i = $l;
-        FacePropertiesItem = this.FacesProperties.GetItem(i);
-        FacePropertiesItem = rtl.freeLoc(FacePropertiesItem);
-      };
-      rtl.free(this,"FacesProperties");
-      pas.System.TObject.Destroy.call(this);
-    };
-  });
-  rtl.createClass($mod,"TSolvedStates",pas.System.TObject,function () {
-    this.$init = function () {
-      pas.System.TObject.$init.call(this);
-      this.FSolvedStates = null;
-    };
-    this.$final = function () {
-      this.FSolvedStates = undefined;
-      pas.System.TObject.$final.call(this);
-    };
-    this.Create$1 = function () {
-      this.FSolvedStates = pas["Generics.Collections"].TList$G15.$create("Create$1");
-      return this;
-    };
-    this.Destroy = function () {
-      this.Clear();
-      rtl.free(this,"FSolvedStates");
-      pas.System.TObject.Destroy.call(this);
-    };
-    this.Clear = function () {
-      var i = 0;
-      var SolvedStateItem = null;
-      for (var $l = 0, $end = this.FSolvedStates.FLength - 1; $l <= $end; $l++) {
-        i = $l;
-        SolvedStateItem = this.FSolvedStates.GetItem(i);
-        SolvedStateItem = rtl.freeLoc(SolvedStateItem);
-      };
-      this.FSolvedStates.Clear();
-    };
-  });
-},["uPuzzle","uFace","uPart","Graphics"]);
 rtl.module("uLine",["System","uMatrix","uVector"],function () {
   "use strict";
   var $mod = this;
-  rtl.recNewT($mod,"TLine",function () {
+  rtl.recNewT(this,"TLine",function () {
     this.$new = function () {
       var r = Object.create(this);
       r.BaseVector = pas.uVector.TVector.$new();
@@ -3318,20 +6277,1000 @@ rtl.module("uLine",["System","uMatrix","uVector"],function () {
       this.NormVector.Normalize();
     };
   });
+  this.DELTA = 1e-4;
+},["uGeometryUtils"]);
+rtl.module("uPlane",["System","uMatrix","uVector"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.recNewT(this,"TPlane",function () {
+    this.NormDistance = 0.0;
+    this.$new = function () {
+      var r = Object.create(this);
+      r.NormVect = pas.uVector.TVector.$new();
+      return r;
+    };
+    this.$eq = function (b) {
+      return this.NormVect.$eq(b.NormVect) && (this.NormDistance === b.NormDistance);
+    };
+    this.$assign = function (s) {
+      this.NormVect.$assign(s.NormVect);
+      this.NormDistance = s.NormDistance;
+      return this;
+    };
+    this.TurnRound = function () {
+      this.NormDistance = -this.NormDistance;
+      this.NormVect.$assign(pas.uVector.VectorNegate(this.NormVect));
+    };
+    this.DistanceToPoint = function (Point) {
+      var Result = 0.0;
+      Result = pas.uVector.VectorDot(Point,this.NormVect) - this.NormDistance;
+      return Result;
+    };
+  });
+  this.Plane = function (NormVect, NormDistance) {
+    var Result = $mod.TPlane.$new();
+    Result.NormVect.$assign(NormVect);
+    Result.NormDistance = NormDistance;
+    return Result;
+  };
+});
+rtl.module("uGeometryUtils",["System","uLine","uVector","uPlane"],function () {
+  "use strict";
+  var $mod = this;
+  this.THalfOfPlane = {"0": "hopInPlane", hopInPlane: 0, "1": "hopInside", hopInside: 1, "2": "hopOutside", hopOutside: 2, "3": "hopIntersect", hopIntersect: 3};
+  rtl.createClass(this,"TGeometryUtils",pas.System.TObject,function () {
+    this.DistancePointToPlane = function (Plane, Point) {
+      var Result = 0.0;
+      Result = pas.uVector.VectorDot(pas.uVector.VectorSubtract(Point,pas.uVector.VectorScale(Plane.NormVect,Plane.NormDistance)),Plane.NormVect);
+      return Result;
+    };
+  });
+});
+rtl.module("Graphics",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.RGB = function (R, G, B) {
+    var Result = 0;
+    Result = rtl.lw(rtl.lw(R | rtl.lw(G << 8)) | rtl.lw(B << 16)) & 0xFFFFFFFF;
+    return Result;
+  };
+});
+rtl.module("Math",["System"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.IsZero = function (d, Epsilon) {
+    var Result = false;
+    if (Epsilon === 0) Epsilon = 1E-12;
+    Result = Math.abs(d) <= Epsilon;
+    return Result;
+  };
+  $mod.$implcode = function () {
+    $impl.DZeroResolution = 1E-12;
+  };
 },[]);
+rtl.module("uFaceUtils",["System","uFace","uPlane","uVector","Generics.Collections"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  rtl.createClass(this,"TFaceUtils",pas.System.TObject,function () {
+    this.IsSameAsPrev = function (Face, idx) {
+      var Result = false;
+      var v0 = pas.uVector.TVector.$new();
+      var v1 = pas.uVector.TVector.$new();
+      Result = Face.GetVertexIndex(idx) === Face.GetVertexIndex(idx - 1);
+      if (Result) return Result;
+      v0.$assign(Face.GetVertex(idx));
+      v1.$assign(Face.GetVertex(idx - 1));
+      Result = v0.IsNear(v1);
+      return Result;
+    };
+    this.IsStraightAngle = function (Face, idx) {
+      var Result = false;
+      var v0 = pas.uVector.TVector.$new();
+      var v1 = pas.uVector.TVector.$new();
+      var v2 = pas.uVector.TVector.$new();
+      v0.$assign(Face.GetVertex(idx));
+      v1.$assign(pas.uVector.VectorSubtract(v0,Face.GetVertex(idx - 1)));
+      v2.$assign(pas.uVector.VectorSubtract(Face.GetVertex(idx + 1),v0));
+      v1.Normalize();
+      v2.Normalize();
+      Result = v1.IsNear(v2);
+      return Result;
+    };
+    this.IsZeroAngle = function (Face, idx) {
+      var Result = false;
+      var v0 = pas.uVector.TVector.$new();
+      var v1 = pas.uVector.TVector.$new();
+      var v2 = pas.uVector.TVector.$new();
+      v0.$assign(Face.GetVertex(idx));
+      v1.$assign(pas.uVector.VectorSubtract(v0,Face.GetVertex(idx - 1)));
+      v2.$assign(pas.uVector.VectorSubtract(v0,Face.GetVertex(idx + 1)));
+      v1.Normalize();
+      v2.Normalize();
+      Result = v1.IsNear(v2);
+      return Result;
+    };
+    this.CalculateBaseVertex = function (Face) {
+      var Result = 0;
+      var i = 0;
+      var n = 0;
+      var iX = 0;
+      var iY = 0;
+      var iZ = 0;
+      var XMin = 0.0;
+      var XMax = 0.0;
+      var YMin = 0.0;
+      var YMax = 0.0;
+      var ZMin = 0.0;
+      var ZMax = 0.0;
+      var dX = 0.0;
+      var dY = 0.0;
+      var dZ = 0.0;
+      Result = -1;
+      n = Face.GetVertexCount();
+      if (n < 3) return Result;
+      var $with = Face.GetVertex(0);
+      XMin = $with.x;
+      XMax = $with.x;
+      YMin = $with.y;
+      YMax = $with.y;
+      ZMin = $with.z;
+      ZMax = $with.z;
+      iX = 0;
+      iY = 0;
+      iZ = 0;
+      for (var $l = 1, $end = n - 1; $l <= $end; $l++) {
+        i = $l;
+        var $with1 = Face.GetVertex(i);
+        if ($with1.x < XMin) {
+          XMin = $with1.x;
+          iX = i;
+        };
+        if ($with1.x > XMax) XMax = $with1.x;
+        if ($with1.y < YMin) {
+          YMin = $with1.y;
+          iY = i;
+        };
+        if ($with1.y > YMax) YMax = $with1.y;
+        if ($with1.z < ZMin) {
+          ZMin = $with1.z;
+          iZ = i;
+        };
+        if ($with1.z > ZMax) ZMax = $with1.z;
+      };
+      dX = Math.abs(XMax - XMin);
+      dY = Math.abs(YMax - YMin);
+      dZ = Math.abs(ZMax - ZMin);
+      if ((dX >= dY) && (dX >= dZ)) {
+        Result = iX}
+       else if ((dY >= dX) && (dY >= dZ)) {
+        Result = iY}
+       else Result = iZ;
+      for (var $l1 = 0, $end1 = n - 1; $l1 <= $end1; $l1++) {
+        i = $l1;
+        if (!$mod.TFaceUtils.IsStraightAngle(Face,Result + i)) {
+          Result = (Result + i) % n;
+          return Result;
+        };
+      };
+      return Result;
+    };
+    this.IsFaceConvex = function (Face) {
+      var Result = false;
+      var nv = pas.uVector.TVector.$new();
+      var v = pas.uVector.TVector.$new();
+      var i = 0;
+      var n = 0;
+      var v0 = pas.uVector.TVector.$new();
+      var v1 = pas.uVector.TVector.$new();
+      var v2 = pas.uVector.TVector.$new();
+      Result = false;
+      nv.$assign($mod.TFaceUtils.CalculateNormal(Face));
+      n = Face.GetVertexCount();
+      for (var $l = 0, $end = n - 1; $l <= $end; $l++) {
+        i = $l;
+        v0.$assign(Face.GetVertex(i));
+        v1.$assign(Face.GetVertex(i + 1));
+        v2.$assign(Face.GetVertex(i + 2));
+        v.$assign(pas.uVector.VectorCross(pas.uVector.VectorSubtract(v0,v1),pas.uVector.VectorSubtract(v2,v1)));
+        if (pas.uVector.VectorDot(v,nv) < 0) if (!$mod.TFaceUtils.IsStraightAngle(Face,i + 1)) return Result;
+      };
+      Result = true;
+      return Result;
+    };
+    this.CutFace = function (Face, Plane, InvisibleSlice, NewFaces, NewVectors) {
+      var Result = false;
+      var FaceVertices = null;
+      var CutVertices = null;
+      function CalcNewVertex(i1, i2) {
+        var Result = pas.uVector.TVector.$new();
+        var c1 = null;
+        var c2 = null;
+        c1 = FaceVertices.GetItem(i1);
+        c2 = FaceVertices.GetItem(i2);
+        Result.$assign(pas.uVector.VectorAdd(c1.Vector,pas.uVector.VectorScale(pas.uVector.VectorSubtract(c2.Vector,c1.Vector),(0 - c1.Distance) / (c2.Distance - c1.Distance))));
+        return Result;
+      };
+      var i = 0;
+      var i2 = 0;
+      var n = 0;
+      var j = 0;
+      var TempFace = null;
+      var NewFace = null;
+      var c = null;
+      var c1 = null;
+      var c2 = null;
+      var first = null;
+      var current = null;
+      var slicePoint = null;
+      var SortItem = null;
+      var FreeItem = null;
+      var PlaneVector = pas.uVector.TVector.$new();
+      var IntersectionVector = pas.uVector.TVector.$new();
+      var TempVectors = null;
+      Result = false;
+      if (Face.GetVertexCount() < 3) return Result;
+      PlaneVector.$assign(pas.uVector.VectorScale(Plane.NormVect,Plane.NormDistance));
+      IntersectionVector.$assign(pas.uVector.VectorCross(Plane.NormVect,Face.GetNorm()));
+      IntersectionVector.Normalize();
+      FaceVertices = pas["Generics.Collections"].TList$G11.$create("Create$1");
+      CutVertices = pas["Generics.Collections"].TList$G11.$create("Create$1");
+      try {
+        for (var $l = 0, $end = Face.GetVertexCount() - 1; $l <= $end; $l++) {
+          i = $l;
+          c = $impl.TVertex.$create("Create$1");
+          c.Vector.$assign(Face.GetVertex(i));
+          c.InvisibleEdge = !Face.IsEdgeVisible(i);
+          c.Distance = pas.uVector.VectorDot(Plane.NormVect,pas.uVector.VectorSubtract(c.Vector,PlaneVector));
+          if (c.Distance < -4E-6) {
+            c.typ = $impl.TVertexType.vtInside}
+           else if (c.Distance > 4E-6) {
+            c.typ = $impl.TVertexType.vtOutside}
+           else {
+            if (i > 0) {
+              c.typ = FaceVertices.GetItem(i - 1).typ}
+             else c.typ = $impl.TVertexType.vtSide;
+          };
+          FaceVertices.Add(c);
+        };
+        if ((FaceVertices.GetItem(0).typ === $impl.TVertexType.vtSide) && (c.typ !== $impl.TVertexType.vtSide)) {
+          for (var $l1 = 0, $end1 = FaceVertices.FLength - 1; $l1 <= $end1; $l1++) {
+            i = $l1;
+            if (FaceVertices.GetItem(i).typ === $impl.TVertexType.vtSide) {
+              FaceVertices.GetItem(i).typ = c.typ}
+             else break;
+          };
+        };
+        if (FaceVertices.GetItem(0).typ === $impl.TVertexType.vtSide) return Result;
+        n = FaceVertices.FLength;
+        for (var $l2 = n - 1; $l2 >= 0; $l2--) {
+          i = $l2;
+          i2 = i + 1;
+          if (i2 === n) i2 = 0;
+          if (FaceVertices.GetItem(i).typ !== FaceVertices.GetItem(i2).typ) {
+            c1 = $impl.TVertex.$create("Create$1");
+            c2 = $impl.TVertex.$create("Create$1");
+            c1.Vector.$assign(CalcNewVertex(i,i2));
+            c1.InvisibleEdge = FaceVertices.GetItem(i).InvisibleEdge;
+            if (FaceVertices.GetItem(i).typ === $impl.TVertexType.vtOutside) {
+              c1.typ = $impl.TVertexType.vtGoInside}
+             else c1.typ = $impl.TVertexType.vtGoOutside;
+            c1.LinkedPoint = c2;
+            FaceVertices.Insert(i + 1,c1);
+            c2.Vector.$assign(c1.Vector);
+            c2.LinkedPoint = c1;
+            CutVertices.Add(c2);
+          };
+        };
+        for (var $l3 = 0, $end2 = FaceVertices.FLength - 2; $l3 <= $end2; $l3++) {
+          i = $l3;
+          FaceVertices.GetItem(i).Next = FaceVertices.GetItem(i + 1);
+        };
+        FaceVertices.GetItem(FaceVertices.FLength - 1).Next = FaceVertices.GetItem(0);
+        var $in = CutVertices.GetEnumerator$1();
+        try {
+          while ($in.MoveNext()) {
+            c = $in.DoGetCurrent();
+            c.Distance = pas.uVector.VectorDot(c.Vector,IntersectionVector);
+          }
+        } finally {
+          $in = rtl.freeLoc($in)
+        };
+        for (var $l4 = 1, $end3 = CutVertices.FLength - 1; $l4 <= $end3; $l4++) {
+          i = $l4;
+          SortItem = CutVertices.GetItem(i);
+          j = i - 1;
+          while ((j >= 0) && (CutVertices.GetItem(j).Distance > SortItem.Distance)) {
+            CutVertices.SetItem(j + 1,CutVertices.GetItem(j));
+            j -= 1;
+          };
+          CutVertices.SetItem(j + 1,SortItem);
+        };
+        for (var $l5 = 0, $end4 = CutVertices.FLength - 2; $l5 <= $end4; $l5++) {
+          i = $l5;
+          CutVertices.GetItem(i).Next = CutVertices.GetItem(i + 1);
+          CutVertices.GetItem(i).InvisibleEdge = InvisibleSlice;
+        };
+        do {
+          first = null;
+          for (var $l6 = 0, $end5 = FaceVertices.FLength - 1; $l6 <= $end5; $l6++) {
+            i = $l6;
+            if ((FaceVertices.GetItem(i).typ === $impl.TVertexType.vtOutside) && !FaceVertices.GetItem(i).used) {
+              first = FaceVertices.GetItem(i);
+              break;
+            };
+          };
+          if (first === null) break;
+          TempVectors = pas["Generics.Collections"].TList$G7.$create("Create$1");
+          TempFace = pas.uFace.TFace.$create("Create$1",[TempVectors]);
+          current = first;
+          do {
+            current.used = true;
+            TempFace.AddVector(pas.uVector.TVector.$clone(current.Vector),true);
+            if (current.typ === $impl.TVertexType.vtGoInside) {
+              TempFace.SetEdgeVisibility(TempFace.GetVertexCount() - 1,!InvisibleSlice);
+              slicePoint = current.LinkedPoint;
+              slicePoint = slicePoint.Next;
+              current = slicePoint.LinkedPoint;
+            } else {
+              TempFace.SetEdgeVisibility(TempFace.GetVertexCount() - 1,!current.InvisibleEdge);
+              current = current.Next;
+            };
+          } while (!((current === null) || (current === first) || current.used));
+          TempFace.CheckFace();
+          NewFace = pas.uFace.TFace.$create("Create$1",[NewVectors]);
+          NewFace.Color = Face.Color;
+          NewFaces.Add(NewFace);
+          for (var $l7 = 0, $end6 = TempFace.GetVertexCount() - 1; $l7 <= $end6; $l7++) {
+            i = $l7;
+            NewFace.AddVector(pas.uVector.TVector.$clone(TempFace.GetVertex(i)),TempFace.IsEdgeVisible(i));
+          };
+          TempFace = rtl.freeLoc(TempFace);
+          TempVectors = rtl.freeLoc(TempVectors);
+          Result = true;
+        } while (!(first === null));
+      } finally {
+        for (var $l8 = 0, $end7 = FaceVertices.FLength - 1; $l8 <= $end7; $l8++) {
+          i = $l8;
+          FreeItem = FaceVertices.GetItem(i);
+          FreeItem = rtl.freeLoc(FreeItem);
+        };
+        FaceVertices = rtl.freeLoc(FaceVertices);
+        for (var $l9 = 0, $end8 = CutVertices.FLength - 1; $l9 <= $end8; $l9++) {
+          i = $l9;
+          FreeItem = CutVertices.GetItem(i);
+          FreeItem = rtl.freeLoc(FreeItem);
+        };
+        CutVertices = rtl.freeLoc(CutVertices);
+      };
+      return Result;
+    };
+    this.CalculateNormal = function (Face) {
+      var Result = pas.uVector.TVector.$new();
+      var idx = 0;
+      var v0 = pas.uVector.TVector.$new();
+      var v1 = pas.uVector.TVector.$new();
+      var v2 = pas.uVector.TVector.$new();
+      idx = $mod.TFaceUtils.CalculateBaseVertex(Face);
+      v0.$assign(Face.GetVertex(idx - 1));
+      v1.$assign(Face.GetVertex(idx));
+      v2.$assign(Face.GetVertex(idx + 1));
+      Result.$assign(pas.uVector.VectorCross(pas.uVector.VectorSubtract(v2,v1),pas.uVector.VectorSubtract(v0,v1)));
+      Result.Normalize();
+      return Result;
+    };
+  });
+  $mod.$implcode = function () {
+    $impl.DELTA = 0.000004;
+    $impl.TVertexType = {"0": "vtInside", vtInside: 0, "1": "vtSide", vtSide: 1, "2": "vtOutside", vtOutside: 2, "3": "vtGoInside", vtGoInside: 3, "4": "vtGoOutside", vtGoOutside: 4};
+    rtl.createClass($impl,"TVertex",pas.System.TObject,function () {
+      this.$init = function () {
+        pas.System.TObject.$init.call(this);
+        this.Vector = pas.uVector.TVector.$new();
+        this.typ = 0;
+        this.LinkedPoint = null;
+        this.Next = null;
+        this.InvisibleEdge = false;
+        this.used = false;
+        this.Distance = 0.0;
+      };
+      this.$final = function () {
+        this.Vector = undefined;
+        this.LinkedPoint = undefined;
+        this.Next = undefined;
+        pas.System.TObject.$final.call(this);
+      };
+      this.Create$1 = function () {
+        this.LinkedPoint = null;
+        this.Next = null;
+        this.InvisibleEdge = false;
+        this.used = false;
+        this.Distance = 0;
+        return this;
+      };
+    });
+  };
+},["SysUtils","Generics.Defaults","Math"]);
+rtl.module("uFace",["System","uVector","uGeometryUtils","uPlane","Graphics","Generics.Collections"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.TFaceType = {"0": "ftUnknown", ftUnknown: 0, "1": "ftConvex", ftConvex: 1, "2": "ftReflex", ftReflex: 2};
+  rtl.recNewT(this,"TFaceVertex",function () {
+    this.Index = 0;
+    this.SegmentVisible = false;
+    this.$eq = function (b) {
+      return (this.Index === b.Index) && (this.SegmentVisible === b.SegmentVisible);
+    };
+    this.$assign = function (s) {
+      this.Index = s.Index;
+      this.SegmentVisible = s.SegmentVisible;
+      return this;
+    };
+  });
+  rtl.createClass(this,"TFace",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FPartVertices = null;
+      this.FSpikes = null;
+      this.FConvexity = 0;
+      this.FNormalIndex = 0;
+      this.FVertices = null;
+      this.Color = 0;
+      this.TextureId = 0;
+      this.IsStickerVisible = false;
+    };
+    this.$final = function () {
+      this.FPartVertices = undefined;
+      this.FSpikes = undefined;
+      this.FVertices = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.CheckConvexity = function () {
+      if (!pas.uFaceUtils.TFaceUtils.IsFaceConvex(this)) {
+        this.FConvexity = $mod.TFaceType.ftReflex}
+       else this.FConvexity = $mod.TFaceType.ftConvex;
+      this.FNormalIndex = pas.uFaceUtils.TFaceUtils.CalculateBaseVertex(this);
+    };
+    this.Create$1 = function (PartVectices) {
+      pas.System.TObject.Create.call(this);
+      this.FPartVertices = PartVectices;
+      this.FVertices = pas["Generics.Collections"].TList$G9.$create("Create$1");
+      this.FSpikes = pas["Generics.Collections"].TList$G8.$create("Create$1");
+      this.FConvexity = $mod.TFaceType.ftUnknown;
+      this.Color = -1;
+      this.TextureId = -1;
+      this.IsStickerVisible = true;
+      this.Invalidate();
+      return this;
+    };
+    this.Destroy = function () {
+      this.Clear();
+      rtl.free(this,"FSpikes");
+      rtl.free(this,"FVertices");
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.Clear = function () {
+      this.Color = -1;
+      this.FSpikes.Clear();
+      this.FVertices.Clear();
+      this.TextureId = -1;
+      this.Invalidate();
+    };
+    this.Assign = function (Face) {
+      var i = 0;
+      this.Clear();
+      this.Color = Face.Color;
+      this.TextureId = Face.TextureId;
+      if (this.FPartVertices === Face.FPartVertices) {
+        this.FVertices.AddRange$2(Face.FVertices)}
+       else for (var $l = 0, $end = Face.GetVertexCount() - 1; $l <= $end; $l++) {
+        i = $l;
+        this.AddVector(pas.uVector.TVector.$clone(Face.GetVertex(i)),Face.IsEdgeVisible(i));
+      };
+      this.FSpikes.AddRange$2(Face.FSpikes);
+      this.FConvexity = Face.FConvexity;
+    };
+    this.IsColored = function () {
+      var Result = false;
+      Result = (this.Color !== -1) && this.IsStickerVisible;
+      return Result;
+    };
+    this.Invalidate = function () {
+      this.FConvexity = $mod.TFaceType.ftUnknown;
+    };
+    this.GetNorm = function () {
+      var Result = pas.uVector.TVector.$new();
+      var v0 = pas.uVector.TVector.$new();
+      var v1 = pas.uVector.TVector.$new();
+      var v2 = pas.uVector.TVector.$new();
+      if (this.FConvexity === $mod.TFaceType.ftUnknown) this.CheckConvexity();
+      v0.$assign(this.GetVertex(this.FNormalIndex - 1));
+      v1.$assign(this.GetVertex(this.FNormalIndex));
+      v2.$assign(this.GetVertex(this.FNormalIndex + 1));
+      Result.$assign(pas.uVector.VectorCross(pas.uVector.VectorSubtract(v2,v1),pas.uVector.VectorSubtract(v0,v1)));
+      Result.Normalize();
+      return Result;
+    };
+    this.GetVertex = function (i) {
+      var Result = pas.uVector.TVector.$new();
+      var n = 0;
+      n = this.FVertices.FLength;
+      if (n === 0) {
+        Result.$assign(pas.uVector.Vector(0,0,0));
+        return Result;
+      };
+      while (i >= n) i -= n;
+      while (i < 0) i += n;
+      Result.$assign(this.FPartVertices.GetItem(this.FVertices.GetItem(i).Index));
+      return Result;
+    };
+    this.GetVertexIndex = function (i) {
+      var Result = 0;
+      var n = 0;
+      n = this.FVertices.FLength;
+      while (i >= n) i -= n;
+      while (i < 0) i += n;
+      Result = this.FVertices.GetItem(i).Index;
+      return Result;
+    };
+    this.GetVertexCount = function () {
+      var Result = 0;
+      Result = this.FVertices.FLength;
+      return Result;
+    };
+    this.HalfPlane = function (Plane) {
+      var Result = 0;
+      var i = 0;
+      var D = 0.0;
+      var NormVect = pas.uVector.TVector.$new();
+      var PlaneVect = pas.uVector.TVector.$new();
+      Result = pas.uGeometryUtils.THalfOfPlane.hopInPlane;
+      NormVect.$assign(Plane.NormVect);
+      PlaneVect.$assign(pas.uVector.VectorScale(NormVect,Plane.NormDistance));
+      for (var $l = 0, $end = this.GetVertexCount() - 1; $l <= $end; $l++) {
+        i = $l;
+        D = pas.uVector.VectorDot(pas.uVector.VectorSubtract(this.GetVertex(i),PlaneVect),NormVect);
+        if (D > 2.5E-4) {
+          if (Result === pas.uGeometryUtils.THalfOfPlane.hopInside) {
+            Result = pas.uGeometryUtils.THalfOfPlane.hopIntersect;
+            return Result;
+          };
+          Result = pas.uGeometryUtils.THalfOfPlane.hopOutside;
+        } else if (D < -2.5E-4) {
+          if (Result === pas.uGeometryUtils.THalfOfPlane.hopOutside) {
+            Result = pas.uGeometryUtils.THalfOfPlane.hopIntersect;
+            return Result;
+          };
+          Result = pas.uGeometryUtils.THalfOfPlane.hopInside;
+        };
+      };
+      return Result;
+    };
+    this.GetPlane = function () {
+      var Result = pas.uPlane.TPlane.$new();
+      Result.NormVect.$assign(this.GetNorm());
+      Result.NormDistance = pas.uVector.VectorDot(Result.NormVect,this.GetVertex(0));
+      return Result;
+    };
+    this.Rotate = function (n) {
+      var i = 0;
+      if (n > 0) {
+        for (var $l = 0, $end = n - 1; $l <= $end; $l++) {
+          i = $l;
+          this.FVertices.Move(0,this.FVertices.FLength - 1);
+        };
+      } else if (n < 0) {
+        for (var $l1 = 0, $end1 = -n - 1; $l1 <= $end1; $l1++) {
+          i = $l1;
+          this.FVertices.Move(this.FVertices.FLength - 1,0);
+        };
+      };
+    };
+    this.AddVector = function (v, Visible) {
+      var Result = false;
+      var i = 0;
+      for (var $l = 0, $end = this.FPartVertices.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        if (this.FPartVertices.GetItem(i).IsNear(v)) {
+          this.AddVertexByIndex(i,Visible);
+          Result = true;
+          return Result;
+        };
+      };
+      this.FPartVertices.Add(v);
+      this.AddVertexByIndex(this.FPartVertices.FLength - 1,Visible);
+      Result = false;
+      return Result;
+    };
+    this.AddVertexByIndex = function (idx, SegmentVisible) {
+      var Vertex = $mod.TFaceVertex.$new();
+      if ((this.FVertices.FLength === 0) || (idx !== this.FVertices.GetItem(this.FVertices.FLength - 1).Index)) {
+        Vertex.Index = idx;
+        Vertex.SegmentVisible = SegmentVisible;
+        this.FVertices.Add(Vertex);
+      };
+    };
+    this.IsEdgeVisible = function (idx) {
+      var Result = false;
+      Result = this.FVertices.GetItem(idx).SegmentVisible;
+      return Result;
+    };
+    this.AllEdgesVisible = function () {
+      var Result = false;
+      var i = 0;
+      Result = false;
+      for (var $l = 0, $end = this.FVertices.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        if (!this.FVertices.GetItem(i).SegmentVisible) return Result;
+      };
+      Result = true;
+      return Result;
+    };
+    this.SetEdgeVisibility = function (idx, Visible) {
+      var Vertex = $mod.TFaceVertex.$new();
+      Vertex.$assign(this.FVertices.GetItem(idx));
+      Vertex.SegmentVisible = Visible;
+      this.FVertices.SetItem(idx,Vertex);
+    };
+    this.SetSpike = function (Level) {
+      if (!this.FSpikes.Contains(Level)) this.FSpikes.Add(Level);
+      if (this.FSpikes.Contains(-Level)) this.FSpikes.Remove(-Level);
+    };
+    this.CheckFace = function () {
+      var idx = 0;
+      idx = 0;
+      while (idx < this.GetVertexCount()) {
+        if (pas.uFaceUtils.TFaceUtils.IsSameAsPrev(this,idx) || pas.uFaceUtils.TFaceUtils.IsStraightAngle(this,idx) || pas.uFaceUtils.TFaceUtils.IsZeroAngle(this,idx)) {
+          this.FVertices.Delete(idx);
+          if (idx > 0) {
+            idx -= 2}
+           else idx -= 1;
+        };
+        idx += 1;
+      };
+    };
+  });
+  $mod.$implcode = function () {
+    $impl.DELTA = 2.5e-4;
+  };
+},["uFaceUtils"]);
+rtl.module("uPart",["System","uPlane","uMatrix","uVector","uFace","uGeometryUtils","Generics.Collections"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  rtl.createClass(this,"TPart",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FVertices = null;
+      this.FFaces = null;
+      this.FVisible = false;
+    };
+    this.$final = function () {
+      this.FVertices = undefined;
+      this.FFaces = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function () {
+      pas.System.TObject.Create.call(this);
+      this.FVertices = pas["Generics.Collections"].TList$G7.$create("Create$1");
+      this.FFaces = pas["Generics.Collections"].TList$G10.$create("Create$1");
+      this.FVisible = true;
+      return this;
+    };
+    this.Destroy = function () {
+      this.Clear();
+      rtl.free(this,"FFaces");
+      rtl.free(this,"FVertices");
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.Clear = function () {
+      var Face = null;
+      this.FVertices.Clear();
+      var $in = this.FFaces.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Face = $in.DoGetCurrent();
+          Face = rtl.freeLoc(Face);
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+      this.FFaces.Clear();
+      this.FVisible = true;
+    };
+    this.Assign = function (Part) {
+      var i = 0;
+      var FaceSrc = null;
+      var FaceDst = null;
+      this.Clear();
+      this.FVertices.AddRange$2(Part.FVertices);
+      var $in = Part.FFaces.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          FaceSrc = $in.DoGetCurrent();
+          FaceDst = pas.uFace.TFace.$create("Create$1",[this.FVertices]);
+          try {
+            FaceDst.Color = FaceSrc.Color;
+            for (var $l = 0, $end = FaceSrc.GetVertexCount() - 1; $l <= $end; $l++) {
+              i = $l;
+              FaceDst.AddVertexByIndex(FaceSrc.GetVertexIndex(i),true);
+              FaceDst.SetEdgeVisibility(i,FaceSrc.IsEdgeVisible(i));
+            };
+          } catch ($e) {
+            FaceDst = rtl.freeLoc(FaceDst);
+            throw $e;
+          };
+          this.FFaces.Add(FaceDst);
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+      this.FVisible = Part.FVisible;
+    };
+    this.AddVertex = function (V) {
+      var Result = 0;
+      var i = 0;
+      for (var $l = 0, $end = this.FVertices.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        if (V.IsNear(this.FVertices.GetItem(i))) {
+          Result = i;
+          return Result;
+        };
+      };
+      Result = this.FVertices.Add(V);
+      return Result;
+    };
+    this.AddFace = function (idx) {
+      var Result = null;
+      var i = 0;
+      Result = pas.uFace.TFace.$create("Create$1",[this.FVertices]);
+      try {
+        for (var $l = 0, $end = rtl.length(idx) - 1; $l <= $end; $l++) {
+          i = $l;
+          if (idx[i] < this.FVertices.FLength) {
+            Result.AddVertexByIndex(idx[i],true)}
+           else throw pas.SysUtils.Exception.$create("Create$1",["TPart.AddFace: invalid index"]);
+        };
+      } catch ($e) {
+        Result = rtl.freeLoc(Result);
+        throw $e;
+      };
+      this.FFaces.Add(Result);
+      return Result;
+    };
+    this.HalfPlane = function (Plane) {
+      var Result = 0;
+      var D = 0.0;
+      var Vertex = pas.uVector.TVector.$new();
+      var NormVect = pas.uVector.TVector.$new();
+      var PlaneVect = pas.uVector.TVector.$new();
+      Result = pas.uGeometryUtils.THalfOfPlane.hopInPlane;
+      NormVect.$assign(Plane.NormVect);
+      PlaneVect.$assign(pas.uVector.VectorScale(NormVect,Plane.NormDistance));
+      var $in = this.FVertices.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Vertex = $in.DoGetCurrent();
+          D = pas.uVector.VectorDot(pas.uVector.VectorSubtract(Vertex,PlaneVect),NormVect);
+          if (D > 2E-4) {
+            if (Result === pas.uGeometryUtils.THalfOfPlane.hopInside) {
+              Result = pas.uGeometryUtils.THalfOfPlane.hopIntersect;
+              return Result;
+            };
+            Result = pas.uGeometryUtils.THalfOfPlane.hopOutside;
+          } else if (D < -2E-4) {
+            if (Result === pas.uGeometryUtils.THalfOfPlane.hopOutside) {
+              Result = pas.uGeometryUtils.THalfOfPlane.hopIntersect;
+              return Result;
+            };
+            Result = pas.uGeometryUtils.THalfOfPlane.hopInside;
+          };
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+      return Result;
+    };
+    this.Contains = function (Point) {
+      var Result = false;
+      var NormVec = pas.uVector.TVector.$new();
+      var Vertex = pas.uVector.TVector.$new();
+      var MinVec = pas.uVector.TVector.$new();
+      var MaxVec = pas.uVector.TVector.$new();
+      var Plane = pas.uPlane.TPlane.$new();
+      var hf = 0;
+      var Face = null;
+      var d = 0.0;
+      if ((this.FFaces.FLength === 0) || (this.FVertices.FLength === 0)) return false;
+      MinVec.$assign(this.FVertices.GetItem(0));
+      MaxVec.$assign(this.FVertices.GetItem(0));
+      var $in = this.FVertices.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Vertex = $in.DoGetCurrent();
+          if (Vertex.x > MaxVec.x) MaxVec.x = Vertex.x;
+          if (Vertex.x < MinVec.x) MinVec.x = Vertex.x;
+          if (Vertex.y > MaxVec.y) MaxVec.y = Vertex.y;
+          if (Vertex.y < MinVec.y) MinVec.y = Vertex.y;
+          if (Vertex.z > MaxVec.z) MaxVec.z = Vertex.z;
+          if (Vertex.z < MinVec.z) MinVec.z = Vertex.z;
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+      if ((Point.x > (MaxVec.x + 2E-4)) || (Point.x < (MinVec.x - 2E-4)) || (Point.y > (MaxVec.y + 2E-4)) || (Point.y < (MinVec.y - 2E-4)) || (Point.z > (MaxVec.z + 2E-4)) || (Point.z < (MinVec.z - 2E-4))) return false;
+      Result = true;
+      var $in1 = this.FFaces.GetEnumerator$1();
+      try {
+        while ($in1.MoveNext()) {
+          Face = $in1.DoGetCurrent();
+          Plane.$assign(Face.GetPlane());
+          NormVec.$assign(Plane.NormVect);
+          d = pas.uVector.VectorDot(NormVec,pas.uVector.VectorSubtract(Point,pas.uVector.VectorScale(NormVec,Plane.NormDistance)));
+          hf = this.HalfPlane(Plane);
+          if ((d > 2E-4) && (hf === pas.uGeometryUtils.THalfOfPlane.hopInside)) return false;
+          if (hf === pas.uGeometryUtils.THalfOfPlane.hopInPlane) {
+            if ((d < 2E-4) && (d > -2E-4)) {
+              Result = this.FlatContains(Point,NormVec)}
+             else Result = false;
+            break;
+          };
+        }
+      } finally {
+        $in1 = rtl.freeLoc($in1)
+      };
+      return Result;
+    };
+    this.Trans = function (Matrix) {
+      var i = 0;
+      for (var $l = 0, $end = this.FVertices.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        this.FVertices.SetItem(i,pas.uMatrix.TMatrix.VectorMul(Matrix,this.FVertices.GetItem(i)));
+      };
+    };
+    this.FlatContains = function (Point, NormVec) {
+      var Result = false;
+      var Face = null;
+      Result = true;
+      var $in = this.FFaces.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Face = $in.DoGetCurrent();
+          if (this.FaceContains(Point,NormVec,Face)) return Result;
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+      Result = false;
+      return Result;
+    };
+    this.FaceContains = function (Point, NormVec, Face) {
+      var Result = false;
+      var d = 0.0;
+      var i = 0;
+      var V = pas.uVector.TVector.$new();
+      Result = true;
+      for (var $l = 0, $end = Face.GetVertexCount() - 1; $l <= $end; $l++) {
+        i = $l;
+        V.$assign(pas.uVector.VectorCross(pas.uVector.VectorSubtract(Face.GetVertex(i + 1),Face.GetVertex(i)),NormVec));
+        V.Normalize();
+        d = pas.uVector.VectorDot(V,pas.uVector.VectorSubtract(Point,Face.GetVertex(i)));
+        if (d > 2E-4) {
+          Result = false;
+          break;
+        };
+      };
+      return Result;
+    };
+  });
+  $mod.$implcode = function () {
+    $impl.DELTA = 2e-4;
+  };
+},["SysUtils"]);
 rtl.module("uUtils",["System","Classes","Graphics"],function () {
   "use strict";
   var $mod = this;
-  rtl.createClass($mod,"TUtils",pas.System.TObject,function () {
+  rtl.createClass(this,"TUtils",pas.System.TObject,function () {
+    this.FLogProc = null;
+    this.FLogWarningProc = null;
+    this.Log = function (Mess) {
+      if ($mod.TUtils.FLogProc != null) $mod.TUtils.FLogProc(Mess);
+    };
+    this.LogWarning = function (Mess) {
+      if ($mod.TUtils.FLogWarningProc != null) $mod.TUtils.FLogWarningProc(Mess);
+    };
+    this.StrToColor = function (S) {
+      var Result = 0;
+      if (pas.System.Copy(S,1,1) === "-") {
+        Result = pas.SysUtils.StrToInt(S)}
+       else Result = pas.Graphics.RGB($mod.TUtils.HexToInt(pas.System.Copy(S,1,2)),$mod.TUtils.HexToInt(pas.System.Copy(S,3,2)),$mod.TUtils.HexToInt(pas.System.Copy(S,5,2)));
+      return Result;
+    };
+    this.Trim = function (S) {
+      var $Self = this;
+      var Result = "";
+      function TrimLeft(S) {
+        var Result = "";
+        var I = 0;
+        var L = 0;
+        L = S.length;
+        I = 1;
+        while ((I <= L) && (S.charAt(I - 1) <= " ")) I += 1;
+        Result = pas.System.Copy(S,I,2147483647);
+        return Result;
+      };
+      function TrimRight(S) {
+        var Result = "";
+        var I = 0;
+        I = S.length;
+        while ((I > 0) && (S.charAt(I - 1) <= " ")) I -= 1;
+        Result = pas.System.Copy(S,1,I);
+        return Result;
+      };
+      Result = TrimLeft(TrimRight(S));
+      return Result;
+    };
+    this.Parse = function (S, Separators) {
+      var $Self = this;
+      var Result = "";
+      function indexOfCharsMin(S, Chars) {
+        var Result = 0;
+        var i = 0;
+        var j = 0;
+        Result = -1;
+        for (var $l = 1, $end = Chars.length; $l <= $end; $l++) {
+          i = $l;
+          j = pas.System.Pos(Chars.charAt(i - 1),S);
+          if (j > 0) if ((Result < 0) || (j < Result)) Result = j;
+        };
+        return Result;
+      };
+      var Pos = 0;
+      Pos = indexOfCharsMin(S.get(),Separators);
+      if (Pos <= 0) Pos = S.get().length + 1;
+      Result = S.get();
+      S.set(pas.System.Copy(Result,Pos + 1,2147483647));
+      Result = pas.System.Copy(Result,1,Pos - 1);
+      return Result;
+    };
+    this.ParseInt = function (S) {
+      var Result = 0;
+      Result = pas.SysUtils.StrToIntDef(this.Trim(this.Parse(S,",")),0);
+      return Result;
+    };
+    this.HexToInt = function (Value) {
+      var Result = 0;
+      var i = 0;
+      Result = 0;
+      i = 1;
+      if (Value === "") return Result;
+      if (Value.charAt(0) === "$") i += 1;
+      while (i <= Value.length) {
+        if ((Value.charAt(i - 1) >= "0") && (Value.charAt(i - 1) <= "9")) {
+          Result = (Result << 4) | (Value.charCodeAt(i - 1) - 48)}
+         else if ((Value.charAt(i - 1) >= "A") && (Value.charAt(i - 1) <= "F")) {
+          Result = (Result << 4) | ((Value.charCodeAt(i - 1) - 65) + 10)}
+         else if ((Value.charAt(i - 1) >= "a") && (Value.charAt(i - 1) <= "f")) {
+          Result = (Result << 4) | ((Value.charCodeAt(i - 1) - 97) + 10)}
+         else break;
+        i += 1;
+      };
+      return Result;
+    };
     var delta = 1e-5;
     this.PrivPi = function (Al) {
       var Result = 0.0;
       while (Al > Math.PI) Al = Al - (2 * Math.PI);
       while (Al < -Math.PI) Al = Al + (2 * Math.PI);
-      if (Al < (-Math.PI + 0.00001)) Al = Math.PI;
+      if (Al < (-Math.PI + 1E-5)) Al = Math.PI;
       Result = Al;
       return Result;
     };
+  });
+  rtl.createClass(this,"TSettings",pas.System.TObject,function () {
+    this.PreScript = "";
   });
   $mod.$init = function () {
   };
@@ -3340,7 +7279,7 @@ rtl.module("uLayer",["System","uMatrix","uPart","Generics.Collections"],function
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
-  rtl.createClass($mod,"TLayer",pas.System.TObject,function () {
+  rtl.createClass(this,"TLayer",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
       this.FTurningAngle = 0.0;
@@ -3351,10 +7290,36 @@ rtl.module("uLayer",["System","uMatrix","uPart","Generics.Collections"],function
       this.AvailableAngles = [];
       this.MinAngle = 0.0;
       this.MaxAngle = 0.0;
+      this.ConnectedLayer = 0;
     };
     this.$final = function () {
       this.AvailableAngles = undefined;
       pas.System.TObject.$final.call(this);
+    };
+    var delta = 1e-6;
+    this.SetTurningAngle = function (AAngle) {
+      var i = 0;
+      var N = 0;
+      this.FTurningAngle = AAngle;
+      if (AAngle === 0) return;
+      this.Fixed = false;
+      N = Math.round((2 * Math.PI) / AAngle);
+      if (Math.abs((N * AAngle) - (2 * Math.PI)) > 1E-6) throw pas.SysUtils.Exception.$create("Create$1",["TLayer.SetTurningAngle: 2Pi is not divisible by " + pas.SysUtils.FloatToStr(AAngle)]);
+      for (var $l = 0, $end = N - 1; $l <= $end; $l++) {
+        i = $l;
+        this.AddAvailableAngle(AAngle * i);
+      };
+    };
+    this.Create$1 = function (ADistanceFrom, ADistanceTo) {
+      pas.System.TObject.Create.call(this);
+      this.DistanceFrom = ADistanceFrom;
+      this.DistanceTo = ADistanceTo;
+      this.Fixed = true;
+      this.AvailableAngles = rtl.arraySetLength(this.AvailableAngles,0.0,0);
+      this.MinAngle = -1e6;
+      this.MaxAngle = 1e6;
+      this.ConnectedLayer = -1;
+      return this;
     };
     this.Destroy = function () {
       this.AvailableAngles = rtl.arraySetLength(this.AvailableAngles,0.0,0);
@@ -3373,7 +7338,7 @@ rtl.module("uLayer",["System","uMatrix","uPart","Generics.Collections"],function
         Result = Al;
         return Result;
       };
-      Al = Al - 0.0001;
+      Al = Al - 1E-4;
       loops = 0;
       MaxA = this.AvailableAngles[rtl.length(this.AvailableAngles) - 1];
       while (Al > MaxA) {
@@ -3404,7 +7369,7 @@ rtl.module("uLayer",["System","uMatrix","uPart","Generics.Collections"],function
         Result = Al;
         return Result;
       };
-      Al = Al + 0.0001;
+      Al = Al + 1E-4;
       loops = 0;
       MinA = this.AvailableAngles[0];
       while (Al < MinA) {
@@ -3432,22 +7397,40 @@ rtl.module("uLayer",["System","uMatrix","uPart","Generics.Collections"],function
       Al = pas.uUtils.TUtils.PrivPi(Al);
       for (var $l = 0, $end = rtl.length(this.AvailableAngles) - 1; $l <= $end; $l++) {
         i = $l;
-        if (Math.abs(pas.uUtils.TUtils.PrivPi(Al - this.AvailableAngles[i])) < 0.0001) return Result;
+        if (Math.abs(pas.uUtils.TUtils.PrivPi(Al - this.AvailableAngles[i])) < 1E-4) return Result;
       };
       Result = false;
       return Result;
     };
+    this.AddAvailableAngle = function (AAngle) {
+      var i = 0;
+      var d = 0.0;
+      if (this.Fixed) return;
+      AAngle = pas.uUtils.TUtils.PrivPi(AAngle);
+      for (var $l = 0, $end = rtl.length(this.AvailableAngles) - 1; $l <= $end; $l++) {
+        i = $l;
+        if (Math.abs(pas.uUtils.TUtils.PrivPi(AAngle - this.AvailableAngles[i])) < 1E-4) return;
+      };
+      this.AvailableAngles = rtl.arraySetLength(this.AvailableAngles,0.0,rtl.length(this.AvailableAngles) + 1);
+      this.AvailableAngles[rtl.length(this.AvailableAngles) - 1] = AAngle;
+      for (var $l1 = rtl.length(this.AvailableAngles) - 1; $l1 >= 1; $l1--) {
+        i = $l1;
+        if (this.AvailableAngles[i] < this.AvailableAngles[i - 1]) {
+          d = this.AvailableAngles[i];
+          this.AvailableAngles[i] = this.AvailableAngles[i - 1];
+          this.AvailableAngles[i - 1] = d;
+        };
+      };
+    };
   });
-},["uUtils","SysUtils"],function () {
+  $mod.$implcode = function () {
+    $impl.DELTA = 1e-4;
+  };
+},["uGeometryUtils","uUtils","SysUtils"]);
+rtl.module("uAxis",["System","uLine","uLayer","uPlane","uVector","uMatrix","Generics.Collections"],function () {
   "use strict";
   var $mod = this;
-  var $impl = $mod.$impl;
-  $impl.DELTA = 1e-4;
-});
-rtl.module("uAxis",["System","uLine","uLayer","uVector","uMatrix","Generics.Collections"],function () {
-  "use strict";
-  var $mod = this;
-  rtl.createClass($mod,"TAxis",pas.System.TObject,function () {
+  rtl.createClass(this,"TAxis",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
       this.Line = pas.uLine.TLine.$new();
@@ -3472,6 +7455,14 @@ rtl.module("uAxis",["System","uLine","uLayer","uVector","uMatrix","Generics.Coll
       var Result = pas.uVector.TVector.$new();
       Result.$assign(this.Line.BaseVector);
       return Result;
+    };
+    this.Create$1 = function () {
+      this.Enabled = true;
+      this.Layers = pas["Generics.Collections"].TList$G13.$create("Create$1");
+      this.TurnAxesWithLayer = -1;
+      this.TurnAxesWithPartNo = -1;
+      this.ConnectedLayers = rtl.arraySetLength(this.ConnectedLayers,[],0);
+      return this;
     };
     this.Destroy = function () {
       this.Clear();
@@ -3500,7 +7491,49 @@ rtl.module("uAxis",["System","uLine","uLayer","uVector","uMatrix","Generics.Coll
       return Result;
     };
     this.Trans = function (mat) {
-      this.Line.Trans(mat.slice(0));
+      this.Line.Trans(pas.uMatrix.T4x4Matrix$clone(mat));
+    };
+    this.ConnectLayers = function (Layer1, Layer2) {
+      var Result = false;
+      var i = 0;
+      var j = 0;
+      var Found1 = 0;
+      var Found2 = 0;
+      Result = false;
+      if (Layer2 === Layer1) return Result;
+      Found1 = -1;
+      for (var $l = 0, $end = rtl.length(this.ConnectedLayers) - 1; $l <= $end; $l++) {
+        i = $l;
+        for (var $l1 = 0, $end1 = rtl.length(this.ConnectedLayers[i]) - 1; $l1 <= $end1; $l1++) {
+          j = $l1;
+          if (this.ConnectedLayers[i][j] === Layer1) Found1 = i;
+        };
+      };
+      Found2 = -1;
+      for (var $l2 = 0, $end2 = rtl.length(this.ConnectedLayers) - 1; $l2 <= $end2; $l2++) {
+        i = $l2;
+        for (var $l3 = 0, $end3 = rtl.length(this.ConnectedLayers[i]) - 1; $l3 <= $end3; $l3++) {
+          j = $l3;
+          if (this.ConnectedLayers[i][j] === Layer2) Found2 = i;
+        };
+      };
+      if ((Found1 >= 0) && (Found2 >= 0)) return Result;
+      if ((Found1 >= 0) && (Found2 === -1)) {
+        this.ConnectedLayers[Found1] = rtl.arraySetLength(this.ConnectedLayers[Found1],0,rtl.length(this.ConnectedLayers[Found1]) + 1);
+        this.ConnectedLayers[Found1][rtl.length(this.ConnectedLayers[Found1]) - 1] = Layer2;
+      };
+      if ((Found2 >= 0) && (Found1 === -1)) {
+        this.ConnectedLayers[Found2] = rtl.arraySetLength(this.ConnectedLayers[Found2],0,rtl.length(this.ConnectedLayers[Found2]) + 1);
+        this.ConnectedLayers[Found2][rtl.length(this.ConnectedLayers[Found2]) - 1] = Layer1;
+      };
+      if ((Found1 === -1) && (Found2 === -1)) {
+        this.ConnectedLayers = rtl.arraySetLength(this.ConnectedLayers,[],rtl.length(this.ConnectedLayers) + 1);
+        this.ConnectedLayers[rtl.length(this.ConnectedLayers) - 1] = rtl.arraySetLength(this.ConnectedLayers[rtl.length(this.ConnectedLayers) - 1],0,2);
+        this.ConnectedLayers[rtl.length(this.ConnectedLayers) - 1][0] = Layer1;
+        this.ConnectedLayers[rtl.length(this.ConnectedLayers) - 1][1] = Layer2;
+      };
+      Result = true;
+      return Result;
     };
     this.IsLayerFixed = function (ALayers) {
       var Result = false;
@@ -3514,18 +7547,602 @@ rtl.module("uAxis",["System","uLine","uLayer","uVector","uMatrix","Generics.Coll
       Result = false;
       return Result;
     };
+    this.CreateLayers = function (Distances) {
+      var i = 0;
+      var j = 0;
+      var Count = 0;
+      var Layer = null;
+      var BaseDistance = 0.0;
+      var TempDistance = 0.0;
+      var FDistances = [];
+      var $in = this.Layers.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Layer = $in.DoGetCurrent();
+          Layer = rtl.freeLoc(Layer);
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+      this.Layers.Clear();
+      if (rtl.length(Distances) > 0) {
+        for (var $l = 1, $end = rtl.length(Distances) - 1; $l <= $end; $l++) {
+          i = $l;
+          TempDistance = Distances[i];
+          j = i - 1;
+          while ((j >= 0) && (Distances[j] > TempDistance)) {
+            Distances[j + 1] = Distances[j];
+            j -= 1;
+          };
+          Distances[j + 1] = TempDistance;
+        };
+        Count = 1;
+        for (var $l1 = 0, $end1 = rtl.length(Distances) - 1 - 1; $l1 <= $end1; $l1++) {
+          i = $l1;
+          if ((Distances[i + 1] - Distances[i]) > 1E-4) Count += 1;
+        };
+        FDistances = rtl.arraySetLength(FDistances,0.0,Count);
+        Count = 1;
+        FDistances[0] = Distances[0];
+        for (var $l2 = 0, $end2 = rtl.length(Distances) - 1 - 1; $l2 <= $end2; $l2++) {
+          i = $l2;
+          if ((Distances[i + 1] - Distances[i]) > 1E-4) {
+            FDistances[Count] = Distances[i + 1];
+            Count += 1;
+          } else pas.uUtils.TUtils.LogWarning("Duplicated Distances");
+        };
+        BaseDistance = 0;
+        this.Layers.Add(pas.uLayer.TLayer.$create("Create$1",[-1000,FDistances[0] + BaseDistance]));
+        for (var $l3 = 0, $end3 = Count - 2; $l3 <= $end3; $l3++) {
+          i = $l3;
+          this.Layers.Add(pas.uLayer.TLayer.$create("Create$1",[FDistances[i] + BaseDistance,FDistances[i + 1] + BaseDistance]));
+        };
+        this.Layers.Add(pas.uLayer.TLayer.$create("Create$1",[FDistances[Count - 1] + BaseDistance,1000]));
+      } else this.Layers.Add(pas.uLayer.TLayer.$create("Create$1",[-1000,1000]));
+    };
+    this.GetLayerPlaneTo = function (LayerNo) {
+      var Result = pas.uPlane.TPlane.$new();
+      Result.$assign(pas.uPlane.Plane(pas.uVector.TVector.$clone(this.GetNormVector()),this.Layers.GetItem(LayerNo).DistanceTo + pas.uVector.VectorDot(this.GetBaseVector(),this.GetNormVector())));
+      return Result;
+    };
   });
+  this.INFINITE_LAYER_DISTANCE = 1000;
 },["uUtils"]);
+rtl.module("uPartUtils",["System","uPart","uPlane","uVector","uFace","Generics.Collections","Graphics"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  rtl.createClass(this,"TPartUtils",pas.System.TObject,function () {
+    this.SetFaceEdgesVisibility = function (Part, Face, InvisibleEdges) {
+      var i = 0;
+      var j = 0;
+      var EdgeVisible = false;
+      var v1 = 0;
+      var v2 = 0;
+      var TestFace = null;
+      for (var $l = 0, $end = Face.GetVertexCount() - 1; $l <= $end; $l++) {
+        i = $l;
+        EdgeVisible = (InvisibleEdges & (1 << i)) === 0;
+        Face.SetEdgeVisibility(i,EdgeVisible);
+        v1 = Face.GetVertexIndex(i);
+        v2 = Face.GetVertexIndex(i + 1);
+        var $in = Part.FFaces.GetEnumerator$1();
+        try {
+          while ($in.MoveNext()) {
+            TestFace = $in.DoGetCurrent();
+            if (TestFace !== Face) for (var $l1 = 0, $end1 = TestFace.GetVertexCount() - 1; $l1 <= $end1; $l1++) {
+              j = $l1;
+              if ((TestFace.GetVertexIndex(j + 1) === v1) && (TestFace.GetVertexIndex(j) === v2)) TestFace.SetEdgeVisibility(j,EdgeVisible);
+            };
+          }
+        } finally {
+          $in = rtl.freeLoc($in)
+        };
+      };
+    };
+    this.CutPart = function (Part, Plane, NewParts, SliceColor, InvisibleEdges) {
+      var Result = false;
+      var Distances = [];
+      var Segments1 = null;
+      var Segments2 = null;
+      var i = 0;
+      var j = 0;
+      var vi1 = 0;
+      var vi2 = 0;
+      var hp = 0;
+      var NewPart = null;
+      var Face = null;
+      var NewFace = null;
+      var NewFaces = null;
+      var V0 = pas.uVector.TVector.$new();
+      var V2 = pas.uVector.TVector.$new();
+      var Found = false;
+      NewPart = pas.uPart.TPart.$create("Create$1");
+      NewParts.Add(NewPart);
+      var $in = Part.FFaces.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Face = $in.DoGetCurrent();
+          hp = Face.HalfPlane(pas.uPlane.TPlane.$clone(Plane));
+          if ((hp === pas.uGeometryUtils.THalfOfPlane.hopOutside) || ((hp === pas.uGeometryUtils.THalfOfPlane.hopInPlane) && Plane.NormVect.IsNearOpposite(Face.GetNorm()))) {
+            NewFace = pas.uFace.TFace.$create("Create$1",[NewPart.FVertices]);
+            NewFace.Assign(Face);
+            NewPart.FFaces.Add(NewFace);
+          } else if (hp === pas.uGeometryUtils.THalfOfPlane.hopIntersect) {
+            NewFaces = pas["Generics.Collections"].TList$G10.$create("Create$1");
+            if (pas.uFaceUtils.TFaceUtils.CutFace(Face,pas.uPlane.TPlane.$clone(Plane),false,NewFaces,NewPart.FVertices)) NewPart.FFaces.AddRange$2(NewFaces);
+            NewFaces = rtl.freeLoc(NewFaces);
+          };
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+      Distances = rtl.arraySetLength(Distances,0.0,NewPart.FVertices.FLength);
+      for (var $l = 0, $end = NewPart.FVertices.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        Distances[i] = pas.uGeometryUtils.TGeometryUtils.DistancePointToPlane(Plane,NewPart.FVertices.GetItem(i));
+      };
+      Segments1 = pas["Generics.Collections"].TList$G7.$create("Create$1");
+      Segments2 = pas["Generics.Collections"].TList$G7.$create("Create$1");
+      try {
+        for (var $l1 = 0, $end1 = NewPart.FFaces.FLength - 1; $l1 <= $end1; $l1++) {
+          i = $l1;
+          for (var $l2 = 0, $end2 = NewPart.FFaces.GetItem(i).GetVertexCount() - 1; $l2 <= $end2; $l2++) {
+            j = $l2;
+            var $with = NewPart.FFaces.GetItem(i);
+            vi1 = $with.GetVertexIndex(j);
+            vi2 = $with.GetVertexIndex(j + 1);
+            if (pas.Math.IsZero(Distances[vi1],4.1666666666666669E-6) && pas.Math.IsZero(Distances[vi2],4.1666666666666669E-6)) {
+              Segments2.Add($with.GetVertex(j));
+              Segments1.Add($with.GetVertex(j + 1));
+              $with.SetEdgeVisibility(j,true);
+            };
+          };
+        };
+        for (var $l3 = Segments1.FLength - 2; $l3 >= 0; $l3--) {
+          i = $l3;
+          for (var $l4 = Segments1.FLength - 1, $end3 = i + 1; $l4 >= $end3; $l4--) {
+            j = $l4;
+            if (Segments1.GetItem(i).IsNear(Segments2.GetItem(j)) && Segments1.GetItem(j).IsNear(Segments2.GetItem(i))) {
+              Segments1.Delete(j);
+              Segments2.Delete(j);
+              Segments1.Delete(i);
+              Segments2.Delete(i);
+              break;
+            };
+          };
+        };
+        while (Segments1.FLength > 2) {
+          NewFace = pas.uFace.TFace.$create("Create$1",[NewPart.FVertices]);
+          NewFace.Color = SliceColor;
+          V0.$assign(Segments1.GetItem(0));
+          V2.$assign(Segments2.GetItem(0));
+          NewFace.AddVector(pas.uVector.TVector.$clone(V0),true);
+          Segments1.Delete(0);
+          Segments2.Delete(0);
+          do {
+            Found = false;
+            for (var $l5 = 0, $end4 = Segments1.FLength - 1; $l5 <= $end4; $l5++) {
+              i = $l5;
+              if (Segments1.GetItem(i).IsNear(V2)) {
+                NewFace.AddVector(pas.uVector.TVector.$clone(V2),true);
+                Found = true;
+                V2.$assign(Segments2.GetItem(i));
+                Segments1.Delete(i);
+                Segments2.Delete(i);
+                break;
+              };
+            };
+          } while (Found);
+          if (V2.IsNear(V0) && (NewFace.GetVertexCount() > 2)) {
+            NewFace.CheckFace();
+            if (NewFace.GetVertexCount() > 2) {
+              NewPart.FFaces.Add(NewFace);
+              if (InvisibleEdges !== 0) this.SetFaceEdgesVisibility(NewPart,NewFace,InvisibleEdges);
+            } else NewFace = rtl.freeLoc(NewFace);
+          } else NewFace = rtl.freeLoc(NewFace);
+        };
+      } finally {
+        Segments1 = rtl.freeLoc(Segments1);
+        Segments2 = rtl.freeLoc(Segments2);
+      };
+      Result = true;
+      return Result;
+    };
+    this.GetNearestFace = function (Part, Vector) {
+      var Result = null;
+      var d = 0.0;
+      var MinDistance = 0.0;
+      var Face = null;
+      Result = null;
+      MinDistance = 1e10;
+      var $in = Part.FFaces.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Face = $in.DoGetCurrent();
+          d = Math.abs(Face.GetPlane().DistanceToPoint(Vector));
+          if (d < MinDistance) {
+            MinDistance = d;
+            Result = Face;
+          };
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+      return Result;
+    };
+  });
+  $mod.$implcode = function () {
+    $impl.DELTA = 0.001 / 240;
+  };
+},["Math","uFaceUtils","uGeometryUtils"]);
+rtl.module("uPuzzleUtils",["System","uVector","uPuzzle","uFace","uPlane","uPart","Generics.Collections","Graphics"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.createClass(this,"TPuzzleUtils",pas.System.TObject,function () {
+    this.ListUniqueColors = function (Puzzle, Colors, IgnoreInvisibleEdges) {
+      var Color = 0;
+      var LastColor = 0;
+      var Face = null;
+      var Part = null;
+      LastColor = -1;
+      var $in = Puzzle.FParts.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Part = $in.DoGetCurrent();
+          if (Part.FVisible) {
+            var $in1 = Part.FFaces.GetEnumerator$1();
+            try {
+              while ($in1.MoveNext()) {
+                Face = $in1.DoGetCurrent();
+                Color = Face.Color;
+                if (Face.IsColored() && (Color !== LastColor) && (!IgnoreInvisibleEdges || Face.AllEdgesVisible())) {
+                  if (!Colors.Contains(Color)) Colors.Add(Color);
+                  LastColor = Color;
+                };
+              }
+            } finally {
+              $in1 = rtl.freeLoc($in1)
+            };
+          };
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+    };
+    this.RemoveGrayParts = function (Puzzle) {
+      function PartIsColored(Part) {
+        var Result = false;
+        var Face = null;
+        Result = true;
+        var $in = Part.FFaces.GetEnumerator$1();
+        try {
+          while ($in.MoveNext()) {
+            Face = $in.DoGetCurrent();
+            if (Face.Color !== -1) return Result;
+          }
+        } finally {
+          $in = rtl.freeLoc($in)
+        };
+        Result = false;
+        return Result;
+      };
+      var i = 0;
+      var Part = null;
+      for (var $l = Puzzle.FParts.FLength - 1; $l >= 0; $l--) {
+        i = $l;
+        Part = Puzzle.FParts.GetItem(i);
+        if (Part.FVisible && !PartIsColored(Part)) {
+          Part = rtl.freeLoc(Part);
+          Puzzle.FParts.Delete(i);
+        };
+      };
+    };
+    this.CutByPlane = function (Puzzle, Plane, Color, InvisibleEdges) {
+      var i = 0;
+      var hp = 0;
+      var NewParts = null;
+      var Part = null;
+      NewParts = pas["Generics.Collections"].TList$G12.$create("Create$1");
+      try {
+        for (var $l = Puzzle.FParts.FLength - 1; $l >= 0; $l--) {
+          i = $l;
+          Part = Puzzle.FParts.GetItem(i);
+          if (Part.FVisible) {
+            hp = Part.HalfPlane(Plane);
+            if (hp === pas.uGeometryUtils.THalfOfPlane.hopIntersect) {
+              if (pas.uPartUtils.TPartUtils.CutPart(Part,pas.uPlane.TPlane.$clone(Plane),NewParts,Color,InvisibleEdges)) {
+                Part = rtl.freeLoc(Part);
+                Puzzle.FParts.Delete(i);
+                Puzzle.FParts.InsertRange$2(i,NewParts);
+                NewParts.Clear();
+              };
+            } else if (hp === pas.uGeometryUtils.THalfOfPlane.hopInside) {
+              Part = rtl.freeLoc(Part);
+              Puzzle.FParts.Delete(i);
+            };
+          };
+        };
+        Puzzle.PositionsInvalidate();
+      } finally {
+        NewParts = rtl.freeLoc(NewParts);
+      };
+    };
+    this.SplitByPlane = function (Puzzle, Plane, Color1, Color2, InvisibleEdges1, InvisibleEdges2) {
+      var i = 0;
+      var Copy = null;
+      var Part = null;
+      var OppositePlane = pas.uPlane.TPlane.$new();
+      var NewParts = null;
+      OppositePlane.$assign(Plane);
+      OppositePlane.TurnRound();
+      NewParts = pas["Generics.Collections"].TList$G12.$create("Create$1");
+      try {
+        for (var $l = Puzzle.FParts.FLength - 1; $l >= 0; $l--) {
+          i = $l;
+          Part = Puzzle.FParts.GetItem(i);
+          if (Part.FVisible && (Part.HalfPlane(Plane) === pas.uGeometryUtils.THalfOfPlane.hopIntersect)) {
+            Copy = pas.uPart.TPart.$create("Create$1");
+            Copy.Assign(Part);
+            pas.uPartUtils.TPartUtils.CutPart(Part,pas.uPlane.TPlane.$clone(Plane),NewParts,Color1,InvisibleEdges1);
+            Part = rtl.freeLoc(Part);
+            Puzzle.FParts.Delete(i);
+            Puzzle.FParts.InsertRange$2(i,NewParts);
+            NewParts.Clear();
+            pas.uPartUtils.TPartUtils.CutPart(Copy,pas.uPlane.TPlane.$clone(OppositePlane),NewParts,Color2,InvisibleEdges2);
+            Puzzle.FParts.InsertRange$2(i,NewParts);
+            NewParts.Clear();
+            Copy = rtl.freeLoc(Copy);
+          };
+        };
+        Puzzle.PositionsInvalidate();
+      } finally {
+        NewParts = rtl.freeLoc(NewParts);
+      };
+    };
+    this.InvertVisibility = function (Puzzle) {
+      var Part = null;
+      var $in = Puzzle.FParts.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Part = $in.DoGetCurrent();
+          Part.FVisible = !Part.FVisible;
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+    };
+    this.SetAllInvisible = function (Puzzle) {
+      var Part = null;
+      var $in = Puzzle.FParts.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Part = $in.DoGetCurrent();
+          Part.FVisible = false;
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+    };
+    this.SetAllVisible = function (Puzzle) {
+      var Part = null;
+      var $in = Puzzle.FParts.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Part = $in.DoGetCurrent();
+          Part.FVisible = true;
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+    };
+    this.SplitByAxes = function (Puzzle) {
+      var i = 0;
+      var Axis = null;
+      var $in = Puzzle.FAxes.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Axis = $in.DoGetCurrent();
+          for (var $l = 0, $end = Axis.Layers.FLength - 2; $l <= $end; $l++) {
+            i = $l;
+            $mod.TPuzzleUtils.SplitByPlane(Puzzle,pas.uPlane.TPlane.$clone(Axis.GetLayerPlaneTo(i)),-1,-1,0,0);
+          };
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+    };
+    this.GetVisiblePartContaining = function (Puzzle, Vector) {
+      var Result = null;
+      var Part = null;
+      Result = null;
+      var $in = Puzzle.FParts.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Part = $in.DoGetCurrent();
+          if (Part.FVisible && Part.Contains(Vector)) return Part;
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+      return Result;
+    };
+    this.GetNearestVisibleFace = function (Puzzle, Vector) {
+      var Result = null;
+      var Part = null;
+      Part = $mod.TPuzzleUtils.GetVisiblePartContaining(Puzzle,pas.uVector.TVector.$clone(Vector));
+      if (Part !== null) {
+        Result = pas.uPartUtils.TPartUtils.GetNearestFace(Part,pas.uVector.TVector.$clone(Vector))}
+       else Result = null;
+      return Result;
+    };
+  });
+},["uAxis","uPartUtils","uGeometryUtils","SysUtils"]);
+rtl.module("Dialogs",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.ShowMessage = function (Msg) {
+  };
+});
+rtl.module("uSolvedState",["System","Generics.Collections","uVector"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.createClass(this,"TFaceProperties",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.vc = pas.uVector.TVector.$new();
+      this.vn = pas.uVector.TVector.$new();
+      this.ColorIndex = 0;
+    };
+    this.$final = function () {
+      this.vc = undefined;
+      this.vn = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function () {
+      this.ColorIndex = -1;
+      return this;
+    };
+  });
+  rtl.createClass(this,"TSolvedState",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FacesProperties = null;
+    };
+    this.$final = function () {
+      this.FacesProperties = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function () {
+      this.FacesProperties = pas["Generics.Collections"].TList$G5.$create("Create$1");
+      return this;
+    };
+    this.Destroy = function () {
+      var i = 0;
+      var FacePropertiesItem = null;
+      for (var $l = 0, $end = this.FacesProperties.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        FacePropertiesItem = this.FacesProperties.GetItem(i);
+        FacePropertiesItem = rtl.freeLoc(FacePropertiesItem);
+      };
+      rtl.free(this,"FacesProperties");
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.CalcFromPuzzle = function (Puzzle) {
+      var $Self = this;
+      var FPuzzle = null;
+      var v1 = pas.uVector.TVector.$new();
+      var v2 = pas.uVector.TVector.$new();
+      var v3 = pas.uVector.TVector.$new();
+      var Colors = null;
+      function AddFace(Face) {
+        var i = 0;
+        var c1 = 0.0;
+        var c2 = 0.0;
+        var c3 = 0.0;
+        var fp = null;
+        fp = $mod.TFaceProperties.$create("Create$1");
+        fp.ColorIndex = Colors.IndexOf(Face.Color);
+        fp.vc.$assign(Face.GetVertex(0));
+        for (var $l = 1, $end = Face.GetVertexCount() - 1; $l <= $end; $l++) {
+          i = $l;
+          fp.vc.x = fp.vc.x + Face.GetVertex(i).x;
+          fp.vc.y = fp.vc.y + Face.GetVertex(i).y;
+          fp.vc.z = fp.vc.z + Face.GetVertex(i).z;
+        };
+        fp.vc.$assign(pas.uVector.VectorDivide(fp.vc,Face.GetVertexCount()));
+        c1 = pas.uVector.VectorDot(fp.vc,v1);
+        c2 = pas.uVector.VectorDot(fp.vc,v2);
+        c3 = pas.uVector.VectorDot(fp.vc,v3);
+        fp.vc.x = c1;
+        fp.vc.y = c2;
+        fp.vc.z = c3;
+        fp.vn.$assign(Face.GetNorm());
+        c1 = pas.uVector.VectorDot(fp.vn,v1);
+        c2 = pas.uVector.VectorDot(fp.vn,v2);
+        c3 = pas.uVector.VectorDot(fp.vn,v3);
+        fp.vn.x = c1;
+        fp.vn.y = c2;
+        fp.vn.z = c3;
+        $Self.FacesProperties.Add(fp);
+      };
+      var i = 0;
+      var j = 0;
+      FPuzzle = Puzzle;
+      if (FPuzzle.FAxes.FLength < 2) {
+        pas.Dialogs.ShowMessage("TSolvedState.CalcFromPuzzle: Axes.Count < 2");
+        return;
+      };
+      v1.$assign(FPuzzle.FAxes.GetItem(0).GetNormVector());
+      v2.$assign(FPuzzle.FAxes.GetItem(1).GetNormVector());
+      v2.$assign(pas.uVector.VectorCross(v2,v1));
+      if (v2.Abs() < 1e-4) {
+        pas.Dialogs.ShowMessage("TSolvedState.CalcFromPuzzle: first and second axes can't be parallel");
+        return;
+      };
+      v2.Normalize();
+      v3.$assign(v2);
+      v3.$assign(pas.uVector.VectorCross(v3,v1));
+      v3.Normalize();
+      Colors = pas["Generics.Collections"].TList$G8.$create("Create$1");
+      pas.uPuzzleUtils.TPuzzleUtils.ListUniqueColors(FPuzzle,Colors,false);
+      for (var $l = 0, $end = FPuzzle.FParts.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        for (var $l1 = 0, $end1 = FPuzzle.FParts.GetItem(i).FFaces.FLength - 1; $l1 <= $end1; $l1++) {
+          j = $l1;
+          if (FPuzzle.FParts.GetItem(i).FFaces.GetItem(j).Color !== -1) AddFace(FPuzzle.FParts.GetItem(i).FFaces.GetItem(j));
+        };
+      };
+      Colors = rtl.freeLoc(Colors);
+    };
+  });
+  rtl.createClass(this,"TSolvedStates",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FSolvedStates = null;
+      this.UniquePlanes = 0;
+    };
+    this.$final = function () {
+      this.FSolvedStates = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function () {
+      this.FSolvedStates = pas["Generics.Collections"].TList$G6.$create("Create$1");
+      return this;
+    };
+    this.Destroy = function () {
+      this.Clear();
+      rtl.free(this,"FSolvedStates");
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.Clear = function () {
+      var i = 0;
+      var SolvedStateItem = null;
+      for (var $l = 0, $end = this.FSolvedStates.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        SolvedStateItem = this.FSolvedStates.GetItem(i);
+        SolvedStateItem = rtl.freeLoc(SolvedStateItem);
+      };
+      this.FSolvedStates.Clear();
+    };
+  });
+},["uPuzzle","uFace","uPart","uPuzzleUtils","Graphics","Dialogs"]);
 rtl.module("uMacro",["System","Generics.Collections","Types","Classes"],function () {
   "use strict";
   var $mod = this;
-  rtl.createClass($mod,"TMacro",pas.System.TObject,function () {
+  rtl.createClass(this,"TMacro",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.Name = "";
+      this.Description = "";
+      this.Sequence = "";
+    };
   });
 });
 rtl.module("uSelection",["System","uFace","uPart","uAxis","uVector","Generics.Collections"],function () {
   "use strict";
   var $mod = this;
-  rtl.createClass($mod,"TMovingParts",pas.System.TObject,function () {
+  rtl.createClass(this,"TMovingParts",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
       this.FMovingParts = null;
@@ -3541,7 +8158,7 @@ rtl.module("uSelection",["System","uFace","uPart","uAxis","uVector","Generics.Co
     };
     this.Create$1 = function () {
       pas.System.TObject.Create.call(this);
-      this.FMovingParts = pas["Generics.Collections"].TList$G10.$create("Create$1");
+      this.FMovingParts = pas["Generics.Collections"].TList$G12.$create("Create$1");
       this.Clear();
       return this;
     };
@@ -3561,7 +8178,7 @@ rtl.module("uSelection",["System","uFace","uPart","uAxis","uVector","Generics.Co
       if (this.FMovingParts.IndexOf(Part) === -1) this.FMovingParts.Add(Part);
     };
   });
-  rtl.createClass($mod,"TSelection",pas.System.TObject,function () {
+  rtl.createClass(this,"TSelection",pas.System.TObject,function () {
     this.SelectedPart = null;
     this.SelectedFace = null;
     this.MouseOverPart = null;
@@ -3591,9 +8208,9 @@ rtl.module("uSelection",["System","uFace","uPart","uAxis","uVector","Generics.Co
 rtl.module("uVectorImage",["System","Classes","Graphics","Generics.Collections"],function () {
   "use strict";
   var $mod = this;
-  rtl.createClass($mod,"TVectorCommand",pas.System.TObject,function () {
+  rtl.createClass(this,"TVectorCommand",pas.System.TObject,function () {
   });
-  rtl.createClass($mod,"TVectorImage",pas.System.TObject,function () {
+  rtl.createClass(this,"TVectorImage",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
       this.FVectorCommands = null;
@@ -3625,14 +8242,23 @@ rtl.module("uVectorImage",["System","Classes","Graphics","Generics.Collections"]
 rtl.module("uTexture",["System","uVectorImage","Generics.Collections"],function () {
   "use strict";
   var $mod = this;
-  rtl.createClass($mod,"TTexture",pas.System.TObject,function () {
+  rtl.createClass(this,"TTexture",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
+      this.Name = "";
+      this.FileName = "";
       this.VectorImage = null;
     };
     this.$final = function () {
       this.VectorImage = undefined;
       pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function () {
+      pas.System.TObject.Create.call(this);
+      this.Name = "";
+      this.FileName = "";
+      this.VectorImage = null;
+      return this;
     };
     this.Destroy = function () {
       if (this.VectorImage !== null) rtl.free(this,"VectorImage");
@@ -3643,7 +8269,7 @@ rtl.module("uTexture",["System","uVectorImage","Generics.Collections"],function 
 rtl.module("uPuzzleHeader",["System"],function () {
   "use strict";
   var $mod = this;
-  rtl.createClass($mod,"TPuzzleHeader",pas.System.TObject,function () {
+  rtl.createClass(this,"TPuzzleHeader",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
       this.Name = "";
@@ -3677,7 +8303,7 @@ rtl.module("uPuzzleHeader",["System"],function () {
 rtl.module("uPuzzleBase",["System","uMatrix","uPart","uAxis","uTexture","uPuzzleHeader","uVector","Generics.Collections"],function () {
   "use strict";
   var $mod = this;
-  rtl.recNewT($mod,"TPartPosition",function () {
+  rtl.recNewT(this,"TPartPosition",function () {
     this.iFrom = 0;
     this.iTo = 0;
     this.$eq = function (b) {
@@ -3689,7 +8315,7 @@ rtl.module("uPuzzleBase",["System","uMatrix","uPart","uAxis","uTexture","uPuzzle
       return this;
     };
   });
-  rtl.createClass($mod,"TPuzzleBase",pas.System.TObject,function () {
+  rtl.createClass(this,"TPuzzleBase",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
       this.FParts = null;
@@ -3714,7 +8340,7 @@ rtl.module("uPuzzleBase",["System","uMatrix","uPart","uAxis","uTexture","uPuzzle
       try {
         while ($in.MoveNext()) {
           Part = $in.DoGetCurrent();
-          Part.Trans(mat.slice(0));
+          Part.Trans(pas.uMatrix.T4x4Matrix$clone(mat));
         }
       } finally {
         $in = rtl.freeLoc($in)
@@ -3726,7 +8352,7 @@ rtl.module("uPuzzleBase",["System","uMatrix","uPart","uAxis","uTexture","uPuzzle
       try {
         while ($in.MoveNext()) {
           Axis = $in.DoGetCurrent();
-          Axis.Trans(mat.slice(0));
+          Axis.Trans(pas.uMatrix.T4x4Matrix$clone(mat));
         }
       } finally {
         $in = rtl.freeLoc($in)
@@ -3735,9 +8361,9 @@ rtl.module("uPuzzleBase",["System","uMatrix","uPart","uAxis","uTexture","uPuzzle
     this.Create$1 = function () {
       pas.System.TObject.Create.call(this);
       this.Header = pas.uPuzzleHeader.TPuzzleHeader.$create("Create$1");
-      this.FAxes = pas["Generics.Collections"].TList$G12.$create("Create$1");
-      this.FParts = pas["Generics.Collections"].TList$G10.$create("Create$1");
-      this.FTextures = pas["Generics.Collections"].TList$G13.$create("Create$1");
+      this.FAxes = pas["Generics.Collections"].TList$G14.$create("Create$1");
+      this.FParts = pas["Generics.Collections"].TList$G12.$create("Create$1");
+      this.FTextures = pas["Generics.Collections"].TList$G15.$create("Create$1");
       return this;
     };
     this.Destroy = function () {
@@ -3776,6 +8402,10 @@ rtl.module("uPuzzleBase",["System","uMatrix","uPart","uAxis","uTexture","uPuzzle
         Axis = rtl.freeLoc(Axis);
       };
       this.FAxes.Clear();
+    };
+    this.Trans = function (mat) {
+      this.TransParts(pas.uMatrix.T4x4Matrix$clone(mat),this.FParts);
+      this.TransAxes(pas.uMatrix.T4x4Matrix$clone(mat),this.FAxes);
     };
     this.GetPartPosition = function (AxisNo, PartNo, iFrom, iTo) {
       var PartPosition = $mod.TPartPosition.$new();
@@ -3834,19 +8464,19 @@ rtl.module("uPuzzleBase",["System","uMatrix","uPart","uAxis","uTexture","uPuzzle
         return Result;
       };
       var i = 0;
-      Axis = $Self.FAxes.GetItem(AxisNo);
+      Axis = this.FAxes.GetItem(AxisNo);
       GetProjectionBoundaries();
       iFrom.set(0);
       for (var $l = 1, $end = Axis.Layers.FLength - 1; $l <= $end; $l++) {
         i = $l;
-        if (Axis.Layers.GetItem(i).DistanceFrom < (AMin + 0.0001)) {
+        if (Axis.Layers.GetItem(i).DistanceFrom < (AMin + 1E-4)) {
           iFrom.set(i)}
          else break;
       };
       iTo.set(Axis.Layers.FLength - 1);
       for (var $l1 = Axis.Layers.FLength - 2; $l1 >= 0; $l1--) {
         i = $l1;
-        if (Axis.Layers.GetItem(i).DistanceTo > (AMax - 0.0001)) {
+        if (Axis.Layers.GetItem(i).DistanceTo > (AMax - 1E-4)) {
           iTo.set(i)}
          else break;
       };
@@ -3877,23 +8507,20 @@ rtl.module("uTurn",["System","uPart","Generics.Collections"],function () {
   "use strict";
   var $mod = this;
   this.TTurningType = {"0": "ttyNone", ttyNone: 0, "1": "ttyLayerTurn", ttyLayerTurn: 1, "2": "ttyPartsMove", ttyPartsMove: 2};
-  rtl.createClass($mod,"TTurn",pas.System.TObject,function () {
+  rtl.createClass(this,"TTurn",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
       this.typ = 0;
       this.AxisNo = 0;
       this.Layers = [];
       this.Angle = 0.0;
+      this.Distance = 0.0;
     };
     this.$final = function () {
       this.Layers = undefined;
       pas.System.TObject.$final.call(this);
     };
   });
-});
-rtl.module("Math",["System"],function () {
-  "use strict";
-  var $mod = this;
 });
 rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro","uSelection","uPuzzleBase","uTurn","Classes","Generics.Collections"],function () {
   "use strict";
@@ -3902,7 +8529,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
   this.TTurningState = {"0": "tsFree", tsFree: 0, "1": "tsMidTurn", tsMidTurn: 1, "2": "tsTurningAnimated", tsTurningAnimated: 2, "3": "tsWholeRotating", tsWholeRotating: 3};
   this.TTurningType = {"0": "ttManual", ttManual: 0, "1": "ttScramble", ttScramble: 1, "2": "ttUndo", ttUndo: 2, "3": "ttRedo", ttRedo: 3, "4": "ttMacro", ttMacro: 4};
   this.TCheckSolvedProc = {"0": "cspEachColorHasSameDirection", cspEachColorHasSameDirection: 0, "1": "cspEachColorHasSameOrOppositeDirection", cspEachColorHasSameOrOppositeDirection: 1, "2": "cspCountUniquePlanes", cspCountUniquePlanes: 2, "3": "cspEachFaceConsistsOfDifferentColors", cspEachFaceConsistsOfDifferentColors: 3, "4": "cspEachRowColDiagConsistsOfDifferentColors", cspEachRowColDiagConsistsOfDifferentColors: 4, "5": "cspCheckSavedStates", cspCheckSavedStates: 5, "6": "cspEachPlaneHasOneColor", cspEachPlaneHasOneColor: 6, "7": "cspEachColorHasSameDirectionOrCountUniquePlanes", cspEachColorHasSameDirectionOrCountUniquePlanes: 7, "8": "cspAdjoiningFacesHaveSameColors", cspAdjoiningFacesHaveSameColors: 8, "9": "cspEachRowColConsistsOfDifferentColors", cspEachRowColConsistsOfDifferentColors: 9};
-  rtl.createClass($mod,"TPuzzle",pas.uPuzzleBase.TPuzzleBase,function () {
+  rtl.createClass(this,"TPuzzle",pas.uPuzzleBase.TPuzzleBase,function () {
     this.$init = function () {
       pas.uPuzzleBase.TPuzzleBase.$init.call(this);
       this.FCheckSolvedProc = 0;
@@ -3946,7 +8573,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
     this.AddUndo = function (AxisNo, Layers, Angle) {
       var Turn = null;
       var i = 0;
-      if (Math.abs(Angle) < 0.0001) return;
+      if (Math.abs(Angle) < 1E-4) return;
       Turn = pas.uTurn.TTurn.$create("Create");
       Turn.typ = pas.uTurn.TTurningType.ttyLayerTurn;
       Turn.AxisNo = AxisNo;
@@ -3995,9 +8622,9 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
         i = $l;
         if (Layers[i]) {
           Layer = Axis.Layers.GetItem(i);
-          if ((RotateDirection < 0) && (Layer.Angle < (Layer.MinAngle + 0.001))) return Result;
-          if ((RotateDirection > 0) && (Layer.Angle > (Layer.MaxAngle - 0.001))) return Result;
-          if ((RotateDirection === 0) && ((Layer.Angle < (Layer.MinAngle + 0.001)) || (Layer.Angle > (Layer.MaxAngle - 0.001)))) return Result;
+          if ((RotateDirection < 0) && (Layer.Angle < (Layer.MinAngle + 1E-3))) return Result;
+          if ((RotateDirection > 0) && (Layer.Angle > (Layer.MaxAngle - 1E-3))) return Result;
+          if ((RotateDirection === 0) && ((Layer.Angle < (Layer.MinAngle + 1E-3)) || (Layer.Angle > (Layer.MaxAngle - 1E-3)))) return Result;
         };
       };
       Result = true;
@@ -4079,8 +8706,8 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       };
     };
     this.TransSelection = function (mat) {
-      if (this.FMovingParts.TurnWithAxes) this.TransAxes(mat.slice(0),this.FAxes);
-      this.TransParts(mat.slice(0),this.FMovingParts.FMovingParts);
+      if (this.FMovingParts.TurnWithAxes) this.TransAxes(pas.uMatrix.T4x4Matrix$clone(mat),this.FAxes);
+      this.TransParts(pas.uMatrix.T4x4Matrix$clone(mat),this.FMovingParts.FMovingParts);
     };
     this.RotateWOCheckWOAnimation = function (AxisNo, Layers, Al) {
       this.GetMovingParts(AxisNo,Layers);
@@ -4162,7 +8789,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       if (this.TurningState === $mod.TTurningState.tsTurningAnimated) return;
       this.TurningState = $mod.TTurningState.tsTurningAnimated;
       try {
-        while (Math.abs(AngleToTurn) > 0.0000001) {
+        while (Math.abs(AngleToTurn) > 1E-6) {
           Diff = Math.sign(AngleToTurn) * 0.05;
           if (Math.abs(AngleToTurn) < Math.abs(Diff)) Diff = AngleToTurn;
           this.TransLayers(this.FAxes.GetItem(pas.uSelection.TSelection.TurnAxisNo).GetRotateMatrix(Diff),pas.uSelection.TSelection.TurnAxisNo,pas.uSelection.TSelection.TurnLayers);
@@ -4173,6 +8800,28 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       } finally {
         this.TurningState = $mod.TTurningState.tsFree;
       };
+    };
+    this.CalcMovingLayers = function (AxisNo, Layers) {
+      var Result = false;
+      var Axis = null;
+      var i = 0;
+      Axis = this.FAxes.GetItem(AxisNo);
+      if (!Axis.Enabled) return false;
+      pas.uSelection.TSelection.TurnLayers = rtl.arraySetLength(pas.uSelection.TSelection.TurnLayers,false,Axis.Layers.FLength);
+      for (var $l = 0, $end = rtl.length(pas.uSelection.TSelection.TurnLayers) - 1; $l <= $end; $l++) {
+        i = $l;
+        pas.uSelection.TSelection.TurnLayers[i] = false;
+      };
+      for (var $l1 = 0, $end1 = rtl.length(Layers) - 1; $l1 <= $end1; $l1++) {
+        i = $l1;
+        if (Layers[i]) this.AddMovingLayer(AxisNo,i,{p: pas.uSelection.TSelection.TSelection, get: function () {
+            return this.p.TurnLayers;
+          }, set: function (v) {
+            this.p.TurnLayers = v;
+          }});
+      };
+      Result = !this.IsTurningWhole(pas.uSelection.TSelection.TurnLayers);
+      return Result;
     };
     this.CalcMovingLayers$1 = function (AxisNo, LayerNo, LayersCount) {
       var Result = false;
@@ -4207,7 +8856,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
         var i = 0;
         var Layer = null;
         Result = false;
-        if ((Al < (AngleMin - 0.00001)) || (Al > (AngleMax + 0.00001))) return Result;
+        if ((Al < (AngleMin - 1E-5)) || (Al > (AngleMax + 1E-5))) return Result;
         for (var $l = iFirst, $end = rtl.length(Layers) - 1; $l <= $end; $l++) {
           i = $l;
           if (Layers[i]) {
@@ -4226,7 +8875,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       var PlusValid = false;
       var MinusValid = false;
       var TurnWithAxes = false;
-      TurnWithAxes = $Self.IsTurnWithAxes(AxisNo,Layers);
+      TurnWithAxes = this.IsTurnWithAxes(AxisNo,Layers);
       if (TurnWithAxes) {
         Al = -Al;
         A = AngleMin;
@@ -4237,7 +8886,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
           Layers[i] = !Layers[i];
         };
       };
-      Axis = $Self.FAxes.GetItem(AxisNo);
+      Axis = this.FAxes.GetItem(AxisNo);
       AnglePlus = Al;
       AngleMinus = Al;
       FirstLayer = null;
@@ -4256,14 +8905,14 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       PlusValid = false;
       while (!PlusValid) {
         AnglePlus = FirstLayer.GetNextAngle(FirstLayer.Angle + AnglePlus) - FirstLayer.Angle;
-        if ((AnglePlus > PI2) || (AnglePlus > (AngleMax + 0.001))) break;
+        if ((AnglePlus > PI2) || (AnglePlus > (AngleMax + 1E-3))) break;
         PlusValid = AngleValid(AnglePlus);
         if (!PlusValid) AnglePlus = AnglePlus + 0.01;
       };
       MinusValid = false;
       while (!MinusValid) {
         AngleMinus = FirstLayer.GetPrevAngle(FirstLayer.Angle + AngleMinus) - FirstLayer.Angle;
-        if ((AngleMinus < -PI2) || (AngleMinus < (AngleMin - 0.001))) break;
+        if ((AngleMinus < -PI2) || (AngleMinus < (AngleMin - 1E-3))) break;
         MinusValid = AngleValid(AngleMinus);
         if (!MinusValid) AngleMinus = AngleMinus - 0.01;
       };
@@ -4282,8 +8931,8 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
     this.TransLayers = function (mat, AxisNo, Layers) {
       this.GetMovingParts(AxisNo,Layers);
       this.FMovingParts.TurnWithAxes = this.IsTurnWithAxes(AxisNo,Layers);
-      this.TransSelection(mat.slice(0));
-      if (this.FOnTransLayers != null) this.FOnTransLayers(mat.slice(0),AxisNo,Layers);
+      this.TransSelection(pas.uMatrix.T4x4Matrix$clone(mat));
+      if (this.FOnTransLayers != null) this.FOnTransLayers(pas.uMatrix.T4x4Matrix$clone(mat),AxisNo,Layers);
     };
     this.IsTurningWhole = function (Layers) {
       var Result = false;
@@ -4330,7 +8979,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       this.FSolvedStates = pas.uSolvedState.TSolvedStates.$create("Create$1");
       this.UndoStack = pas["Generics.Collections"].TList$G17.$create("Create$1");
       this.RedoStack = pas["Generics.Collections"].TList$G17.$create("Create$1");
-      this.FMarks = pas["Generics.Collections"].TList$G6.$create("Create$1");
+      this.FMarks = pas["Generics.Collections"].TList$G8.$create("Create$1");
       this.FMovingParts = pas.uSelection.TMovingParts.$create("Create$1");
       this.Macros = pas["Generics.Collections"].TList$G16.$create("Create$1");
       pas.uSelection.TSelection.Clear();
@@ -4404,7 +9053,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
             this.p.AngleMax = v;
           }});
         Angle = this.GetTurningAngle(AxisNo,pas.uSelection.TSelection.TurnLayers,Angle,pas.uSelection.TSelection.AngleMin,pas.uSelection.TSelection.AngleMax);
-        if ((Angle > (pas.uSelection.TSelection.AngleMax + 0.001)) || (Angle < (pas.uSelection.TSelection.AngleMin - 0.001))) continue;
+        if ((Angle > (pas.uSelection.TSelection.AngleMax + 1E-3)) || (Angle < (pas.uSelection.TSelection.AngleMin - 1E-3))) continue;
         pas.uSelection.TSelection.RotateDirection = Math.sign(Angle);
         if (this.LayerTurnable(AxisNo,pas.uSelection.TSelection.TurnLayers,pas.uSelection.TSelection.RotateDirection)) {
           this.BeforeTurnEvent($mod.TTurningType.ttScramble,AxisNo,{p: pas.uSelection.TSelection.TSelection, get: function () {
@@ -4420,7 +9069,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
             }, set: function (v) {
               this.p.AngleMax = v;
             }},pas.uSelection.TSelection.RotateDirection);
-          if ((Angle >= (pas.uSelection.TSelection.AngleMin - 0.001)) && (Angle <= (pas.uSelection.TSelection.AngleMax + 0.001))) {
+          if ((Angle >= (pas.uSelection.TSelection.AngleMin - 1E-3)) && (Angle <= (pas.uSelection.TSelection.AngleMax + 1E-3))) {
             if (this.FOnBeforeTurn != null) this.FOnBeforeTurn($mod.TTurningType.ttScramble,$mod.TTurningState.tsFree);
             this.RotateLayers(AxisNo,pas.uSelection.TSelection.TurnLayers,Angle,false);
             this.AfterTurnEvent($mod.TTurningType.ttScramble);
@@ -4447,7 +9096,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
             this.p.AngleMax = v;
           }});
         Angle = this.GetTurningAngle(AxisNo,pas.uSelection.TSelection.TurnLayers,Angle,pas.uSelection.TSelection.AngleMin,pas.uSelection.TSelection.AngleMax);
-        if ((Angle > (pas.uSelection.TSelection.AngleMax + 0.001)) || (Angle < (pas.uSelection.TSelection.AngleMin - 0.001))) continue;
+        if ((Angle > (pas.uSelection.TSelection.AngleMax + 1E-3)) || (Angle < (pas.uSelection.TSelection.AngleMin - 1E-3))) continue;
         pas.uSelection.TSelection.RotateDirection = Math.sign(Angle);
         if (this.LayerTurnable(AxisNo,pas.uSelection.TSelection.TurnLayers,pas.uSelection.TSelection.RotateDirection)) {
           this.BeforeTurnEvent($mod.TTurningType.ttScramble,AxisNo,{p: pas.uSelection.TSelection.TSelection, get: function () {
@@ -4463,7 +9112,7 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
             }, set: function (v) {
               this.p.AngleMax = v;
             }},pas.uSelection.TSelection.RotateDirection);
-          if ((Angle >= (pas.uSelection.TSelection.AngleMin - 0.001)) && (Angle <= (pas.uSelection.TSelection.AngleMax + 0.001))) {
+          if ((Angle >= (pas.uSelection.TSelection.AngleMin - 1E-3)) && (Angle <= (pas.uSelection.TSelection.AngleMax + 1E-3))) {
             if (this.FOnBeforeTurn != null) this.FOnBeforeTurn($mod.TTurningType.ttScramble,$mod.TTurningState.tsFree);
             this.RotateLayers(AxisNo,pas.uSelection.TSelection.TurnLayers,Angle,false);
             this.AfterTurnEvent($mod.TTurningType.ttScramble);
@@ -4572,6 +9221,57 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       if (this.FUndoRecordEnabled) this.AddUndo(AxisNo,Layers,Al);
       this.ClearRedoStack();
     };
+    this.MacroRotateLayers = function (AxisNo, Layers, Al) {
+      var Axis = null;
+      var AngleMin = 0.0;
+      var AngleMax = 0.0;
+      var mat = rtl.arraySetLength(null,0.0,4,4);
+      this.GetRotateAngleRange(AxisNo,Layers,{get: function () {
+          return AngleMin;
+        }, set: function (v) {
+          AngleMin = v;
+        }},{get: function () {
+          return AngleMax;
+        }, set: function (v) {
+          AngleMax = v;
+        }});
+      this.BeforeTurnEvent($mod.TTurningType.ttMacro,AxisNo,{get: function () {
+          return Layers;
+        }, set: function (v) {
+          Layers = v;
+        }},{get: function () {
+          return AngleMin;
+        }, set: function (v) {
+          AngleMin = v;
+        }},{get: function () {
+          return AngleMax;
+        }, set: function (v) {
+          AngleMax = v;
+        }},Math.sign(Al));
+      if (this.FOnBeforeTurn != null) this.FOnBeforeTurn($mod.TTurningType.ttMacro,$mod.TTurningState.tsFree);
+      Axis = this.FAxes.GetItem(AxisNo);
+      if (Axis.IsLayerFixed(Layers)) return;
+      this.GetRotateAngleRange(AxisNo,Layers,{get: function () {
+          return AngleMin;
+        }, set: function (v) {
+          AngleMin = v;
+        }},{get: function () {
+          return AngleMax;
+        }, set: function (v) {
+          AngleMax = v;
+        }});
+      Al = this.GetTurningAngle(AxisNo,Layers,Al,AngleMin,AngleMax);
+      mat = Axis.GetRotateMatrix(Al);
+      this.GetMovingParts(AxisNo,Layers);
+      if (this.IsTurnWithAxes(AxisNo,Layers)) this.TransAxes(pas.uMatrix.T4x4Matrix$clone(mat),this.FAxes);
+      this.TransParts(pas.uMatrix.T4x4Matrix$clone(mat),this.FMovingParts.FMovingParts);
+      if (this.FOnTransLayers != null) this.FOnTransLayers(pas.uMatrix.T4x4Matrix$clone(mat),AxisNo,Layers);
+      this.AddAngles(AxisNo,Layers,Al);
+      if (this.FUndoRecordEnabled) this.AddUndo(AxisNo,Layers,Al);
+      this.ClearRedoStack();
+      this.AfterTurnEvent($mod.TTurningType.ttMacro);
+      if (this.FOnAfterTurn != null) this.FOnAfterTurn($mod.TTurningType.ttMacro,$mod.TTurningState.tsFree);
+    };
     this.BeforeTurnEvent = function (AType, AxisNo, Layers, AngleMin, AngleMax, RotateDirection) {
     };
     this.TurningEvent = function (AType) {
@@ -4579,26 +9279,3984 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
     this.AfterTurnEvent = function (AType) {
       this.PositionsInvalidate();
     };
+    this.BeforeLoadFromXmlEvent = function (XmlNode) {
+    };
+    this.AfterLoadFromXmlEvent = function (XmlNode) {
+    };
     this.DisableAnimation = function () {
       this.FAnimationEnabled = false;
     };
   });
+  $mod.$implcode = function () {
+    $impl.DELTA = 1e-3;
+    $impl.DELTA_ANGLE = 1e-5;
+  };
   $mod.$init = function () {
   };
-},["uUtils","uLayer","Math","SysUtils"],function () {
+},["uUtils","uLayer","Math","SysUtils"]);
+rtl.module("Variants",["System","JS"],function () {
+  "use strict";
+  var $mod = this;
+  this.varEmpty = 0;
+  this.varNull = 1;
+  this.varDouble = 5;
+  this.varOleStr = 8;
+  this.varBoolean = 11;
+  this.varVariant = 12;
+  this.varString = 256;
+  this.VarType = function (Value) {
+    var Result = 0;
+    if (pas.JS.isUndefined(Value)) return 0;
+    if (pas.JS.isNull(Value)) return 1;
+    if (rtl.isNumber(Value)) return 5;
+    if (pas.JS.isBoolean(Value)) return 11;
+    if (rtl.isString(Value)) return 256;
+    Result = 12;
+    return Result;
+  };
+  this.VarClear = function (Value) {
+    Value.set(null);
+  };
+});
+rtl.module("uScript",["System","Classes","Generics.Collections","Variants"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
-  $impl.DELTA = 1e-3;
-  $impl.DELTA_ANGLE = 1e-5;
-});
-rtl.module("program",["System","JS","Web","SysUtils","uPuzzle"],function () {
+  this.TToken = {"0": "tEMPTY", tEMPTY: 0, "1": "tVR", tVR: 1, "2": "tCON", tCON: 2, "3": "tTRUE", tTRUE: 3, "4": "tFALSE", tFALSE: 4, "5": "tEQU", tEQU: 5, "6": "tOR", tOR: 6, "7": "tAND", tAND: 7, "8": "tNOT", tNOT: 8, "9": "tXOR", tXOR: 9, "10": "tCOMMA", tCOMMA: 10, "11": "tLBL", tLBL: 11, "12": "tNEQ", tNEQ: 12, "13": "tGT", tGT: 13, "14": "tLS", tLS: 14, "15": "tGTE", tGTE: 15, "16": "tLSE", tLSE: 16, "17": "tADD", tADD: 17, "18": "tSUB", tSUB: 18, "19": "tMUL", tMUL: 19, "20": "tDIVIDE", tDIVIDE: 20, "21": "tDIV", tDIV: 21, "22": "tMOD", tMOD: 22, "23": "tPWR", tPWR: 23, "24": "tLBR", tLBR: 24, "25": "tRBR", tRBR: 25, "26": "tLARR", tLARR: 26, "27": "tRARR", tRARR: 27, "28": "tSEMI", tSEMI: 28, "29": "tREM", tREM: 29, "30": "tREMB", tREMB: 30, "31": "tREME", tREME: 31, "32": "tASSIGN", tASSIGN: 32, "33": "tBEGIN", tBEGIN: 33, "34": "tEND", tEND: 34, "35": "tIF", tIF: 35, "36": "tTHEN", tTHEN: 36, "37": "tELSE", tELSE: 37, "38": "tFOR", tFOR: 38, "39": "tTO", tTO: 39, "40": "tDOWNTO", tDOWNTO: 40, "41": "tDO", tDO: 41, "42": "tWHILE", tWHILE: 42, "43": "tREPEAT", tREPEAT: 43, "44": "tUNTIL", tUNTIL: 44, "45": "tBREAK", tBREAK: 45, "46": "tCONTINUE", tCONTINUE: 46, "47": "tEXIT", tEXIT: 47, "48": "tGOTO", tGOTO: 48, "49": "tSHL", tSHL: 49, "50": "tSHR", tSHR: 50, "51": "tPROC", tPROC: 51, "52": "tFUNCT", tFUNCT: 52, "53": "tUSES", tUSES: 53, "54": "tINCLUDE", tINCLUDE: 54, "55": "tCASE", tCASE: 55, "56": "tOF", tOF: 56, "57": "tDOT2", tDOT2: 57};
+  this.ResWords = ["","","","TRUE","FALSE","=","OR","AND","NOT","XOR",",",":","<>",">","<",">=","<=","+","-","*","/","DIV","MOD","^","(",")","[","]",";","//","{","}",":=","BEGIN","END","IF","THEN","ELSE","FOR","TO","DOWNTO","DO","WHILE","REPEAT","UNTIL","BREAK","CONTINUE","EXIT","GOTO","SHL","SHR","PROCEDURE","FUNCTION","USES","INCLUDE","CASE","OF",".."];
+  this.StrDelimiter = "'";
+  this.DecimalPoint = ".";
+  this.TokenDelimiter = "";
+  rtl.recNewT(this,"TVar",function () {
+    this.Name = "";
+    this.Value = undefined;
+    this.$eq = function (b) {
+      return (this.Name === b.Name) && (this.Value === b.Value);
+    };
+    this.$assign = function (s) {
+      this.Name = s.Name;
+      this.Value = s.Value;
+      return this;
+    };
+  });
+  rtl.recNewT(this,"TFunc",function () {
+    this.Func = null;
+    this.$eq = function (b) {
+      return rtl.eqCallback(this.Func,b.Func);
+    };
+    this.$assign = function (s) {
+      this.Func = s.Func;
+      return this;
+    };
+  });
+  rtl.recNewT(this,"TProcedure",function () {
+    this.Name = "";
+    this.Body = "";
+    this.Params = "";
+    this.Result = false;
+    this.$eq = function (b) {
+      return (this.Name === b.Name) && (this.Body === b.Body) && (this.Params === b.Params) && (this.Result === b.Result);
+    };
+    this.$assign = function (s) {
+      this.Name = s.Name;
+      this.Body = s.Body;
+      this.Params = s.Params;
+      this.Result = s.Result;
+      return this;
+    };
+  });
+  rtl.createClass(this,"TScript",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.Expr = "";
+      this.ExprIndex = 0;
+      this.Token = "";
+      this.TokenCode = 0;
+      this.BlockLevel = 0;
+      this.BlockCmd = 0;
+      this.GotoLabel = "";
+      this.VarList = null;
+      this.FuncList = null;
+      this.ProcList = null;
+      this.IdleProc = null;
+      this.CallGlobalProc = null;
+      this.LastString = "";
+      this.LastParsed = "";
+      this.Stop = false;
+      this.ErrCode = 0;
+      this.ErrMsg = "";
+      this.ErrLine = "";
+    };
+    this.$final = function () {
+      this.VarList = undefined;
+      this.FuncList = undefined;
+      this.ProcList = undefined;
+      this.IdleProc = undefined;
+      this.CallGlobalProc = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function () {
+      pas.System.TObject.Create.call(this);
+      this.ErrCode = 0;
+      this.IdleProc = null;
+      this.CallGlobalProc = null;
+      this.LastString = "";
+      this.LastParsed = "";
+      return this;
+    };
+    this.Destroy = function () {
+      rtl.free(this,"VarList");
+      rtl.free(this,"FuncList");
+      rtl.free(this,"ProcList");
+    };
+    this.ClearVars = function () {
+      this.VarList.Clear();
+    };
+    this.ClearProcs = function () {
+      this.ProcList.Clear();
+    };
+    this.DefineConsts = function () {
+      this.SetValue("PI",Math.PI);
+    };
+    this.VarExists = function (N) {
+      var Result = false;
+      Result = this.VarList.ContainsKey(N);
+      return Result;
+    };
+    this.VarRemove = function (N) {
+      this.VarList.Remove(N);
+    };
+    this.VarByName = function (N, V) {
+      var Result = false;
+      var Name = "";
+      Name = pas.SysUtils.UpperCase(pas.SysUtils.Trim(N));
+      Result = this.VarList.TryGetValue(Name,{p: V, get: function () {
+          return this.p.Value;
+        }, set: function (v) {
+          this.p.Value = v;
+        }});
+      if (Result) V.Name = N;
+      return Result;
+    };
+    this.SetVar = function (V) {
+      var Result = false;
+      if (this.VarList.ContainsKey(V.Name)) {
+        this.VarList.AddOrSetValue(V.Name,V.Value);
+        Result = true;
+      } else {
+        Result = $impl.ValidName(V.Name);
+        if (Result) this.VarList.AddOrSetValue(V.Name,V.Value);
+      };
+      return Result;
+    };
+    this.SetValue = function (N, V) {
+      var Result = false;
+      var VTemp = $mod.TVar.$new();
+      VTemp.Name = pas.SysUtils.UpperCase(pas.SysUtils.Trim(N));
+      VTemp.Value = V;
+      Result = this.SetVar($mod.TVar.$clone(VTemp));
+      return Result;
+    };
+    this.Parse = function (S) {
+      var Result = "";
+      var i = 0;
+      var T = 0;
+      var ts = "";
+      var ss = "";
+      Result = "";
+      i = 1;
+      ss = this.DelRemarks(S);
+      do {
+        ts = this.GetTextToken(ss,{get: function () {
+            return i;
+          }, set: function (v) {
+            i = v;
+          }},{get: function () {
+            return T;
+          }, set: function (v) {
+            T = v;
+          }});
+        if (T === $mod.TToken.tEMPTY) break;
+        Result = Result + this.TokenStr(T,ts);
+      } while (!false);
+      return Result;
+    };
+    this.Execute = function (S) {
+      var Result = false;
+      this.Clear();
+      if (pas.System.Pos($mod.TokenDelimiter,S) === 0) {
+        if (this.LastString !== S) this.LastParsed = this.Parse(S);
+        this.LastString = S;
+        this.Exec(this.PreProcess(this.LastParsed));
+      } else this.Exec(this.PreProcess(S));
+      Result = this.ErrCode === 0;
+      return Result;
+    };
+    this.Clear = function () {
+      this.BlockLevel = -1;
+      this.BlockCmd = $mod.TToken.tEMPTY;
+      this.Stop = false;
+      this.ErrCode = 0;
+      this.ErrLine = "";
+      this.ErrMsg = "";
+    };
+    this.Process = function () {
+      if (this.Stop) this.BlockCmd = $mod.TToken.tEXIT;
+      if (this.IdleProc != null) this.IdleProc();
+    };
+    this.Error = function (Msg, Line, Code) {
+      if (this.ErrCode !== 0) return;
+      this.ErrCode = Code;
+      this.ErrMsg = Msg;
+      this.ErrLine = this.UnParse(Line,true);
+    };
+    this.Level1 = function (R) {
+      var op = 0;
+      var hold = $mod.TVar.$new();
+      this.Level2(R);
+      if (this.ErrCode !== 0) return;
+      while ((this.TokenCode === $mod.TToken.tOR) || (this.TokenCode === $mod.TToken.tXOR)) {
+        op = this.TokenCode;
+        this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+            return this.p.ExprIndex;
+          }, set: function (v) {
+            this.p.ExprIndex = v;
+          }},{p: this, get: function () {
+            return this.p.TokenCode;
+          }, set: function (v) {
+            this.p.TokenCode = v;
+          }});
+        this.Level2(hold);
+        if (this.ErrCode !== 0) return;
+        this.Arith(op,R,hold);
+      };
+    };
+    this.Level2 = function (R) {
+      var op = 0;
+      var hold = $mod.TVar.$new();
+      this.Level3(R);
+      if (this.ErrCode !== 0) return;
+      while (this.TokenCode === $mod.TToken.tAND) {
+        op = this.TokenCode;
+        this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+            return this.p.ExprIndex;
+          }, set: function (v) {
+            this.p.ExprIndex = v;
+          }},{p: this, get: function () {
+            return this.p.TokenCode;
+          }, set: function (v) {
+            this.p.TokenCode = v;
+          }});
+        this.Level3(hold);
+        if (this.ErrCode !== 0) return;
+        this.Arith(op,R,hold);
+      };
+    };
+    this.Level3 = function (R) {
+      var op = 0;
+      var hold = $mod.TVar.$new();
+      this.Level4(R);
+      if (this.ErrCode !== 0) return;
+      while ((this.TokenCode === $mod.TToken.tLS) || (this.TokenCode === $mod.TToken.tGT) || (this.TokenCode === $mod.TToken.tLSE) || (this.TokenCode === $mod.TToken.tGTE) || (this.TokenCode === $mod.TToken.tEQU) || (this.TokenCode === $mod.TToken.tNEQ)) {
+        op = this.TokenCode;
+        this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+            return this.p.ExprIndex;
+          }, set: function (v) {
+            this.p.ExprIndex = v;
+          }},{p: this, get: function () {
+            return this.p.TokenCode;
+          }, set: function (v) {
+            this.p.TokenCode = v;
+          }});
+        this.Level4(hold);
+        if (this.ErrCode !== 0) return;
+        this.Arith(op,R,hold);
+      };
+    };
+    this.Level4 = function (R) {
+      var op = 0;
+      var hold = $mod.TVar.$new();
+      this.Level5(R);
+      if (this.ErrCode !== 0) return;
+      while ((this.TokenCode === $mod.TToken.tADD) || (this.TokenCode === $mod.TToken.tSUB)) {
+        op = this.TokenCode;
+        this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+            return this.p.ExprIndex;
+          }, set: function (v) {
+            this.p.ExprIndex = v;
+          }},{p: this, get: function () {
+            return this.p.TokenCode;
+          }, set: function (v) {
+            this.p.TokenCode = v;
+          }});
+        this.Level5(hold);
+        if (this.ErrCode !== 0) return;
+        this.Arith(op,R,hold);
+      };
+    };
+    this.Level5 = function (R) {
+      var op = 0;
+      op = $mod.TToken.tEMPTY;
+      if ((this.TokenCode === $mod.TToken.tADD) || (this.TokenCode === $mod.TToken.tSUB) || (this.TokenCode === $mod.TToken.tNOT)) {
+        op = this.TokenCode;
+        this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+            return this.p.ExprIndex;
+          }, set: function (v) {
+            this.p.ExprIndex = v;
+          }},{p: this, get: function () {
+            return this.p.TokenCode;
+          }, set: function (v) {
+            this.p.TokenCode = v;
+          }});
+      };
+      this.Level6(R);
+      if (this.ErrCode !== 0) return;
+      if (op > $mod.TToken.tEMPTY) this.Unary(op,R);
+    };
+    this.Level6 = function (R) {
+      var op = 0;
+      var hold = $mod.TVar.$new();
+      this.Level7(R);
+      if (this.ErrCode !== 0) return;
+      while (this.TokenCode in rtl.createSet($mod.TToken.tMUL,$mod.TToken.tDIVIDE,$mod.TToken.tDIV,$mod.TToken.tMOD)) {
+        op = this.TokenCode;
+        this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+            return this.p.ExprIndex;
+          }, set: function (v) {
+            this.p.ExprIndex = v;
+          }},{p: this, get: function () {
+            return this.p.TokenCode;
+          }, set: function (v) {
+            this.p.TokenCode = v;
+          }});
+        this.Level7(hold);
+        if (this.ErrCode > 0) return;
+        this.Arith(op,R,hold);
+      };
+    };
+    this.Level7 = function (R) {
+      var op = 0;
+      var hold = $mod.TVar.$new();
+      this.Level8(R);
+      if (this.ErrCode !== 0) return;
+      while ((this.TokenCode === $mod.TToken.tPWR) || (this.TokenCode === $mod.TToken.tSHL) || (this.TokenCode === $mod.TToken.tSHR)) {
+        op = this.TokenCode;
+        this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+            return this.p.ExprIndex;
+          }, set: function (v) {
+            this.p.ExprIndex = v;
+          }},{p: this, get: function () {
+            return this.p.TokenCode;
+          }, set: function (v) {
+            this.p.TokenCode = v;
+          }});
+        this.Level8(hold);
+        if (this.ErrCode !== 0) return;
+        this.Arith(op,R,hold);
+      };
+    };
+    this.Level8 = function (R) {
+      var T = 0;
+      var i = 0;
+      var E = 0.0;
+      var arr1 = false;
+      var arr2 = false;
+      var S = "";
+      var Nm = "";
+      var ind1 = "";
+      var ind2 = "";
+      arr1 = false;
+      arr2 = false;
+      if (this.TokenCode === $mod.TToken.tLBR) {
+        this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+            return this.p.ExprIndex;
+          }, set: function (v) {
+            this.p.ExprIndex = v;
+          }},{p: this, get: function () {
+            return this.p.TokenCode;
+          }, set: function (v) {
+            this.p.TokenCode = v;
+          }});
+        this.Level1(R);
+        if (this.ErrCode !== 0) return;
+        if (this.TokenCode !== $mod.TToken.tRBR) {
+          this.Error("'" + $mod.ResWords[$mod.TToken.tRBR] + "' expected",this.Expr,2);
+          return;
+        };
+        this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+            return this.p.ExprIndex;
+          }, set: function (v) {
+            this.p.ExprIndex = v;
+          }},{p: this, get: function () {
+            return this.p.TokenCode;
+          }, set: function (v) {
+            this.p.TokenCode = v;
+          }});
+      } else {
+        var $tmp = this.TokenCode;
+        if ($tmp === $mod.TToken.tTRUE) {
+          R.Name = $mod.ResWords[$mod.TToken.tTRUE];
+          R.Value = true;
+        } else if ($tmp === $mod.TToken.tFALSE) {
+          R.Name = $mod.ResWords[$mod.TToken.tFALSE];
+          R.Value = false;
+        } else if ($tmp === $mod.TToken.tVR) {
+          Nm = this.Token;
+          T = this.NextToken(this.Expr,this.ExprIndex);
+          if ((T === $mod.TToken.tLBR) || this.FuncList.ContainsKey(Nm) || this.ProcList.ContainsKey(Nm)) {
+            S = this.GetFuncParams(this.Expr,{p: this, get: function () {
+                return this.p.ExprIndex;
+              }, set: function (v) {
+                this.p.ExprIndex = v;
+              }});
+            if (this.ProcList.ContainsKey(Nm)) {
+              if (!this.CallProc(Nm,S,R)) {
+                this.Error("Error in procedure: " + Nm,this.Expr,7);
+                return;
+              };
+            } else if (!this.CallFunc(Nm,S,R)) {
+              this.Error("Error in function: " + Nm,this.Expr,7);
+              return;
+            };
+          } else {
+            ind1 = "";
+            ind2 = "";
+            if (T === $mod.TToken.tLARR) {
+              ind1 = this.GetIndex(this.Expr,{p: this, get: function () {
+                  return this.p.ExprIndex;
+                }, set: function (v) {
+                  this.p.ExprIndex = v;
+                }},{p: this, get: function () {
+                  return this.p.TokenCode;
+                }, set: function (v) {
+                  this.p.TokenCode = v;
+                }});
+              if (this.ErrCode !== 0) return;
+              arr1 = true;
+            };
+            T = this.NextToken(this.Expr,this.ExprIndex);
+            if (T === $mod.TToken.tLARR) {
+              ind2 = this.GetIndex(this.Expr,{p: this, get: function () {
+                  return this.p.ExprIndex;
+                }, set: function (v) {
+                  this.p.ExprIndex = v;
+                }},{p: this, get: function () {
+                  return this.p.TokenCode;
+                }, set: function (v) {
+                  this.p.TokenCode = v;
+                }});
+              if (this.ErrCode !== 0) return;
+              arr2 = true;
+            };
+            if (arr1 && !arr2 && this.VarExists(Nm)) {
+              arr1 = false;
+              arr2 = true;
+              ind2 = ind1;
+            };
+            if (arr1) {
+              if (this.VarExists(Nm)) {
+                this.Error("Variable with same name exist : " + Nm,this.Expr,24);
+                return;
+              };
+              Nm = Nm + "[" + ind1 + "]";
+            } else {
+              if (this.FindArray(Nm)) {
+                this.Error("Array with same name exist : " + Nm,this.Expr,24);
+                return;
+              };
+            };
+            if (!this.VarList.TryGetValue(Nm,{p: R, get: function () {
+                return this.p.Value;
+              }, set: function (v) {
+                this.p.Value = v;
+              }})) {
+              this.Error("Variable not found: " + Nm,this.Expr,3);
+              return;
+            };
+            if (arr2) {
+              if (!$impl.VarIsString($mod.TVar.$clone(R))) {
+                this.Error("Invalid variable type: " + Nm,this.Expr,5);
+                return;
+              };
+              if (ind2 === "") {
+                this.Error("Empty string index",this.Expr,19);
+                return;
+              };
+              if (pas.System.Pos(",",ind2) > 0) {
+                this.Error("Invalid string index",this.Expr,19);
+                return;
+              };
+              try {
+                i = pas.SysUtils.StrToInt(ind2);
+              } catch ($e) {
+                this.Error("Invalid string index : " + ind2,this.Expr,19);
+                return;
+              };
+              if ((i < 1) || (i > (("" + R.Value)).length)) {
+                this.Error("String index out of range: " + ind2,this.Expr,19);
+                return;
+              };
+              R.Value = ("" + R.Value).charAt(i - 1);
+            };
+          };
+          this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+              return this.p.ExprIndex;
+            }, set: function (v) {
+              this.p.ExprIndex = v;
+            }},{p: this, get: function () {
+              return this.p.TokenCode;
+            }, set: function (v) {
+              this.p.TokenCode = v;
+            }});
+        } else if ($tmp === $mod.TToken.tCON) {
+          if (this.Token.charAt(0) !== $mod.StrDelimiter) {
+            if (!$impl.StrToNum(this.Token,{get: function () {
+                return E;
+              }, set: function (v) {
+                E = v;
+              }})) {
+              this.Error("Invalid number: " + this.Token,this.Expr,1);
+              return;
+            };
+            if ((pas.System.Pos($mod.DecimalPoint,this.Token) === 0) && (E < 2147483647) && (E > -2147483647)) {
+              R.Value = $impl.ExtToInt(E)}
+             else R.Value = E;
+          } else {
+            if ((this.Token.length < 2) || (this.Token.charAt(this.Token.length - 1) !== $mod.StrDelimiter)) {
+              this.Error("Unterminated string: " + this.Token,this.Expr,6);
+              return;
+            };
+            R.Value = pas.System.Copy(this.Token,2,this.Token.length - 2);
+          };
+          this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+              return this.p.ExprIndex;
+            }, set: function (v) {
+              this.p.ExprIndex = v;
+            }},{p: this, get: function () {
+              return this.p.TokenCode;
+            }, set: function (v) {
+              this.p.TokenCode = v;
+            }});
+        } else {
+          this.Error("Unknown or invalid operator in expression: " + this.Token,this.Expr,1);
+        };
+      };
+    };
+    this.Arith = function (o, R, H) {
+      var A = 0.0;
+      var B = 0.0;
+      try {
+        A = pas.JS.toNumber(R.Value);
+        B = pas.JS.toNumber(H.Value);
+        var $tmp = o;
+        if ($tmp === $mod.TToken.tOR) {
+          R.Value = pas.JS.toBoolean(R.Value) || pas.JS.toBoolean(H.Value)}
+         else if ($tmp === $mod.TToken.tAND) {
+          R.Value = pas.JS.toBoolean(R.Value) && pas.JS.toBoolean(H.Value)}
+         else if ($tmp === $mod.TToken.tXOR) {
+          R.Value = pas.JS.toBoolean(R.Value) ^ pas.JS.toBoolean(H.Value)}
+         else if ($tmp === $mod.TToken.tEQU) {
+          R.Value = (A === B) || (rtl.isString(R.Value) && rtl.isString(H.Value) && (pas.JS.ToString(R.Value) === pas.JS.ToString(H.Value)))}
+         else if ($tmp === $mod.TToken.tNEQ) {
+          R.Value = !((A === B) || (rtl.isString(R.Value) && rtl.isString(H.Value) && (pas.JS.ToString(R.Value) === pas.JS.ToString(H.Value))))}
+         else if ($tmp === $mod.TToken.tGT) {
+          R.Value = A > B}
+         else if ($tmp === $mod.TToken.tLS) {
+          R.Value = A < B}
+         else if ($tmp === $mod.TToken.tGTE) {
+          R.Value = A >= B}
+         else if ($tmp === $mod.TToken.tLSE) {
+          R.Value = A <= B}
+         else if ($tmp === $mod.TToken.tADD) {
+          if (rtl.isString(R.Value) || rtl.isString(H.Value)) {
+            R.Value = pas.JS.ToString(R.Value) + pas.JS.ToString(H.Value)}
+           else R.Value = A + B}
+         else if ($tmp === $mod.TToken.tSUB) {
+          R.Value = A - B}
+         else if ($tmp === $mod.TToken.tMUL) {
+          R.Value = A * B}
+         else if ($tmp === $mod.TToken.tDIVIDE) {
+          R.Value = A / B}
+         else if ($tmp === $mod.TToken.tDIV) {
+          R.Value = rtl.trunc(pas.System.Trunc(A) / pas.System.Trunc(B))}
+         else if ($tmp === $mod.TToken.tMOD) {
+          R.Value = pas.System.Trunc(A) % pas.System.Trunc(B)}
+         else if ($tmp === $mod.TToken.tPWR) {
+          R.Value = Math.pow(A,B)}
+         else if ($tmp === $mod.TToken.tSHL) {
+          R.Value = rtl.shl(pas.System.Trunc(A),pas.System.Trunc(B))}
+         else if ($tmp === $mod.TToken.tSHR) R.Value = rtl.shr(pas.System.Trunc(A),pas.System.Trunc(B));
+      } catch ($e) {
+        this.Error('Invalid operand types for "' + $mod.ResWords[o] + '"',this.Expr,5);
+        return;
+      };
+    };
+    this.Unary = function (o, R) {
+      if (o === $mod.TToken.tSUB) try {
+        R.Value = -pas.JS.toNumber(R.Value);
+        return;
+      } catch ($e) {
+        this.Error('Invalid operand types for "' + $mod.ResWords[o] + '"',this.Expr,5);
+        return;
+      };
+      if (o === $mod.TToken.tNOT) try {
+        R.Value = !pas.JS.toBoolean(R.Value);
+        return;
+      } catch ($e) {
+        this.Error('Invalid operand types for "' + $mod.ResWords[o] + '"',this.Expr,5);
+        return;
+      };
+    };
+    this.GetIndex = function (S, Index, T) {
+      var Result = "";
+      var R = $mod.TVar.$new();
+      var tt = 0;
+      var i = 0;
+      var i1 = 0;
+      var a = 0;
+      var b = 0;
+      var ss = "";
+      var st = "";
+      var ind = "";
+      Result = "";
+      if (Index.get() > S.length) {
+        this.Error("Invalid string index",S,1);
+        return Result;
+      };
+      this.Token = this.GetToken(S,Index,T);
+      if (T.get() !== $mod.TToken.tLARR) {
+        this.Error($mod.ResWords[$mod.TToken.tLARR] + " expected",this.Expr,22);
+        return Result;
+      };
+      ss = "";
+      a = 1;
+      do {
+        this.Token = this.GetToken(S,Index,T);
+        if (T.get() === $mod.TToken.tLARR) a += 1;
+        if (T.get() === $mod.TToken.tRARR) a -= 1;
+        if (T.get() === $mod.TToken.tEMPTY) break;
+        if (a === 0) break;
+        ss = ss + this.TokenStr(T.get(),this.Token);
+      } while (!false);
+      if (a > 0) {
+        this.Error($mod.ResWords[$mod.TToken.tRARR] + " expected",S,21);
+        return Result;
+      };
+      i1 = 1;
+      a = 0;
+      b = 0;
+      st = "";
+      ind = "";
+      do {
+        st = this.GetToken(ss,{get: function () {
+            return i1;
+          }, set: function (v) {
+            i1 = v;
+          }},{get: function () {
+            return tt;
+          }, set: function (v) {
+            tt = v;
+          }});
+        if (tt === $mod.TToken.tRBR) b += 1;
+        if (tt === $mod.TToken.tLBR) b -= 1;
+        if (tt === $mod.TToken.tLARR) a += 1;
+        if (tt === $mod.TToken.tRARR) a -= 1;
+        if ((a === 0) && (b === 0) && ((tt === $mod.TToken.tCOMMA) || (tt === $mod.TToken.tEMPTY))) {
+          if (!this.Calc(ind,R)) {
+            this.Error("Error in expression: " + this.UnParse(ind,true),S,1);
+            return Result;
+          };
+          try {
+            i = pas.System.Trunc(pas.JS.toNumber(R.Value));
+          } catch ($e) {
+            this.Error("Invalid index: " + this.UnParse(ind,true),S,5);
+            return Result;
+          };
+          if (Result === "") {
+            Result = pas.SysUtils.IntToStr(i)}
+           else Result = Result + "," + pas.SysUtils.IntToStr(i);
+          ind = "";
+        } else ind = ind + this.TokenStr(tt,st);
+        if (tt === $mod.TToken.tEMPTY) break;
+      } while (!false);
+      return Result;
+    };
+    this.GetFuncParams = function (S, Index) {
+      var Result = "";
+      var t = 0;
+      var i = 0;
+      var j = 0;
+      var st = "";
+      var ss = "";
+      var p = "";
+      Result = "";
+      if (Index.get() > S.length) return Result;
+      i = Index.get();
+      this.Token = this.GetToken(S,Index,{p: this, get: function () {
+          return this.p.TokenCode;
+        }, set: function (v) {
+          this.p.TokenCode = v;
+        }});
+      if (this.TokenCode !== $mod.TToken.tLBR) {
+        Index.set(i);
+        return Result;
+      };
+      i = 1;
+      st = "";
+      do {
+        this.Token = this.GetToken(S,Index,{p: this, get: function () {
+            return this.p.TokenCode;
+          }, set: function (v) {
+            this.p.TokenCode = v;
+          }});
+        if (this.TokenCode === $mod.TToken.tLBR) i += 1;
+        if (this.TokenCode === $mod.TToken.tRBR) i -= 1;
+        if ((this.TokenCode === $mod.TToken.tEMPTY) || (i === 0)) break;
+        st = st + this.TokenStr(this.TokenCode,this.Token);
+      } while (!false);
+      if (i !== 0) {
+        this.Error("Invalid function params: " + this.UnParse(st,true),S,1);
+        return Result;
+      };
+      p = "";
+      i = 1;
+      j = 0;
+      do {
+        ss = this.GetToken(st,{get: function () {
+            return i;
+          }, set: function (v) {
+            i = v;
+          }},{get: function () {
+            return t;
+          }, set: function (v) {
+            t = v;
+          }});
+        if (t === $mod.TToken.tEMPTY) break;
+        if (t === $mod.TToken.tRBR) j += 1;
+        if (t === $mod.TToken.tLBR) j -= 1;
+        if ((j === 0) && (t === $mod.TToken.tCOMMA)) {
+          p = p + "\r\n"}
+         else p = p + this.TokenStr(t,ss);
+      } while (!false);
+      Result = p;
+      return Result;
+    };
+    this.FindArray = function (N) {
+      var Result = false;
+      var L = 0;
+      var s = "";
+      var key = "";
+      L = N.length + 1;
+      s = N + "[";
+      var $in = this.VarList.GetKeys().GetEnumerator$1();
+      try {
+        while ($in.MoveNext$1()) {
+          key = $in.GetCurrent();
+          if ($impl.CmpStr(key,s,1,L)) return true;
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+      Result = false;
+      return Result;
+    };
+    this.SetVarDirect = function (R) {
+      this.SetVar($mod.TVar.$clone(R));
+    };
+    this.CallFunc = function (FuncName, ParamString, V) {
+      var Result = false;
+      var i = 0;
+      var slParamStrings = null;
+      var slVars = null;
+      var VarListLocals = null;
+      var VR = $mod.TVar.$new();
+      var Param = $mod.TVar.$new();
+      var s = "";
+      var err = "";
+      Result = false;
+      if (!this.FuncList.ContainsKey(FuncName)) {
+        this.Error("Unknown function: " + FuncName,this.Expr,8);
+        return Result;
+      };
+      slParamStrings = pas.Classes.TStringList.$create("Create$1");
+      slVars = pas.Classes.TStringList.$create("Create$1");
+      slParamStrings.SetTextStr(ParamString);
+      VarListLocals = pas["Generics.Collections"].TList$G20.$create("Create$1");
+      for (var $l = 0, $end = slParamStrings.GetCount() - 1; $l <= $end; $l++) {
+        i = $l;
+        if (this.Calc(slParamStrings.Get(i),VR)) {
+          Param.$assign(VR);
+          s = this.UnParse(pas.SysUtils.Trim(slParamStrings.Get(i)),false);
+          if ($impl.ValidName(s) && this.VarExists(s)) {
+            Param.Name = "VAR";
+            slVars.Add(s);
+          } else {
+            Param.Name = "VALUE";
+            slVars.Add("");
+          };
+          VarListLocals.Add(Param);
+        } else {
+          this.Error("Invalid expression in function params: " + slParamStrings.Get(i),this.Expr,7);
+          slParamStrings = rtl.freeLoc(slParamStrings);
+          slVars = rtl.freeLoc(slVars);
+          VarListLocals = rtl.freeLoc(VarListLocals);
+          return Result;
+        };
+      };
+      err = "";
+      try {
+        Result = this.FuncList.GetItem(FuncName).Func(VarListLocals,V);
+      } catch ($e) {
+        if (pas.SysUtils.Exception.isPrototypeOf($e)) {
+          var E = $e;
+          Result = false;
+          err = E.fMessage;
+        } else throw $e
+      };
+      if (Result) {
+        for (var $l1 = 0, $end1 = slParamStrings.GetCount() - 1; $l1 <= $end1; $l1++) {
+          i = $l1;
+          if (slVars.Get(i) !== "") this.SetValue(slVars.Get(i),VarListLocals.GetItem(i).Value);
+        };
+      } else {
+        s = "Invalid parameters, function " + FuncName;
+        if (err !== "") s = s + " : " + err;
+        this.Error(s,this.Expr,7);
+      };
+      slParamStrings.$destroy("Destroy");
+      slVars = rtl.freeLoc(slVars);
+      VarListLocals.$destroy("Destroy");
+      Result = true;
+      return Result;
+    };
+    this.CallProc = function (ProcName, ParamString, V) {
+      var Result = false;
+      var i = 0;
+      var PRoc = $mod.TProcedure.$new();
+      var VR = $mod.TVar.$new();
+      var slParamStrings = null;
+      var slParams = null;
+      Result = false;
+      if (!this.ProcList.TryGetValue(ProcName,PRoc)) {
+        this.Error("Unknown procedure: " + ProcName,this.Expr,8);
+        return Result;
+      };
+      slParamStrings = pas.Classes.TStringList.$create("Create$1");
+      slParams = pas.Classes.TStringList.$create("Create$1");
+      try {
+        slParamStrings.SetTextStr(ParamString);
+        slParams.SetTextStr(PRoc.Params);
+        if (slParams.GetCount() !== slParamStrings.GetCount()) {
+          this.Error("Wrong parameters amount, procedure " + ProcName,this.Expr,7);
+          return Result;
+        };
+        for (var $l = 0, $end = slParamStrings.GetCount() - 1; $l <= $end; $l++) {
+          i = $l;
+          if (this.Calc(slParamStrings.Get(i),VR)) {
+            VR.Name = slParams.Get(i);
+            if (!this.SetVar($mod.TVar.$clone(VR))) {
+              this.Error("Duplicate variable name: " + VR.Name,this.Expr,24);
+              return Result;
+            };
+          } else {
+            this.Error("Invalid expression in function params: " + slParamStrings.Get(i),this.Expr,7);
+            return Result;
+          };
+        };
+        if (PRoc.Result) this.VarRemove("RESULT");
+        this.Exec(PRoc.Body);
+        if (this.BlockCmd !== $mod.TToken.tEMPTY) {
+          if (this.BlockCmd === $mod.TToken.tEXIT) {
+            this.BlockCmd = $mod.TToken.tEMPTY}
+           else {
+            if (this.BlockCmd in rtl.createSet($mod.TToken.tBREAK,$mod.TToken.tCONTINUE)) this.Error($mod.ResWords[this.BlockCmd] + " outside loop",PRoc.Body,15);
+            if (this.BlockCmd === $mod.TToken.tGOTO) this.Error("Label " + this.GotoLabel + " not exist or unreacheble",PRoc.Body,18);
+            return Result;
+          };
+        };
+        if (PRoc.Result) {
+          if (this.VarByName("RESULT",VR)) {
+            V.Value = VR.Value}
+           else {
+            this.Error("Function must return result : " + PRoc.Name,this.Expr,26);
+            return Result;
+          };
+        };
+        Result = true;
+      } finally {
+        slParamStrings = rtl.freeLoc(slParamStrings);
+        slParams = rtl.freeLoc(slParams);
+      };
+      return Result;
+    };
+    this.GetTextToken = function (S, Index, Code) {
+      var Result = "";
+      var t = 0;
+      var i = 0;
+      var j = 0;
+      var sl = 0;
+      var tl = 0;
+      Code.set($mod.TToken.tEMPTY);
+      Result = "";
+      sl = S.length;
+      while ((Index.get() <= sl) && $impl.ScriptIsSpace(S.charAt(Index.get() - 1))) Index.set(Index.get() + 1);
+      if (Index.get() > sl) return Result;
+      for (t = 0; t <= 57; t++) {
+        tl = $mod.ResWords[t].length;
+        if (tl === 0) continue;
+        if ($impl.CmpStr($mod.ResWords[t],S,Index.get(),tl) && (tl > Result.length) && (((Index.get() + tl) > sl) || !$impl.ScriptIsAlpha(S.charAt((Index.get() + tl) - 1)) || !$impl.IsAlpha($mod.ResWords[t]))) {
+          Result = $mod.ResWords[t];
+          Code.set(t);
+        };
+      };
+      if (Code.get() !== $mod.TToken.tEMPTY) {
+        Index.set(Index.get() + Result.length);
+        return Result;
+      };
+      i = Index.get();
+      if (S.charAt(i - 1) !== $mod.StrDelimiter) {
+        while (Index.get() <= sl) {
+          if ($impl.ScriptIsSpace(S.charAt(Index.get() - 1)) || ((Index.get() > i) && !$impl.ScriptIsAlpha(S.charAt(Index.get() - 1)) && (S.charAt(Index.get() - 1) !== $mod.DecimalPoint))) break;
+          Index.set(Index.get() + 1);
+        };
+        Result = pas.SysUtils.Trim(pas.System.Copy(S,i,Index.get() - i));
+        if ((Result !== "") && $impl.ScriptIsDigit(Result.charAt(0)) && (Result.charAt(Result.length - 1) === "E")) {
+          while (Index.get() <= sl) {
+            if (!($impl.ScriptIsDigit(S.charAt(Index.get() - 1)) || (S.charAt(Index.get() - 1) === "-") || (S.charAt(Index.get() - 1) === "+"))) break;
+            Index.set(Index.get() + 1);
+          };
+          Result = pas.SysUtils.Trim(pas.System.Copy(S,i,Index.get() - i));
+        };
+        if ((Result !== "") && $impl.ScriptIsDigit(Result.charAt(0))) {
+          j = pas.System.Pos($mod.ResWords[$mod.TToken.tDOT2],Result);
+          if (j > 0) {
+            Result = pas.SysUtils.Trim(pas.System.Copy(Result,1,j - 1));
+            Index.set(i + Result.length);
+          };
+        };
+      } else {
+        Index.set(Index.get() + 1);
+        while ((Index.get() <= sl) && (S.charAt(Index.get() - 1) !== $mod.StrDelimiter)) Index.set(Index.get() + 1);
+        Result = pas.SysUtils.Trim(pas.System.Copy(S,i,(Index.get() - i) + 1));
+        Index.set(Index.get() + 1);
+      };
+      if (Result === "") return Result;
+      if (((Result.charAt(0) < "0") || (Result.charAt(0) > "9")) && (Result.charAt(0) !== $mod.StrDelimiter)) {
+        Code.set($mod.TToken.tVR)}
+       else Code.set($mod.TToken.tCON);
+      return Result;
+    };
+    this.TokenStr = function (T, S) {
+      var Result = "";
+      Result = $mod.TokenDelimiter + String.fromCharCode(T + 0x40) + S;
+      return Result;
+    };
+    this.GetToken = function (S, Index, Code) {
+      var Result = "";
+      var sl = 0;
+      var i = 0;
+      Code.set($mod.TToken.tEMPTY);
+      Result = "";
+      sl = S.length;
+      if ((Index.get() + 1) > sl) return Result;
+      if (S.charAt(Index.get() - 1) !== $mod.TokenDelimiter) return Result;
+      Index.set(Index.get() + 1);
+      Code.set((S.charAt(Index.get() - 1).charCodeAt() & 255) - 0x40);
+      i = Index.get() + 1;
+      while ((Index.get() <= sl) && (S.charAt(Index.get() - 1) !== $mod.TokenDelimiter)) Index.set(Index.get() + 1);
+      Result = Result + pas.System.Copy(S,i,Index.get() - i);
+      return Result;
+    };
+    this.GetTokenCode = function (S, Index, Code) {
+      var Result = 0;
+      var sl = 0;
+      Result = Index.get();
+      Code.set($mod.TToken.tEMPTY);
+      sl = S.length;
+      if ((Index.get() + 1) > sl) return Result;
+      if (S.charAt(Index.get() - 1) !== $mod.TokenDelimiter) return Result;
+      Result = Index.get();
+      Index.set(Index.get() + 1);
+      Code.set((S.charAt(Index.get() - 1).charCodeAt() & 255) - 0x40);
+      while ((Index.get() <= sl) && (S.charAt(Index.get() - 1) !== $mod.TokenDelimiter)) Index.set(Index.get() + 1);
+      return Result;
+    };
+    this.GetTokenLine = function (S, Index, Code, StopToken) {
+      var Result = "";
+      var i = 0;
+      var n = 0;
+      i = Index.get();
+      do {
+        n = this.GetTokenCode(S,Index,Code);
+        if (Code.get() === $mod.TToken.tEMPTY) break;
+      } while (!(Code.get() in StopToken));
+      Result = pas.System.Copy(S,i,n - i);
+      return Result;
+    };
+    this.NextToken = function (S, Index) {
+      var Result = 0;
+      var i = 0;
+      var t = 0;
+      i = Index;
+      this.GetTokenCode(S,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }});
+      Result = t;
+      return Result;
+    };
+    this.GetOperator = function (Txt, Index, EndToken) {
+      var Result = "";
+      var t = 0;
+      var s = "";
+      var Level = 0;
+      var RLevel = 0;
+      Level = 0;
+      RLevel = 0;
+      Result = "";
+      do {
+        s = this.GetToken(Txt,Index,{get: function () {
+            return t;
+          }, set: function (v) {
+            t = v;
+          }});
+        if ((t === $mod.TToken.tSEMI) && (Result === "")) continue;
+        if ((t === $mod.TToken.tEMPTY) || ((t in EndToken) && (Level === 0) && (RLevel === 0))) break;
+        if ((t === $mod.TToken.tBEGIN) || (t === $mod.TToken.tCASE)) Level += 1;
+        if (t === $mod.TToken.tEND) Level -= 1;
+        if (t === $mod.TToken.tREPEAT) RLevel += 1;
+        if (t === $mod.TToken.tUNTIL) RLevel -= 1;
+        Result = Result + this.TokenStr(t,s);
+      } while (!false);
+      if (Level > 0) this.Error($mod.ResWords[$mod.TToken.tEND] + " expected",Result,10);
+      if (Level < 0) this.Error("Too many " + $mod.ResWords[$mod.TToken.tEND],Result,11);
+      if (RLevel > 0) this.Error($mod.ResWords[$mod.TToken.tUNTIL] + " expected",Result,16);
+      if (Level < 0) this.Error("Too many " + $mod.ResWords[$mod.TToken.tUNTIL],Result,17);
+      return Result;
+    };
+    this.ParseOperator = function (Txt, Cmd, Line, Lbl) {
+      var Result = 0;
+      var i = 0;
+      var n = 0;
+      var t = 0;
+      var s = "";
+      s = Txt;
+      Lbl.set("");
+      i = 1;
+      Cmd.set(this.GetToken(s,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }}));
+      Result = t;
+      n = i;
+      this.GetToken(s,{get: function () {
+          return n;
+        }, set: function (v) {
+          n = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }});
+      if (t === $mod.TToken.tLBL) {
+        i = n;
+        Lbl.set(Cmd.get());
+        Cmd.set(this.GetToken(s,{get: function () {
+            return i;
+          }, set: function (v) {
+            i = v;
+          }},{get: function () {
+            return t;
+          }, set: function (v) {
+            t = v;
+          }}));
+        Result = t;
+      };
+      Line.set(pas.System.Copy(s,i,s.length));
+      return Result;
+    };
+    this.DelRemarks = function (S) {
+      var Result = "";
+      var st = "";
+      var ss = "";
+      var i = 0;
+      var rr = 0;
+      var rb = 0;
+      var re = 0;
+      var InString = false;
+      var InRem = false;
+      st = pas.SysUtils.UpperCase(S);
+      InRem = false;
+      InString = false;
+      rr = $mod.ResWords[$mod.TToken.tREM].length;
+      rb = $mod.ResWords[$mod.TToken.tREMB].length;
+      re = $mod.ResWords[$mod.TToken.tREME].length;
+      i = 1;
+      while (i <= st.length) {
+        if (!InRem) if (st.charAt(i - 1) === $mod.StrDelimiter) InString = !InString;
+        if (!InString) {
+          if ($impl.CmpStr($mod.ResWords[$mod.TToken.tREM],st,i,rr)) InRem = true;
+          if ($impl.CmpStr($mod.ResWords[$mod.TToken.tREMB],st,i,rb)) InRem = true;
+          if ($impl.CmpStr($mod.ResWords[$mod.TToken.tREME],st,i,re)) {
+            InRem = false;
+            i = i + re;
+            continue;
+          };
+          if ((st.charAt(i - 1) === "\n") || (st.charAt(i - 1) === "\r")) InRem = false;
+        };
+        if (!InRem) if (InString) {
+          ss = ss + S.charAt(i - 1)}
+         else ss = ss + pas.SysUtils.UpperCase(S.charAt(i - 1));
+        i += 1;
+      };
+      Result = ss;
+      return Result;
+    };
+    this.UnParse = function (S, Show) {
+      var Result = "";
+      var i = 0;
+      var T = 0;
+      i = 1;
+      Result = "";
+      do {
+        Result = Result + this.GetToken(S,{get: function () {
+            return i;
+          }, set: function (v) {
+            i = v;
+          }},{get: function () {
+            return T;
+          }, set: function (v) {
+            T = v;
+          }});
+        if (Show) Result = Result + " ";
+        if (T === $mod.TToken.tEMPTY) break;
+      } while (!false);
+      return Result;
+    };
+    this.PreProcess = function (Txt) {
+      var Result = "";
+      Result = Txt;
+      return Result;
+    };
+    this.Calc = function (S, R) {
+      var Result = false;
+      var ITmp = 0;
+      var TTmp = 0;
+      var ETmp = "";
+      Result = false;
+      pas.Variants.VarClear({p: R, get: function () {
+          return this.p.Value;
+        }, set: function (v) {
+          this.p.Value = v;
+        }});
+      ITmp = this.ExprIndex;
+      ETmp = this.Expr;
+      TTmp = this.TokenCode;
+      this.Expr = S;
+      this.ExprIndex = 1;
+      this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+          return this.p.ExprIndex;
+        }, set: function (v) {
+          this.p.ExprIndex = v;
+        }},{p: this, get: function () {
+          return this.p.TokenCode;
+        }, set: function (v) {
+          this.p.TokenCode = v;
+        }});
+      if (this.TokenCode === $mod.TToken.tEMPTY) {
+        this.Error("Empty string - not expression",this.Expr,1);
+        return Result;
+      };
+      this.Level1(R);
+      this.Token = this.GetToken(this.Expr,{p: this, get: function () {
+          return this.p.ExprIndex;
+        }, set: function (v) {
+          this.p.ExprIndex = v;
+        }},{p: this, get: function () {
+          return this.p.TokenCode;
+        }, set: function (v) {
+          this.p.TokenCode = v;
+        }});
+      Result = (this.ErrCode === 0) && (this.TokenCode === $mod.TToken.tEMPTY);
+      this.TokenCode = TTmp;
+      this.ExprIndex = ITmp;
+      this.Expr = ETmp;
+      return Result;
+    };
+    this.Exec = function (Txt) {
+      var t = 0;
+      var Ind = 0;
+      var c = "";
+      var s = "";
+      var l = "";
+      var CmdLine = "";
+      Ind = 1;
+      this.BlockLevel += 1;
+      do {
+        if (this.ErrCode !== 0) break;
+        CmdLine = this.GetOperator(Txt,{get: function () {
+            return Ind;
+          }, set: function (v) {
+            Ind = v;
+          }},rtl.createSet($mod.TToken.tSEMI));
+        if (CmdLine === "") break;
+        t = this.ParseOperator(CmdLine,{get: function () {
+            return c;
+          }, set: function (v) {
+            c = v;
+          }},{get: function () {
+            return s;
+          }, set: function (v) {
+            s = v;
+          }},{get: function () {
+            return l;
+          }, set: function (v) {
+            l = v;
+          }});
+        var $tmp = t;
+        if ($tmp === $mod.TToken.tVR) {
+          this.DoSet(CmdLine,c,s)}
+         else if ($tmp === $mod.TToken.tIF) {
+          this.DoIf(CmdLine,s)}
+         else if ($tmp === $mod.TToken.tBEGIN) {
+          this.DoBegin(CmdLine,s)}
+         else if ($tmp === $mod.TToken.tEND) {
+          this.Error("Too many " + $mod.ResWords[$mod.TToken.tEND],CmdLine,11)}
+         else if ($tmp === $mod.TToken.tELSE) {
+          this.Error($mod.ResWords[$mod.TToken.tELSE] + " without " + $mod.ResWords[$mod.TToken.tIF],CmdLine,9)}
+         else if ($tmp === $mod.TToken.tFOR) {
+          this.DoFor(CmdLine,s)}
+         else if ($tmp === $mod.TToken.tWHILE) {
+          this.DoWhile(CmdLine,s)}
+         else if ($tmp === $mod.TToken.tREPEAT) {
+          this.DoRepeat(CmdLine,s)}
+         else if ($tmp === $mod.TToken.tBREAK) {
+          this.DoBreak(CmdLine,s)}
+         else if ($tmp === $mod.TToken.tCONTINUE) {
+          this.DoContinue(CmdLine,s)}
+         else if ($tmp === $mod.TToken.tEXIT) {
+          this.DoExit(CmdLine,s)}
+         else if ($tmp === $mod.TToken.tGOTO) {
+          this.DoGoto(CmdLine,s)}
+         else if ($tmp === $mod.TToken.tCASE) {
+          this.DoCase(CmdLine,s)}
+         else {
+          this.Error("Invalid operator: " + c,CmdLine,9);
+        };
+        this.Process();
+        if (this.BlockCmd !== $mod.TToken.tEMPTY) {
+          if ((this.BlockLevel === 0) && (this.BlockCmd in rtl.createSet($mod.TToken.tBREAK,$mod.TToken.tCONTINUE))) this.Error($mod.ResWords[this.BlockCmd] + " outside loop",CmdLine,15);
+          if (this.BlockCmd === $mod.TToken.tGOTO) {
+            Ind = 1;
+            do {
+              CmdLine = this.GetOperator(Txt,{get: function () {
+                  return Ind;
+                }, set: function (v) {
+                  Ind = v;
+                }},rtl.createSet($mod.TToken.tSEMI));
+              if (CmdLine === "") break;
+              t = this.ParseOperator(CmdLine,{get: function () {
+                  return c;
+                }, set: function (v) {
+                  c = v;
+                }},{get: function () {
+                  return s;
+                }, set: function (v) {
+                  s = v;
+                }},{get: function () {
+                  return l;
+                }, set: function (v) {
+                  l = v;
+                }});
+              if (l === this.GotoLabel) {
+                this.BlockCmd = $mod.TToken.tEMPTY;
+              };
+            } while (!false);
+          };
+          break;
+        };
+      } while (!false);
+      this.BlockLevel -= 1;
+      if ((this.BlockLevel < 0) && (this.BlockCmd === $mod.TToken.tGOTO)) this.Error("Label " + this.GotoLabel + " not exist or unreacheble",CmdLine,18);
+    };
+    this.DoSet = function (CmdLine, Cmd, Line) {
+      var R = $mod.TVar.$new();
+      var RR = $mod.TVar.$new();
+      var i = 0;
+      var ind = 0;
+      var t = 0;
+      var s = "";
+      var ss = "";
+      var v = "";
+      var ind1 = "";
+      var ind2 = "";
+      var arr1 = false;
+      var arr2 = false;
+      i = 1;
+      arr1 = false;
+      arr2 = false;
+      ind1 = "";
+      ind2 = "";
+      v = Cmd;
+      if (this.NextToken(Line,i) === $mod.TToken.tLARR) {
+        ind1 = this.GetIndex(Line,{get: function () {
+            return i;
+          }, set: function (v) {
+            i = v;
+          }},{get: function () {
+            return t;
+          }, set: function (v) {
+            t = v;
+          }});
+        if (this.ErrCode !== 0) return;
+        arr1 = true;
+      };
+      if (this.NextToken(Line,i) === $mod.TToken.tLARR) {
+        ind2 = this.GetIndex(Line,{get: function () {
+            return i;
+          }, set: function (v) {
+            i = v;
+          }},{get: function () {
+            return t;
+          }, set: function (v) {
+            t = v;
+          }});
+        if (this.ErrCode !== 0) return;
+        arr2 = true;
+      };
+      ss = this.GetToken(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }});
+      if ((t === $mod.TToken.tEQU) && ($mod.ResWords[$mod.TToken.tEQU] === $mod.ResWords[$mod.TToken.tASSIGN])) t = $mod.TToken.tASSIGN;
+      if ((t !== $mod.TToken.tASSIGN) && (t !== $mod.TToken.tLBR) && (t !== $mod.TToken.tEMPTY) && (t !== $mod.TToken.tLARR)) {
+        this.Error("Found " + ss + ", expected " + $mod.ResWords[$mod.TToken.tASSIGN] + ", " + $mod.ResWords[$mod.TToken.tLBR] + ", " + $mod.ResWords[$mod.TToken.tLARR] + " or " + $mod.ResWords[$mod.TToken.tSEMI],Line,1);
+        return;
+      };
+      if (t === $mod.TToken.tASSIGN) {
+        s = pas.SysUtils.Trim(pas.System.Copy(Line,i,Line.length));
+        v = Cmd;
+      } else {
+        v = "";
+        s = this.TokenStr($mod.TToken.tVR,Cmd) + Line;
+      };
+      if (!this.Calc(s,R)) {
+        this.Error("Error in expression",s,1);
+        return;
+      };
+      if (v !== "") {
+        if (arr1 && !arr2 && this.VarExists(v)) {
+          arr1 = false;
+          arr2 = true;
+          ind2 = ind1;
+        };
+        if (!$impl.ValidName(v)) {
+          this.Error("Invalid variable name: " + v,CmdLine,4);
+          return;
+        };
+        if (arr1) {
+          if (this.VarExists(v)) {
+            this.Error("Variable with same name exist : " + v,CmdLine,24);
+            return;
+          };
+          v = v + "[" + ind1 + "]";
+        } else if (this.FindArray(v)) {
+          this.Error("Array with same name exist : " + v,CmdLine,24);
+          return;
+        };
+        R.Name = v;
+        if (!arr2) {
+          this.SetVarDirect(R)}
+         else {
+          if (!this.VarByName(v,RR)) {
+            this.Error("Variable not found :" + v,CmdLine,3);
+            return;
+          };
+          if (!$impl.VarIsString($mod.TVar.$clone(RR))) {
+            this.Error("Invalid variable type: " + v,CmdLine,5);
+            return;
+          };
+          if (ind2 === "") {
+            this.Error("Empty string index",this.Expr,19);
+            return;
+          };
+          if (pas.System.Pos(",",ind2) > 0) {
+            this.Error("Invalid string index",this.Expr,19);
+            return;
+          };
+          try {
+            ind = pas.SysUtils.StrToInt(ind2);
+          } catch ($e) {
+            this.Error("Invalid string index : " + ind2,this.Expr,19);
+            return;
+          };
+          if ((ind > (("" + RR.Value)).length) || (ind < 1)) {
+            this.Error("String index out of range: " + ind2,CmdLine,19);
+            return;
+          };
+          if (!$impl.VarIsString($mod.TVar.$clone(RR))) {
+            if ((("" + R.Value)).length !== 1) {
+              this.Error("Character expected: '" + ("" + R.Value) + "'",CmdLine,20);
+              return;
+            };
+            s = "" + RR.Value;
+            s = rtl.setCharAt(s,ind - 1,("" + R.Value).charAt(0));
+            RR.Value = s;
+          } else {
+            try {
+              i = pas.System.Trunc(pas.JS.toNumber(R.Value));
+            } catch ($e) {
+              this.Error("Invalid variable type: " + v,CmdLine,5);
+              return;
+            };
+            if ((i < 0) || (i > 255)) {
+              this.Error("Character value out of range: " + pas.SysUtils.IntToStr(i),CmdLine,20);
+              return;
+            };
+            s = "" + RR.Value;
+            s = rtl.setCharAt(s,ind - 1,String.fromCharCode(i));
+            RR.Value = s;
+          };
+          this.SetVarDirect(RR);
+        };
+      };
+    };
+    this.DoIf = function (CmdLine, Line) {
+      var R = $mod.TVar.$new();
+      var i = 0;
+      var t = 0;
+      var e = "";
+      var b = false;
+      i = 1;
+      e = this.GetTokenLine(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }},rtl.createSet($mod.TToken.tTHEN));
+      if (!this.Calc(e,R)) {
+        this.Error("Error in expression",e,1);
+        return;
+      };
+      try {
+        b = pas.JS.toBoolean(R.Value);
+      } catch ($e) {
+        this.Error("Invalid condition type",e,5);
+        return;
+      };
+      if (!b) {
+        this.GetOperator(Line,{get: function () {
+            return i;
+          }, set: function (v) {
+            i = v;
+          }},rtl.createSet($mod.TToken.tSEMI,$mod.TToken.tELSE));
+        e = pas.System.Copy(Line,i,Line.length);
+      } else e = this.GetOperator(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},rtl.createSet($mod.TToken.tSEMI,$mod.TToken.tELSE));
+      this.Exec(e);
+    };
+    this.DoBegin = function (CmdLine, Line) {
+      var s = "";
+      var i = 0;
+      s = pas.SysUtils.Trim(Line);
+      if (s === "") {
+        this.Error($mod.ResWords[$mod.TToken.tEND] + " expected",CmdLine,10);
+        return;
+      };
+      i = s.length - this.TokenStr($mod.TToken.tEND,$mod.ResWords[$mod.TToken.tEND]).length;
+      if (!$impl.CmpStr(this.TokenStr($mod.TToken.tEND,$mod.ResWords[$mod.TToken.tEND]),s,i - 1,this.TokenStr($mod.TToken.tEND,$mod.ResWords[$mod.TToken.tEND]).length)) {
+        s = pas.System.Copy(s,1,i);
+        this.Exec(s);
+      } else {
+        this.Error($mod.ResWords[$mod.TToken.tEND] + " expected",CmdLine,10);
+        return;
+      };
+    };
+    this.DoFor = function (CmdLine, Line) {
+      var R = $mod.TVar.$new();
+      var i = 0;
+      var j = 0;
+      var t = 0;
+      var ForInc = false;
+      var ForFrom = 0;
+      var ForTo = 0;
+      var s = "";
+      var e = "";
+      var v = "";
+      i = 1;
+      e = this.GetTokenLine(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }},rtl.createSet($mod.TToken.tTO,$mod.TToken.tDOWNTO));
+      if ((t !== $mod.TToken.tTO) && (t !== $mod.TToken.tDOWNTO)) {
+        this.Error($mod.ResWords[$mod.TToken.tTO] + " or " + $mod.ResWords[$mod.TToken.tDOWNTO] + " expected",CmdLine,12);
+        return;
+      };
+      ForInc = t === $mod.TToken.tTO;
+      j = 1;
+      v = this.GetToken(e,{get: function () {
+          return j;
+        }, set: function (v) {
+          j = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }});
+      if (t !== $mod.TToken.tVR) {
+        this.Error($mod.ResWords[$mod.TToken.tFOR] + " control variable expected",CmdLine,13);
+        return;
+      };
+      s = this.GetToken(e,{get: function () {
+          return j;
+        }, set: function (v) {
+          j = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }});
+      if ((t === $mod.TToken.tEQU) && ($mod.ResWords[$mod.TToken.tEQU] === $mod.ResWords[$mod.TToken.tASSIGN])) t = $mod.TToken.tASSIGN;
+      if (t !== $mod.TToken.tASSIGN) {
+        this.Error("Invalid îðerator: " + s + " ('" + $mod.ResWords[$mod.TToken.tFOR] + "' expected ",CmdLine,9);
+        return;
+      };
+      e = pas.SysUtils.Trim(pas.System.Copy(e,j,e.length));
+      if (!this.Calc(e,R)) {
+        this.Error("Error in expression",e,1);
+        return;
+      };
+      try {
+        ForFrom = pas.System.Trunc(pas.JS.toNumber(R.Value));
+      } catch ($e) {
+        this.Error("Invalid loop variable value ",e,5);
+        return;
+      };
+      e = this.GetTokenLine(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }},rtl.createSet($mod.TToken.tDO));
+      if (t !== $mod.TToken.tDO) {
+        this.Error($mod.ResWords[$mod.TToken.tDO] + " expected",CmdLine,14);
+        return;
+      };
+      e = pas.SysUtils.Trim(e);
+      if (!this.Calc(e,R)) {
+        this.Error("Error in expression",e,1);
+        return;
+      };
+      try {
+        ForTo = pas.System.Trunc(pas.JS.toNumber(R.Value));
+      } catch ($e) {
+        this.Error("Invalid loop variable value ",e,5);
+        return;
+      };
+      s = pas.System.Copy(Line,i,Line.length);
+      i = ForFrom;
+      do {
+        if ((ForInc && (i > ForTo)) || (!ForInc && (i < ForTo))) break;
+        if (!this.SetValue(v,i)) {
+          this.Error("Invalid variable name: " + v,CmdLine,1);
+        };
+        this.Exec(s);
+        if (this.ErrCode !== 0) break;
+        this.Process();
+        if (this.BlockCmd !== $mod.TToken.tEMPTY) {
+          if ((this.BlockCmd === $mod.TToken.tEXIT) || (this.BlockCmd === $mod.TToken.tGOTO)) break;
+          if (this.BlockCmd === $mod.TToken.tBREAK) {
+            this.BlockCmd = $mod.TToken.tEMPTY;
+            break;
+          };
+          if (this.BlockCmd === $mod.TToken.tCONTINUE) this.BlockCmd = $mod.TToken.tEMPTY;
+        };
+        if (ForInc) {
+          i += 1}
+         else i -= 1;
+      } while (!false);
+    };
+    this.DoBreak = function (CmdLine, Line) {
+      var i = 0;
+      var t = 0;
+      i = 1;
+      this.GetToken(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }});
+      if (t !== $mod.TToken.tEMPTY) this.Error("Invalid " + $mod.ResWords[$mod.TToken.tBREAK] + " operator",CmdLine,1);
+      this.BlockCmd = $mod.TToken.tBREAK;
+    };
+    this.DoContinue = function (CmdLine, Line) {
+      var i = 0;
+      var t = 0;
+      i = 1;
+      this.GetToken(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }});
+      if (t !== $mod.TToken.tEMPTY) this.Error("Invalid " + $mod.ResWords[$mod.TToken.tEXIT] + " operator",CmdLine,1);
+      this.BlockCmd = $mod.TToken.tCONTINUE;
+    };
+    this.DoExit = function (CmdLine, Line) {
+      var i = 0;
+      var t = 0;
+      i = 1;
+      this.GetToken(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }});
+      if (t !== $mod.TToken.tEMPTY) this.Error("Invalid " + $mod.ResWords[$mod.TToken.tEXIT] + " operator",CmdLine,1);
+      this.BlockCmd = $mod.TToken.tEXIT;
+    };
+    this.DoWhile = function (CmdLine, Line) {
+      var R = $mod.TVar.$new();
+      var i = 0;
+      var t = 0;
+      var s = "";
+      var e = "";
+      i = 1;
+      e = this.GetTokenLine(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }},rtl.createSet($mod.TToken.tDO));
+      if (t !== $mod.TToken.tDO) {
+        this.Error($mod.ResWords[$mod.TToken.tDO] + " expected",CmdLine,14);
+        return;
+      };
+      e = pas.SysUtils.Trim(e);
+      s = pas.SysUtils.Trim(pas.System.Copy(Line,i,Line.length));
+      do {
+        if (!this.Calc(e,R)) {
+          this.Error("Error in expression",e,1);
+          return;
+        };
+        try {
+          if (!R.Value) break;
+        } catch ($e) {
+          this.Error("Invalid condition type",e,5);
+          return;
+        };
+        this.Exec(s);
+        if (this.ErrCode !== 0) break;
+        this.Process();
+        if (this.BlockCmd !== $mod.TToken.tEMPTY) {
+          if ((this.BlockCmd === $mod.TToken.tEXIT) || (this.BlockCmd === $mod.TToken.tGOTO)) break;
+          if (this.BlockCmd === $mod.TToken.tBREAK) {
+            this.BlockCmd = $mod.TToken.tEMPTY;
+            break;
+          };
+          if (this.BlockCmd === $mod.TToken.tCONTINUE) this.BlockCmd = $mod.TToken.tEMPTY;
+        };
+      } while (!false);
+    };
+    this.DoRepeat = function (CmdLine, Line) {
+      var R = $mod.TVar.$new();
+      var i = 0;
+      var t = 0;
+      var s = "";
+      var e = "";
+      i = 1;
+      s = this.GetTokenLine(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }},rtl.createSet($mod.TToken.tUNTIL));
+      if (t !== $mod.TToken.tUNTIL) {
+        this.Error($mod.ResWords[$mod.TToken.tUNTIL] + " expected",CmdLine,16);
+        return;
+      };
+      s = pas.SysUtils.Trim(s);
+      e = pas.SysUtils.Trim(pas.System.Copy(Line,i,Line.length));
+      do {
+        this.Exec(s);
+        if (this.ErrCode !== 0) break;
+        if (!this.Calc(e,R)) {
+          this.Error("Error in expression",e,1);
+          return;
+        };
+        try {
+          if (R.Value) break;
+        } catch ($e) {
+          this.Error("Invalid condition type",e,5);
+          return;
+        };
+        this.Process();
+        if (this.BlockCmd !== $mod.TToken.tEMPTY) {
+          if ((this.BlockCmd === $mod.TToken.tEXIT) || (this.BlockCmd === $mod.TToken.tGOTO)) break;
+          if (this.BlockCmd === $mod.TToken.tBREAK) {
+            this.BlockCmd = $mod.TToken.tEMPTY;
+            break;
+          };
+          if (this.BlockCmd === $mod.TToken.tCONTINUE) this.BlockCmd = $mod.TToken.tEMPTY;
+        };
+      } while (!false);
+    };
+    this.DoGoto = function (CmdLine, Line) {
+      var i = 0;
+      var s = "";
+      var t = 0;
+      i = 1;
+      s = this.GetToken(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }});
+      if (((t !== $mod.TToken.tVR) && (t !== $mod.TToken.tCON)) || !$impl.IsAlpha(s)) {
+        this.Error("Invalid label in " + $mod.ResWords[$mod.TToken.tGOTO],CmdLine,1);
+        return;
+      };
+      this.GetToken(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }});
+      if (t !== $mod.TToken.tEMPTY) {
+        this.Error("Error in " + $mod.ResWords[$mod.TToken.tGOTO] + " statement",CmdLine,1);
+        return;
+      };
+      this.GotoLabel = s;
+      this.BlockCmd = $mod.TToken.tGOTO;
+    };
+    this.DoCase = function (CmdLine, Line) {
+      var $Self = this;
+      function CmpVar(x1, x2, Cmp) {
+        var Result = false;
+        Result = false;
+        Cmp.set(0);
+        if ($impl.VarIsString($mod.TVar.$clone(x1)) ^ $impl.VarIsString($mod.TVar.$clone(x2))) return Result;
+        try {
+          if (rtl.isString(x1.Value) && rtl.isString(x2.Value)) {
+            if (pas.JS.ToString(x1.Value) > pas.JS.ToString(x2.Value)) Cmp.set(1);
+            if (pas.JS.ToString(x1.Value) < pas.JS.ToString(x2.Value)) Cmp.set(-1);
+          } else {
+            if (pas.JS.toNumber(x1.Value) > pas.JS.toNumber(x2.Value)) Cmp.set(1);
+            if (pas.JS.toNumber(x1.Value) < pas.JS.toNumber(x2.Value)) Cmp.set(-1);
+          };
+        } catch ($e) {
+          return Result;
+        };
+        Result = true;
+        return Result;
+      };
+      var i = 0;
+      var j = 0;
+      var k = 0;
+      var t = 0;
+      var R = $mod.TVar.$new();
+      var V = $mod.TVar.$new();
+      var V1 = $mod.TVar.$new();
+      var V2 = $mod.TVar.$new();
+      var s = "";
+      var sOper = "";
+      var sCase = "";
+      var sElse = "";
+      var sRange = "";
+      var SL = null;
+      i = 1;
+      s = this.GetTokenLine(Line,{get: function () {
+          return i;
+        }, set: function (v) {
+          i = v;
+        }},{get: function () {
+          return t;
+        }, set: function (v) {
+          t = v;
+        }},rtl.createSet($mod.TToken.tOF));
+      if (t !== $mod.TToken.tOF) {
+        this.Error($mod.ResWords[$mod.TToken.tOF] + " expected",CmdLine,14);
+        return;
+      };
+      if (!this.Calc(s,R)) {
+        this.Error("Error in expression",s,1);
+        return;
+      };
+      SL = pas.Classes.TStringList.$create("Create$1");
+      sElse = "";
+      do {
+        t = this.NextToken(Line,i);
+        if (t === $mod.TToken.tEND) break;
+        if (t === $mod.TToken.tEMPTY) {
+          this.Error("Error in " + $mod.ResWords[$mod.TToken.tCASE] + " statement",CmdLine,1);
+          SL = rtl.freeLoc(SL);
+          return;
+        };
+        if (t === $mod.TToken.tELSE) {
+          if (sElse !== "") {
+            this.Error("Too many " + $mod.ResWords[$mod.TToken.tELSE] + "in " + $mod.ResWords[$mod.TToken.tCASE] + " statement",CmdLine,28);
+            SL = rtl.freeLoc(SL);
+            return;
+          };
+          this.GetToken(Line,{get: function () {
+              return i;
+            }, set: function (v) {
+              i = v;
+            }},{get: function () {
+              return t;
+            }, set: function (v) {
+              t = v;
+            }});
+          sElse = this.GetOperator(Line,{get: function () {
+              return i;
+            }, set: function (v) {
+              i = v;
+            }},rtl.createSet($mod.TToken.tSEMI));
+          continue;
+        };
+        sRange = this.GetTokenLine(Line,{get: function () {
+            return i;
+          }, set: function (v) {
+            i = v;
+          }},{get: function () {
+            return t;
+          }, set: function (v) {
+            t = v;
+          }},rtl.createSet($mod.TToken.tLBL));
+        if (t !== $mod.TToken.tLBL) {
+          this.Error($mod.ResWords[$mod.TToken.tLBL] + " expected",CmdLine,29);
+          SL = rtl.freeLoc(SL);
+          return;
+        };
+        if (sRange === "") {
+          this.Error("Range defininition expected",CmdLine,29);
+          SL = rtl.freeLoc(SL);
+          return;
+        };
+        sOper = this.GetOperator(Line,{get: function () {
+            return i;
+          }, set: function (v) {
+            i = v;
+          }},rtl.createSet($mod.TToken.tSEMI));
+        j = 1;
+        SL.SetTextStr(this.GetFuncParams(this.TokenStr($mod.TToken.tLBR,$mod.ResWords[$mod.TToken.tLBR]) + sRange + this.TokenStr($mod.TToken.tRBR,$mod.ResWords[$mod.TToken.tRBR]),{get: function () {
+            return j;
+          }, set: function (v) {
+            j = v;
+          }}));
+        for (var $l = 0, $end = SL.GetCount() - 1; $l <= $end; $l++) {
+          k = $l;
+          sCase = SL.Get(k);
+          j = 1;
+          s = this.GetTokenLine(sCase,{get: function () {
+              return j;
+            }, set: function (v) {
+              j = v;
+            }},{get: function () {
+              return t;
+            }, set: function (v) {
+              t = v;
+            }},rtl.createSet($mod.TToken.tDOT2));
+          if (t !== $mod.TToken.tDOT2) {
+            if (!this.Calc(s,V1)) {
+              this.Error("Error in expression",s,1);
+              SL = rtl.freeLoc(SL);
+              return;
+            };
+            V2.$assign(V1);
+          } else {
+            if (!this.Calc(s,V1)) {
+              this.Error("Error in expression",s,1);
+              SL = rtl.freeLoc(SL);
+              return;
+            };
+            s = pas.SysUtils.Trim(pas.System.Copy(sCase,j,sCase.length));
+            if (!this.Calc(s,V2)) {
+              this.Error("Error in expression",s,1);
+              SL = rtl.freeLoc(SL);
+              return;
+            };
+          };
+          if (!CmpVar(V1,V2,{get: function () {
+              return j;
+            }, set: function (v) {
+              j = v;
+            }})) {
+            this.Error("Invalid typecast in " + $mod.ResWords[$mod.TToken.tCASE] + " range",sCase,1);
+            SL = rtl.freeLoc(SL);
+            return;
+          };
+          if (j > 0) {
+            V.$assign(V1);
+            V1.$assign(V2);
+            V2.$assign(V);
+          };
+          if (!($impl.VarIsString($mod.TVar.$clone(R)) ^ $impl.VarIsString($mod.TVar.$clone(V1)))) {
+            CmpVar(V1,R,{get: function () {
+                return j;
+              }, set: function (v) {
+                j = v;
+              }});
+            if (j > 0) continue;
+            CmpVar(R,V2,{get: function () {
+                return j;
+              }, set: function (v) {
+                j = v;
+              }});
+            if (j > 0) continue;
+            this.Exec(sOper);
+            SL = rtl.freeLoc(SL);
+            return;
+          };
+        };
+      } while (!false);
+      if (sElse !== "") this.Exec(sElse);
+      SL = rtl.freeLoc(SL);
+    };
+  });
+  this.ExecuteScript = function (Text) {
+    if (Text === "") return;
+    $mod.Calc.Execute(Text);
+    if ($mod.Calc.ErrCode !== 0) throw pas.SysUtils.Exception.$create("Create$1",[$mod.Calc.ErrMsg + ": '" + $mod.Calc.ErrLine + "'"]);
+  };
+  this.CalcExpression = function (Text, Default) {
+    var Result = 0.0;
+    var V = $mod.TVar.$new();
+    Result = Default;
+    if (Text === "") return Result;
+    $mod.ExecuteScript("Result := " + Text);
+    if ($mod.Calc.VarByName("Result",V)) Result = $impl.ScriptToFloat(V.Value);
+    return Result;
+  };
+  this.Calc = null;
+  $mod.$implcode = function () {
+    $impl.ScriptToFloat = function (V) {
+      var Result = 0.0;
+      Result = pas.SysUtils.StrToFloat(pas.JS.ToString(V));
+      return Result;
+    };
+    $impl.ScriptIsAlpha = function (C) {
+      var Result = false;
+      Result = ((C >= "a") && (C <= "z")) || ((C >= "A") && (C <= "Z")) || (C === "_") || ((C >= "0") && (C <= "9"));
+      return Result;
+    };
+    $impl.ScriptIsDigit = function (C) {
+      var Result = false;
+      Result = (C >= "0") && (C <= "9");
+      return Result;
+    };
+    $impl.ScriptIsSpace = function (C) {
+      var Result = false;
+      Result = (C === " ") || (C === "\t") || (C === "\n") || (C === "\r");
+      return Result;
+    };
+    $impl.ScriptIsNumberChar = function (C) {
+      var Result = false;
+      Result = $impl.ScriptIsDigit(C) || (C === "+") || (C === "-") || (C === ",") || (C === ".") || (C === "E");
+      return Result;
+    };
+    $impl.errOK = 0;
+    $impl.errExprSyntax = 1;
+    $impl.errParentheses = 2;
+    $impl.errVarNotFound = 3;
+    $impl.errInvalidName = 4;
+    $impl.errTypeCast = 5;
+    $impl.errString = 6;
+    $impl.errCall = 7;
+    $impl.errFuncNotFound = 8;
+    $impl.errInvalidOp = 9;
+    $impl.errEndExpected = 10;
+    $impl.errManyEnd = 11;
+    $impl.errToExpected = 12;
+    $impl.errForVar = 13;
+    $impl.errDoExpected = 14;
+    $impl.errBreak = 15;
+    $impl.errUntilExpected = 16;
+    $impl.errManyUntil = 17;
+    $impl.errLabelNotFound = 18;
+    $impl.errIndexRange = 19;
+    $impl.errValueRange = 20;
+    $impl.errRbrExpected = 21;
+    $impl.errManyRbr = 22;
+    $impl.errNameDup = 24;
+    $impl.errFuncResult = 26;
+    $impl.errManyElse = 28;
+    $impl.errCaseRange = 29;
+    $impl.DelChrs = function (s, c) {
+      var Result = "";
+      var i = 0;
+      Result = "";
+      for (var $l = 1, $end = s.length; $l <= $end; $l++) {
+        i = $l;
+        if (s.charAt(i - 1) !== c) Result = Result + s.charAt(i - 1);
+      };
+      return Result;
+    };
+    $impl.ReplaceChrs = function (s, cFrom, cTo) {
+      var Result = "";
+      var i = 0;
+      Result = s;
+      for (var $l = 1, $end = s.length; $l <= $end; $l++) {
+        i = $l;
+        if (s.charAt(i - 1) === cFrom) Result = rtl.setCharAt(Result,i - 1,cTo);
+      };
+      return Result;
+    };
+    $impl.StrToNum = function (S, X) {
+      var Result = false;
+      var c = "";
+      var st = "";
+      var i = 0;
+      var nt = 0;
+      var nz = 0;
+      Result = false;
+      nz = 0;
+      nt = 0;
+      st = pas.SysUtils.Trim(S);
+      c = " ";
+      for (var $l = 1, $end = st.length; $l <= $end; $l++) {
+        i = $l;
+        if (!$impl.ScriptIsNumberChar(st.charAt(i - 1))) return Result;
+        if (st.charAt(i - 1) === ".") {
+          nt += 1;
+          c = ".";
+        };
+        if (st.charAt(i - 1) === ",") {
+          nz += 1;
+          c = ",";
+        };
+      };
+      if ((c === ".") && (nt === 1)) st = $impl.DelChrs(st,",");
+      if ((c === ",") && (nz === 1)) {
+        st = $impl.DelChrs(st,".");
+        st = $impl.ReplaceChrs(st,",",".");
+      };
+      Result = pas.SysUtils.TryStrToFloat(st,X);
+      return Result;
+    };
+    $impl.ExtToInt = function (X) {
+      var Result = 0;
+      var negative = false;
+      negative = X < 0;
+      if (negative) X = -X;
+      Result = pas.System.Trunc(X + 0.000000001);
+      if (negative) Result = -Result;
+      return Result;
+    };
+    $impl.CmpStr = function (s1, s2, p, L) {
+      var Result = false;
+      var i = 0;
+      var n = 0;
+      n = s2.length;
+      if (((p + L) - 1) > n) return false;
+      for (var $l = 1, $end = L; $l <= $end; $l++) {
+        i = $l;
+        if (s1.charAt(i - 1) !== s2.charAt((p + i) - 1 - 1)) return false;
+      };
+      Result = true;
+      return Result;
+    };
+    $impl.IsAlpha = function (s) {
+      var Result = false;
+      var i = 0;
+      Result = false;
+      for (var $l = 1, $end = s.length; $l <= $end; $l++) {
+        i = $l;
+        if (!$impl.ScriptIsAlpha(s.charAt(i - 1))) return Result;
+      };
+      Result = true;
+      return Result;
+    };
+    $impl.ValidName = function (S) {
+      var Result = false;
+      var i = 0;
+      var n = 0;
+      var Arr = false;
+      Result = false;
+      if (S === "") return Result;
+      if (!$impl.ScriptIsAlpha(S.charAt(0))) return Result;
+      if ($impl.ScriptIsDigit(S.charAt(0))) return Result;
+      Arr = false;
+      n = S.length;
+      for (var $l = 2, $end = n; $l <= $end; $l++) {
+        i = $l;
+        if (!Arr) {
+          if (!$impl.ScriptIsAlpha(S.charAt(i - 1))) {
+            if (S.charAt(i - 1) !== $mod.ResWords[$mod.TToken.tLARR].charAt(0)) return Result;
+            Arr = true;
+          };
+        } else {
+          if (!$impl.ScriptIsDigit(S.charAt(i - 1)) && (S.charAt(i - 1) !== $mod.ResWords[$mod.TToken.tSUB].charAt(0)) && (S.charAt(i - 1) !== $mod.ResWords[$mod.TToken.tCOMMA].charAt(0)) && (S.charAt(i - 1) !== $mod.ResWords[$mod.TToken.tRARR].charAt(0))) return Result;
+          if ((S.charAt(i - 1) === $mod.ResWords[$mod.TToken.tRARR].charAt(0)) && (i !== n)) return Result;
+          if ((S.charAt(i - 1) === $mod.ResWords[$mod.TToken.tRARR].charAt(0)) && (i === n)) Arr = false;
+        };
+      };
+      if (Arr) return Result;
+      Result = true;
+      return Result;
+    };
+    $impl.VarIsString = function (V) {
+      var Result = false;
+      var t = 0;
+      t = pas.Variants.VarType(V.Value);
+      Result = (t === 256) || (t === 8);
+      return Result;
+    };
+  };
+  $mod.$init = function () {
+    $mod.Calc = $mod.TScript.$create("Create$1");
+  };
+},["uUtils","SysUtils","Types","Math","JS"]);
+rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.GetNodeText = function (XmlNode) {
+    var Result = "";
+    var TextNode = null;
+    TextNode = XmlNode.FindNode("#text");
+    if (TextNode != null) {
+      Result = pas.SysUtils.Trim(TextNode.GetNodeValue())}
+     else Result = "";
+    return Result;
+  };
+  this.ReadStringFromXml = function (XmlNode, AttrName, Str, Default) {
+    if (!$mod.ReadStringFromXml$1(XmlNode,AttrName,Str)) Str.set(Default);
+  };
+  this.ReadStringFromXml$1 = function (XmlNode, AttrName, Str) {
+    var Result = false;
+    var i = 0;
+    Str.set("");
+    if (XmlNode === null) return false;
+    if (AttrName === "") {
+      Str.set($impl.XmlTextToString($mod.GetNodeText(XmlNode)));
+      return Str.get() !== "";
+    };
+    i = $mod.GetAttrIndex(XmlNode,AttrName);
+    if (i >= 0) {
+      Str.set($impl.XmlTextToString(XmlNode.GetAttributes().GetItem(i).GetNodeValue()));
+      return Str.get() !== "";
+    };
+    XmlNode = XmlNode.FindNode(AttrName);
+    if (XmlNode === null) return false;
+    Str.set($impl.XmlTextToString(XmlNode.GetTextContent()));
+    Result = Str.get() !== "";
+    return Result;
+  };
+  this.ReadStringFromXml$2 = function (XmlNode, AttrName) {
+    var Result = "";
+    var Str = "";
+    if ($mod.ReadStringFromXml$1(XmlNode,AttrName,{get: function () {
+        return Str;
+      }, set: function (v) {
+        Str = v;
+      }})) Result = Str;
+    return Result;
+  };
+  this.ReadStringFromXmlOrParent = function (XmlNode, AttrName) {
+    var Result = "";
+    var Str = "";
+    Result = "";
+    if ($impl.ReadStringFromXmlOrParent$1(XmlNode,AttrName,{get: function () {
+        return Str;
+      }, set: function (v) {
+        Str = v;
+      }})) Result = Str;
+    return Result;
+  };
+  this.ReadMultiStringFromXml = function (XmlNode, AttrName, Delimiter) {
+    var Result = "";
+    var i = 0;
+    var XmlSubNode = null;
+    var S = "";
+    Result = "";
+    for (var $l = 0, $end = XmlNode.GetChildNodes().Count() - 1; $l <= $end; $l++) {
+      i = $l;
+      XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
+      if (pas.SysUtils.SameText(XmlSubNode.GetNodeName(),AttrName)) {
+        $mod.ReadStringFromXml(XmlSubNode,"",{get: function () {
+            return S;
+          }, set: function (v) {
+            S = v;
+          }},"");
+        if (S !== "") {
+          if (Result !== "") Result = Result + Delimiter;
+          Result = Result + S;
+        };
+      };
+    };
+    return Result;
+  };
+  this.GetAttrIndex = function (XmlNode, AttrName) {
+    var Result = 0;
+    var i = 0;
+    Result = -1;
+    for (var $l = 0, $end = XmlNode.GetAttributes().Length() - 1; $l <= $end; $l++) {
+      i = $l;
+      if (pas.SysUtils.SameText(XmlNode.GetAttributes().GetItem(i).GetNodeName(),AttrName)) return i;
+    };
+    return Result;
+  };
+  this.GetAttrFromXml = function (XmlNode, AttrName, Default) {
+    var Result = "";
+    var i = 0;
+    Result = Default;
+    i = $mod.GetAttrIndex(XmlNode,AttrName);
+    if (i >= 0) Result = XmlNode.GetAttributes().GetItem(i).GetNodeValue();
+    return Result;
+  };
+  this.ReadIntExpressionFromXml = function (XmlNode, AttrName, Default) {
+    var Result = 0;
+    var Expression = "";
+    if ($mod.ReadStringFromXml$1(XmlNode,AttrName,{get: function () {
+        return Expression;
+      }, set: function (v) {
+        Expression = v;
+      }})) if (Expression !== "") return Math.round(pas.uScript.CalcExpression(Expression,Default));
+    Result = Default;
+    return Result;
+  };
+  this.ReadIntExpressionFromXmlOrParent = function (XmlNode, AttrName, Default) {
+    var Result = 0;
+    var Expression = "";
+    if ($impl.ReadStringFromXmlOrParent$1(XmlNode,AttrName,{get: function () {
+        return Expression;
+      }, set: function (v) {
+        Expression = v;
+      }})) if (Expression !== "") return Math.round(pas.uScript.CalcExpression(Expression,Default));
+    Result = Default;
+    return Result;
+  };
+  this.ReadDoubleExpressionFromXml = function (XmlNode, AttrName) {
+    var Result = 0.0;
+    Result = pas.uScript.CalcExpression($mod.ReadStringFromXml$2(XmlNode,AttrName),0);
+    return Result;
+  };
+  this.ReadColorExpressionFromXml = function (XmlNode, AttrName, Default) {
+    var Result = 0;
+    function StrIsColor(S) {
+      var Result = false;
+      var i = 0;
+      Result = false;
+      if (S.length !== 6) return Result;
+      for (i = 1; i <= 6; i++) if (!(((S.charAt(i - 1) >= "0") && (S.charAt(i - 1) <= "9")) || ((S.charAt(i - 1) >= "a") && (S.charAt(i - 1) <= "f")) || ((S.charAt(i - 1) >= "A") && (S.charAt(i - 1) <= "F")))) return Result;
+      Result = true;
+      return Result;
+    };
+    var V = pas.uScript.TVar.$new();
+    var Text = "";
+    Result = Default;
+    Text = pas.SysUtils.Trim($mod.ReadStringFromXml$2(XmlNode,AttrName));
+    if (Text === "") return Result;
+    if (!StrIsColor(Text)) {
+      pas.uScript.ExecuteScript("Result := " + Text);
+      if (pas.uScript.Calc.VarByName("Result",V)) Text = pas.JS.ToString(V.Value);
+    };
+    Result = pas.uUtils.TUtils.StrToColor(Text);
+    return Result;
+  };
+  this.ReadVectorFromXml = function (Vec, XmlNode, AttrName) {
+    var Result = false;
+    var S = "";
+    if (XmlNode === null) return false;
+    S = $mod.GetAttrFromXml(XmlNode,AttrName,"");
+    if (S !== "") {
+      Vec.x = pas.uScript.CalcExpression(pas.SysUtils.Trim(pas.uUtils.TUtils.Parse({get: function () {
+          return S;
+        }, set: function (v) {
+          S = v;
+        }},";")),0);
+      Vec.y = pas.uScript.CalcExpression(pas.SysUtils.Trim(pas.uUtils.TUtils.Parse({get: function () {
+          return S;
+        }, set: function (v) {
+          S = v;
+        }},";")),0);
+      Vec.z = pas.uScript.CalcExpression(pas.SysUtils.Trim(pas.uUtils.TUtils.Parse({get: function () {
+          return S;
+        }, set: function (v) {
+          S = v;
+        }},";")),0);
+      Result = true;
+    } else {
+      Vec.x = $mod.ReadDoubleExpressionFromXml(XmlNode,"X");
+      Vec.y = $mod.ReadDoubleExpressionFromXml(XmlNode,"Y");
+      Vec.z = $mod.ReadDoubleExpressionFromXml(XmlNode,"Z");
+      Result = true;
+    };
+    return Result;
+  };
+  $mod.$implcode = function () {
+    $impl.XmlTextToString = function (S) {
+      var Result = "";
+      Result = S;
+      return Result;
+    };
+    $impl.ReadStringFromXmlOrParent$1 = function (XmlNode, AttrName, Str) {
+      var Result = false;
+      if (XmlNode === null) return false;
+      Result = $mod.ReadStringFromXml$1(XmlNode,AttrName,Str);
+      if (!Result && (XmlNode.GetParentNode() !== null)) Result = $mod.ReadStringFromXml$1(XmlNode.GetParentNode(),AttrName,Str);
+      return Result;
+    };
+  };
+  $mod.$init = function () {
+  };
+},["uScript","uUtils","JS","SysUtils"]);
+rtl.module("strutils",["System","SysUtils","Types"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.Soundex = function (AText, ALength) {
+    var Result = "";
+    var S = "";
+    var PS = "";
+    var I = 0;
+    var L = 0;
+    Result = "";
+    PS = "\x00";
+    if (AText.length > 0) {
+      Result = pas.System.upcase(AText.charAt(0));
+      I = 2;
+      L = AText.length;
+      while ((I <= L) && (Result.length < ALength)) {
+        S = $impl.SScore.charAt(AText.charCodeAt(I - 1) - 1);
+        if (!(S.charCodeAt() in rtl.createSet(48,105,PS.charCodeAt()))) Result = Result + S;
+        if (S !== "i") PS = S;
+        I += 1;
+      };
+    };
+    L = Result.length;
+    if (L < ALength) Result = Result + pas.System.StringOfChar("0",ALength - L);
+    return Result;
+  };
+  this.SoundexSimilar = function (AText, AOther, ALength) {
+    var Result = false;
+    Result = $mod.Soundex(AText,ALength) === $mod.Soundex(AOther,ALength);
+    return Result;
+  };
+  this.SoundexSimilar$1 = function (AText, AOther) {
+    var Result = false;
+    Result = $mod.SoundexSimilar(AText,AOther,4);
+    return Result;
+  };
+  this.SoundexProc = function (AText, AOther) {
+    var Result = false;
+    Result = $mod.SoundexSimilar$1(AText,AOther);
+    return Result;
+  };
+  this.AnsiResemblesProc = null;
+  this.ResemblesProc = null;
+  this.SplitString = function (S, Delimiters) {
+    var Result = [];
+    Result = pas.SysUtils.TStringHelper.Split.call({get: function () {
+        return S;
+      }, set: function (v) {
+        rtl.raiseE("EPropReadOnly");
+      }},Delimiters);
+    return Result;
+  };
+  $mod.$implcode = function () {
+    $impl.SScore = "00000000000000000000000000000000" + "00000000000000000000000000000000" + "0123012i02245501262301i2i2" + "000000" + "0123012i02245501262301i2i2" + "00000000000000000000000000000000" + "00000000000000000000000000000000" + "00000000000000000000000000000000" + "00000000000000000000000000000000" + "00000";
+  };
+  $mod.$init = function () {
+    $mod.AnsiResemblesProc = $mod.SoundexProc;
+    $mod.ResemblesProc = $mod.SoundexProc;
+  };
+},["JS"]);
+rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine","uLayer","uAxis","uFace","uPart","uMacro","uTexture","uTurn","DOM","Graphics","Generics.Collections"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.XML_VERSION = 2;
+  rtl.createClass(this,"TXmlReadWrite",pas.System.TObject,function () {
+    this.lMacros = null;
+    this.FindMacros = function (XmlNode, MacroNodes, RepeatN) {
+      var Result = false;
+      var i = 0;
+      var MacroName = "";
+      var MacroNames = "";
+      var AttrName = "";
+      var MacroNode = null;
+      var lNames = [];
+      MacroNames = $impl.XmlTrim(XmlNode.GetAttribute("MacroName"));
+      RepeatN.set(pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Repeat",1));
+      for (var $l = 0, $end = XmlNode.GetAttributes().Length() - 1; $l <= $end; $l++) {
+        i = $l;
+        AttrName = XmlNode.GetAttributes().GetItem(i).GetNodeName();
+        if ((AttrName !== "MacroName") && (AttrName !== "Repeat")) pas.uScript.ExecuteScript(AttrName + ":=" + XmlNode.GetAttribute(AttrName));
+      };
+      lNames = pas.strutils.SplitString(MacroNames," ");
+      for (var $in = lNames, $l1 = 0, $end1 = rtl.length($in) - 1; $l1 <= $end1; $l1++) {
+        MacroName = $in[$l1];
+        if (MacroName.length > 0) for (var $l2 = this.lMacros.FLength - 1; $l2 >= 0; $l2--) {
+          i = $l2;
+          MacroNode = this.lMacros.GetItem(i);
+          if ($impl.XmlSameText(MacroName,$impl.XmlTrim(MacroNode.GetAttribute("Name")))) {
+            MacroNodes.get().Add(MacroNode);
+            break;
+          };
+        };
+      };
+      Result = MacroNodes.get().FLength > 0;
+      return Result;
+    };
+    this.AddCylinder = function (Part, Base, Top, Radius, Color, BaseColor, TopColor) {
+      var i = 0;
+      var x = rtl.arraySetLength(null,0.0,64);
+      var y = rtl.arraySetLength(null,0.0,64);
+      var dA = 0.0;
+      var Al = 0.0;
+      var Height = 0.0;
+      var V = pas.uVector.TVector.$new();
+      var a = pas.uVector.TVector.$new();
+      var Vec = pas.uVector.TVector.$new();
+      var FaceTop = null;
+      var FaceBottom = null;
+      var FaceSide = null;
+      dA = (2 * Math.PI) / 64;
+      Al = 0;
+      for (i = 0; i <= 63; i++) {
+        x[i] = Math.cos(Al);
+        y[i] = Math.sin(Al);
+        Al = Al + dA;
+      };
+      FaceBottom = pas.uFace.TFace.$create("Create$1",[Part.FVertices]);
+      FaceBottom.Color = BaseColor;
+      FaceTop = pas.uFace.TFace.$create("Create$1",[Part.FVertices]);
+      FaceTop.Color = TopColor;
+      for (i = 0; i <= 63; i++) {
+        Vec.$assign(pas.uVector.Vector(x[i],y[i],0));
+        Part.FVertices.Add(Vec);
+        FaceBottom.AddVector(pas.uVector.TVector.$clone(Vec),true);
+        FaceBottom.Rotate(-1);
+        Vec.$assign(pas.uVector.Vector(x[i],y[i],1));
+        Part.FVertices.Add(Vec);
+        FaceTop.AddVector(pas.uVector.TVector.$clone(Vec),true);
+      };
+      Part.FFaces.Add(FaceBottom);
+      Part.FFaces.Add(FaceTop);
+      for (i = 0; i <= 62; i++) {
+        FaceSide = Part.AddFace([(i * 2) + 1,i * 2,(i * 2) + 2,(i * 2) + 3]);
+        FaceSide.Color = Color;
+        FaceSide.SetEdgeVisibility(0,false);
+        FaceSide.SetEdgeVisibility(2,false);
+      };
+      FaceSide = Part.AddFace([((64 - 1) * 2) + 1,(64 - 1) * 2,0,1]);
+      FaceSide.Color = Color;
+      FaceSide.SetEdgeVisibility(0,false);
+      FaceSide.SetEdgeVisibility(2,false);
+      V.$assign(pas.uVector.VectorSubtract(Top,Base));
+      Height = V.Abs();
+      V.Normalize();
+      Part.Trans(pas.uMatrix.TMatrix.GetScaleMatrix(Radius,Radius,Height));
+      a.$assign(pas.uVector.Vector(0,0,1));
+      if (!V.IsNear(a)) {
+        Al = Math.acos(pas.uVector.VectorDot(V,a));
+        if (Math.abs(Math.abs(Al) - Math.PI) < 1e-6) {
+          Part.Trans(pas.uMatrix.TMatrix.GetRotateMatrix$1(pas.uVector.Vector(1,0,0),Al))}
+         else if (Math.abs(Al) > 1e-6) {
+          a.$assign(pas.uVector.VectorCross(a,V));
+          a.Normalize();
+          Part.Trans(pas.uMatrix.TMatrix.GetRotateMatrix$1(a,Al));
+        };
+      };
+      Part.Trans(pas.uMatrix.TMatrix.GetMoveMatrix(Base));
+    };
+    this.AddCircle = function (Part, Base, Center, Radius, Color) {
+      var i = 0;
+      var Al = 0.0;
+      var V = pas.uVector.TVector.$new();
+      var a = pas.uVector.TVector.$new();
+      var Face = null;
+      Face = pas.uFace.TFace.$create("Create$1",[Part.FVertices]);
+      for (i = 0; i <= 63; i++) {
+        Al = (i * 2 * Math.PI) / 64;
+        V.$assign(pas.uVector.Vector(Math.cos(Al),Math.sin(Al),0));
+        Part.AddVertex(V);
+        Face.AddVector(pas.uVector.TVector.$clone(V),true);
+      };
+      Face.Color = Color;
+      Part.FFaces.Add(Face);
+      V.$assign(pas.uVector.VectorSubtract(Center,Base));
+      V.Normalize();
+      Part.Trans(pas.uMatrix.TMatrix.GetScaleMatrix(Radius,Radius,1));
+      a.$assign(pas.uVector.Vector(0,0,1));
+      if (!V.IsNear(a)) {
+        Al = Math.acos(pas.uVector.VectorDot(V,a));
+        if (Math.abs(Math.abs(Al) - Math.PI) < 1e-6) {
+          Part.Trans(pas.uMatrix.TMatrix.GetRotateMatrix$1(pas.uVector.Vector(1,0,0),Al))}
+         else if (Math.abs(Al) > 1e-6) {
+          a.$assign(pas.uVector.VectorCross(a,V));
+          a.Normalize();
+          Part.Trans(pas.uMatrix.TMatrix.GetRotateMatrix$1(a,Al));
+        };
+      };
+      Part.Trans(pas.uMatrix.TMatrix.GetMoveMatrix(Center));
+    };
+    this.Transfer = function (Puzzle, XmlNode) {
+      var STransfer = "";
+      var VTransfer = pas.uVector.TVector.$new();
+      STransfer = XmlNode.GetAttribute("Vector");
+      if (STransfer !== "") {
+        VTransfer.$assign($mod.TXmlReadWrite.GetVectorFromString(STransfer));
+        Puzzle.Trans(pas.uMatrix.TMatrix.GetMoveMatrix(VTransfer));
+      };
+    };
+    this.Turn = function (Puzzle, XmlNode) {
+      var Angle = 0.0;
+      var SNorm = "";
+      var SBase = "";
+      var AxisNo = 0;
+      var LayerFrom = 0;
+      var LayerTo = 0;
+      var Layer = 0;
+      var i = 0;
+      var Layers = [];
+      var IsLayersMove = false;
+      var V = pas.uVector.TVector.$new();
+      var VS = pas.uVector.TVector.$new();
+      AxisNo = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Axis",0);
+      pas.uSelection.TSelection.TurnAxisNo = AxisNo;
+      Layers = rtl.arraySetLength(Layers,false,Puzzle.FAxes.GetItem(AxisNo).Layers.FLength);
+      for (var $l = 0, $end = rtl.length(Layers) - 1; $l <= $end; $l++) {
+        i = $l;
+        Layers[i] = false;
+      };
+      LayerFrom = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"From",-1);
+      LayerTo = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"To",-1);
+      if ((LayerFrom >= 0) && (LayerTo === -1)) LayerTo = Puzzle.FAxes.GetItem(AxisNo).Layers.FLength;
+      if ((LayerTo >= 0) && (LayerFrom === -1)) LayerFrom = 0;
+      if ((LayerFrom >= 0) && (LayerTo >= LayerFrom)) for (var $l1 = LayerFrom, $end1 = LayerTo; $l1 <= $end1; $l1++) {
+        i = $l1;
+        Layers[i] = true;
+      };
+      Layer = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Layer",-1);
+      if (Layer >= 0) Layers[Layer] = true;
+      $mod.TXmlReadWrite.DecodeLayers(pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"Layers"),{get: function () {
+          return Layers;
+        }, set: function (v) {
+          Layers = v;
+        }});
+      Angle = pas.uXmlUtils.ReadDoubleExpressionFromXml(XmlNode,"Angle");
+      IsLayersMove = false;
+      for (var $l2 = 0, $end2 = rtl.length(Layers) - 1; $l2 <= $end2; $l2++) {
+        i = $l2;
+        IsLayersMove = IsLayersMove || Layers[i];
+      };
+      if (IsLayersMove) {
+        Puzzle.CalcMovingLayers(AxisNo,Layers);
+        Puzzle.MacroRotateLayers(AxisNo,pas.uSelection.TSelection.TurnLayers,Angle);
+      } else {
+        SNorm = XmlNode.GetAttribute("NormVector");
+        if (SNorm !== "") {
+          V.$assign($mod.TXmlReadWrite.GetVectorFromString(SNorm));
+          V.Normalize();
+          SBase = XmlNode.GetAttribute("BaseVector");
+          if (SBase !== "") {
+            VS.$assign($mod.TXmlReadWrite.GetVectorFromString(SBase));
+            Puzzle.Trans(pas.uMatrix.TMatrix.GetMoveMatrix(pas.uVector.VectorNegate(VS)));
+            Puzzle.Trans(pas.uMatrix.TMatrix.GetRotateMatrix$1(V,Angle));
+            Puzzle.Trans(pas.uMatrix.TMatrix.GetMoveMatrix(VS));
+          } else Puzzle.Trans(pas.uMatrix.TMatrix.GetRotateMatrix$1(V,Angle));
+        };
+      };
+    };
+    this.DecodeLayers = function (LayersString, Layers) {
+      var Remaining = "";
+      var Item = "";
+      var RangeStart = "";
+      var RangeEnd = "";
+      var SeparatorPos = 0;
+      var DashPos = 0;
+      var LayerFrom = 0;
+      var LayerTo = 0;
+      var i = 0;
+      Remaining = LayersString;
+      while (Remaining !== "") {
+        SeparatorPos = pas.System.Pos(";",Remaining);
+        if (SeparatorPos > 0) {
+          Item = pas.System.Copy(Remaining,1,SeparatorPos - 1);
+          pas.System.Delete({get: function () {
+              return Remaining;
+            }, set: function (v) {
+              Remaining = v;
+            }},1,SeparatorPos);
+        } else {
+          Item = Remaining;
+          Remaining = "";
+        };
+        Item = $impl.XmlTrim(Item);
+        if (Item === "") continue;
+        DashPos = pas.System.Pos("-",Item);
+        if (DashPos === 0) {
+          LayerFrom = Math.round(pas.uScript.CalcExpression(Item,0));
+          if ((LayerFrom >= 0) && (LayerFrom < rtl.length(Layers.get()))) Layers.get()[LayerFrom] = true;
+        } else {
+          RangeStart = $impl.XmlTrim(pas.System.Copy(Item,1,DashPos - 1));
+          RangeEnd = $impl.XmlTrim(pas.System.Copy(Item,DashPos + 1,Item.length));
+          LayerFrom = Math.round(pas.uScript.CalcExpression(RangeStart,0));
+          LayerTo = Math.round(pas.uScript.CalcExpression(RangeEnd,0));
+          if ((LayerFrom >= 0) && (LayerFrom < rtl.length(Layers.get())) && (LayerTo > 0) && (LayerTo < rtl.length(Layers.get()))) for (var $l = LayerFrom, $end = LayerTo; $l <= $end; $l++) {
+            i = $l;
+            Layers.get()[i] = true;
+          };
+        };
+      };
+    };
+    this.LoadArrayFromString = function (Names) {
+      var Result = [];
+      var i = 0;
+      var EList = null;
+      var Values = [];
+      var V = pas.uScript.TVar.$new();
+      var V1 = pas.uScript.TVar.$new();
+      var S = "";
+      var PS = "";
+      EList = pas["Generics.Collections"].TList$G21.$create("Create$1");
+      try {
+        Values = pas.strutils.SplitString(Names,";");
+        for (var $in = Values, $l = 0, $end = rtl.length($in) - 1; $l <= $end; $l++) {
+          S = $in[$l];
+          PS = $impl.XmlTrim(S);
+          if (pas.uScript.Calc.VarByName(PS + "[0]",V) && !pas.uScript.Calc.VarByName(PS,V1) && (pas.Variants.VarType(V.Value) === 5)) {
+            i = 0;
+            do {
+              EList.Add(pas.uScript.CalcExpression(PS + "[" + $impl.XmlIntToStr(i) + "]",0));
+              i += 1;
+            } while (pas.uScript.Calc.VarByName(PS + "[" + $impl.XmlIntToStr(i) + "]",V) && (pas.Variants.VarType(V.Value) === 5));
+          } else EList.Add(pas.uScript.CalcExpression(PS,0));
+        };
+        Result = EList.ToArray();
+      } finally {
+        EList = rtl.freeLoc(EList);
+      };
+      return Result;
+    };
+    this.GetAttrOrParent = function (XmlNode, aName, aDefault) {
+      var Result = "";
+      var i = 0;
+      Result = aDefault;
+      i = pas.uXmlUtils.GetAttrIndex(XmlNode,aName);
+      if (i >= 0) return XmlNode.GetAttributes().GetItem(i).GetNodeValue();
+      XmlNode = XmlNode.GetParentNode();
+      if (XmlNode === null) return Result;
+      i = pas.uXmlUtils.GetAttrIndex(XmlNode,aName);
+      if (i >= 0) return XmlNode.GetAttributes().GetItem(i).GetNodeValue();
+      return Result;
+    };
+    this.GetVectorFromString = function (S) {
+      var Result = pas.uVector.TVector.$new();
+      Result.x = pas.uScript.CalcExpression($impl.XmlTrim(pas.uUtils.TUtils.Parse({get: function () {
+          return S;
+        }, set: function (v) {
+          S = v;
+        }},";")),0);
+      Result.y = pas.uScript.CalcExpression($impl.XmlTrim(pas.uUtils.TUtils.Parse({get: function () {
+          return S;
+        }, set: function (v) {
+          S = v;
+        }},";")),0);
+      Result.z = pas.uScript.CalcExpression($impl.XmlTrim(pas.uUtils.TUtils.Parse({get: function () {
+          return S;
+        }, set: function (v) {
+          S = v;
+        }},";")),0);
+      return Result;
+    };
+    this.GetVectorsFromString = function (S, Vectors) {
+      var $Self = this;
+      var isArray = rtl.arraySetLength(null,false,3);
+      var ArrayName = rtl.arraySetLength(null,"",3);
+      var vec = rtl.arraySetLength(null,0.0,3);
+      function GetArrayValue(i, Dim) {
+        var Result = false;
+        var V = pas.uScript.TVar.$new();
+        if (!isArray[Dim]) return true;
+        Result = pas.uScript.Calc.VarByName(ArrayName[Dim] + "[" + $impl.XmlIntToStr(i) + "]",V);
+        if (Result) {
+          vec[Dim] = pas.uScript.CalcExpression(ArrayName[Dim] + "[" + $impl.XmlIntToStr(i) + "]",0)}
+         else vec[Dim] = 0;
+        return Result;
+      };
+      function InitDim(Dim) {
+        isArray[Dim] = true;
+        ArrayName[Dim] = $impl.XmlUpperCase($impl.XmlTrim(pas.uUtils.TUtils.Parse({get: function () {
+            return S;
+          }, set: function (v) {
+            S = v;
+          }},";")));
+        isArray[Dim] = GetArrayValue(0,Dim);
+        if (!isArray[Dim]) vec[Dim] = pas.uScript.CalcExpression(ArrayName[Dim],0);
+      };
+      var i = 0;
+      if (S === "") return;
+      InitDim(0);
+      InitDim(1);
+      InitDim(2);
+      Vectors.Add(pas.uVector.Vector(vec[0],vec[1],vec[2]));
+      if (isArray[0] || isArray[1] || isArray[2]) for (i = 1; i <= 2147483647; i++) {
+        if (GetArrayValue(i,0) && GetArrayValue(i,1) && GetArrayValue(i,2)) {
+          Vectors.Add(pas.uVector.Vector(vec[0],vec[1],vec[2]))}
+         else break;
+      };
+    };
+    this.VectorLoadFromXml = function (Vector, XmlNode) {
+      var Result = false;
+      Result = false;
+      if (XmlNode === null) return Result;
+      Vector.x = pas.uXmlUtils.ReadDoubleExpressionFromXml(XmlNode,"X");
+      Vector.y = pas.uXmlUtils.ReadDoubleExpressionFromXml(XmlNode,"Y");
+      Vector.z = pas.uXmlUtils.ReadDoubleExpressionFromXml(XmlNode,"Z");
+      Result = true;
+      return Result;
+    };
+    this.VectorsLoadFromXml = function (Vectors, XmlNode) {
+      var $Self = this;
+      var Result = false;
+      function ExecMacro(XmlNode) {
+        var Result = false;
+        var i = 0;
+        var n = 0;
+        var MacroNodes = null;
+        var MacroNode = null;
+        Result = false;
+        MacroNodes = pas["Generics.Collections"].TList$G19.$create("Create$1");
+        try {
+          if ($Self.FindMacros(XmlNode,{get: function () {
+              return MacroNodes;
+            }, set: function (v) {
+              MacroNodes = v;
+            }},{get: function () {
+              return n;
+            }, set: function (v) {
+              n = v;
+            }})) for (var $l = 0, $end = n - 1; $l <= $end; $l++) {
+            i = $l;
+            var $in = MacroNodes.GetEnumerator$1();
+            try {
+              while ($in.MoveNext()) {
+                MacroNode = $in.DoGetCurrent();
+                if (!$Self.VectorsLoadFromXml(Vectors,MacroNode)) return Result;
+              }
+            } finally {
+              $in = rtl.freeLoc($in)
+            };
+          };
+          Result = true;
+        } finally {
+          MacroNodes = rtl.freeLoc(MacroNodes);
+        };
+        return Result;
+      };
+      var i = 0;
+      var XmlSubNode = null;
+      var Vector = pas.uVector.TVector.$new();
+      var S = "";
+      Result = false;
+      if (XmlNode === null) return Result;
+      this.GetVectorsFromString(pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"Vectors"),Vectors);
+      for (var $l = 0, $end = XmlNode.GetChildNodes().Count() - 1; $l <= $end; $l++) {
+        i = $l;
+        XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
+        S = XmlSubNode.GetNodeName();
+        if (S === "Script") {
+          pas.uScript.ExecuteScript(pas.uXmlUtils.GetNodeText(XmlSubNode))}
+         else if (S === "Vector") {
+          if (!this.VectorLoadFromXml(Vector,XmlSubNode)) return Result;
+          Vectors.Add(Vector);
+        } else if (S === "Add") {
+          S = pas.uXmlUtils.GetAttrFromXml(XmlSubNode,"Vector","");
+          if (S !== "") Vectors.Add(this.GetVectorFromString(S));
+        } else if (S === "ExecMacro") {
+          if (!ExecMacro(XmlSubNode)) return Result;
+        };
+      };
+      Result = true;
+      return Result;
+    };
+    this.LineLoadFromXml = function (Line, XmlNode) {
+      var Result = false;
+      if (!pas.uXmlUtils.ReadVectorFromXml(Line.BaseVector,XmlNode,"BaseVector")) Line.BaseVector.$assign(pas.uVector.Vector(0,0,0));
+      if (!pas.uXmlUtils.ReadVectorFromXml(Line.NormVector,XmlNode,"NormVector")) Line.NormVector.$assign(pas.uVector.Vector(1,0,0));
+      Line.NormVector.Normalize();
+      Result = true;
+      return Result;
+    };
+    this.PlaneLoadFromXml = function (Plane, XmlNode) {
+      var Result = false;
+      var BaseVector = pas.uVector.TVector.$new();
+      if (XmlNode === null) return false;
+      if (!pas.uXmlUtils.ReadVectorFromXml(BaseVector,XmlNode,"BaseVector")) BaseVector.$assign(pas.uVector.Vector(0,0,0));
+      if (!pas.uXmlUtils.ReadVectorFromXml(Plane.NormVect,XmlNode,"NormVector")) Plane.NormVect.$assign(pas.uVector.Vector(0,0,1));
+      Plane.NormVect.Normalize();
+      Plane.NormDistance = pas.uXmlUtils.ReadDoubleExpressionFromXml(XmlNode,"NormDistance") + pas.uVector.VectorDot(BaseVector,Plane.NormVect);
+      Result = true;
+      return Result;
+    };
+    this.AxisLoadFromXml = function (Axis, XmlNode) {
+      var Result = false;
+      Result = false;
+      if (!this.LineLoadFromXml(Axis.Line,XmlNode)) return Result;
+      this.FillAxis(Axis,this.GetAttrOrParent(XmlNode,"PlaneDistances",""),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"TurningAngles"),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"AvailableAngles"),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"JumbleAngle"),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"FixedLayers"),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"MinAngles"),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"MaxAngles"),pas.uXmlUtils.ReadIntExpressionFromXmlOrParent(XmlNode,"TurnAxesWithLayer",-1),pas.uXmlUtils.ReadIntExpressionFromXmlOrParent(XmlNode,"TurnAxesWithPartNo",-1));
+      Result = true;
+      return Result;
+    };
+    this.FillAxis = function (Axis, PlaneDistances, TurningAngles, AvailableAngles, JumbleAngle, FixedLayers, MinAngles, MaxAngles, TurnAxesWithLayer, TurnAxesWithPartNo) {
+      var $Self = this;
+      function AddAvailableAngle(Angle) {
+        var Layer = null;
+        Angle = pas.uUtils.TUtils.PrivPi(Angle);
+        var $in = Axis.Layers.GetEnumerator$1();
+        try {
+          while ($in.MoveNext()) {
+            Layer = $in.DoGetCurrent();
+            if (!Layer.Fixed) Layer.AddAvailableAngle(Angle);
+          }
+        } finally {
+          $in = rtl.freeLoc($in)
+        };
+      };
+      function AddJumbleAngles(Angle) {
+        var i = 0;
+        var TurningAngle = 0.0;
+        var Layer = null;
+        var $in = Axis.Layers.GetEnumerator$1();
+        try {
+          while ($in.MoveNext()) {
+            Layer = $in.DoGetCurrent();
+            if (!Layer.Fixed) {
+              TurningAngle = Layer.FTurningAngle;
+              for (var $l = 0, $end = Math.round((2 * Math.PI) / TurningAngle) + 1; $l <= $end; $l++) {
+                i = $l;
+                Layer.AddAvailableAngle(pas.uUtils.TUtils.PrivPi((TurningAngle * i) + Angle));
+                Layer.AddAvailableAngle(pas.uUtils.TUtils.PrivPi((TurningAngle * i) - Angle));
+              };
+            };
+          }
+        } finally {
+          $in = rtl.freeLoc($in)
+        };
+      };
+      var i = 0;
+      var S = "";
+      var SMin = "";
+      var SMax = "";
+      var Al = 0.0;
+      var D = 0.0;
+      Axis.CreateLayers(this.LoadArrayFromString(PlaneDistances));
+      S = TurningAngles;
+      if (pas.System.Pos(";",S) !== 0) {
+        for (var $l = 0, $end = Axis.Layers.FLength - 1; $l <= $end; $l++) {
+          i = $l;
+          Axis.Layers.GetItem(i).SetTurningAngle(pas.uScript.CalcExpression($impl.XmlTrim(pas.uUtils.TUtils.Parse({get: function () {
+              return S;
+            }, set: function (v) {
+              S = v;
+            }},";")),0));
+        }}
+       else {
+        Al = pas.uScript.CalcExpression(S,0);
+        for (var $l1 = 0, $end1 = Axis.Layers.FLength - 1; $l1 <= $end1; $l1++) {
+          i = $l1;
+          Axis.Layers.GetItem(i).SetTurningAngle(Al);
+        };
+      };
+      for (var $l2 = 0, $end2 = Axis.Layers.FLength - 1; $l2 <= $end2; $l2++) {
+        i = $l2;
+        var $with = Axis.Layers.GetItem(i);
+        if (Math.abs($with.FTurningAngle) < 1E-4) $with.Fixed = true;
+      };
+      S = FixedLayers;
+      while ($impl.XmlTrim(S) !== "") {
+        i = Math.round(pas.uScript.CalcExpression($impl.XmlTrim(pas.uUtils.TUtils.Parse({get: function () {
+            return S;
+          }, set: function (v) {
+            S = v;
+          }},";")),0));
+        if ((i >= 0) && (i < Axis.Layers.FLength)) {
+          Axis.Layers.GetItem(i).Fixed = true}
+         else pas.uUtils.TUtils.Log("FillAxis: FixedLayers out of bounds: " + $impl.XmlIntToStr(i));
+      };
+      S = AvailableAngles;
+      while ($impl.XmlTrim(S) !== "") AddAvailableAngle(pas.uScript.CalcExpression($impl.XmlTrim(pas.uUtils.TUtils.Parse({get: function () {
+          return S;
+        }, set: function (v) {
+          S = v;
+        }},";")),0));
+      D = pas.uScript.CalcExpression(JumbleAngle,0);
+      if (D !== 0) AddJumbleAngles(D);
+      SMin = MinAngles;
+      SMax = MaxAngles;
+      for (var $l3 = 0, $end3 = Axis.Layers.FLength - 1; $l3 <= $end3; $l3++) {
+        i = $l3;
+        if ((SMin !== "") || (SMax !== "")) {
+          S = $impl.XmlTrim(pas.uUtils.TUtils.Parse({get: function () {
+              return SMin;
+            }, set: function (v) {
+              SMin = v;
+            }},";"));
+          if (S !== "") Axis.Layers.GetItem(i).MinAngle = pas.uScript.CalcExpression(S,0);
+          S = $impl.XmlTrim(pas.uUtils.TUtils.Parse({get: function () {
+              return SMax;
+            }, set: function (v) {
+              SMax = v;
+            }},";"));
+          if (S !== "") Axis.Layers.GetItem(i).MaxAngle = pas.uScript.CalcExpression(S,0);
+        };
+      };
+      Axis.TurnAxesWithLayer = TurnAxesWithLayer;
+      Axis.TurnAxesWithPartNo = TurnAxesWithPartNo;
+    };
+    this.AxesLoadFromXml = function (Axes, XmlNode) {
+      var $Self = this;
+      var Result = false;
+      var i = 0;
+      var i1 = 0;
+      var i2 = 0;
+      var Axis = null;
+      var S1 = "";
+      var S2 = "";
+      var S3 = "";
+      var S4 = "";
+      var S5 = "";
+      var S6 = "";
+      var S7 = "";
+      var Vectors = null;
+      Result = false;
+      Vectors = pas["Generics.Collections"].TList$G7.$create("Create$1");
+      try {
+        this.GetVectorsFromString(XmlNode.GetAttribute("NormVectors"),Vectors);
+        if (Vectors.FLength > 0) {
+          S1 = pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"PlaneDistances");
+          S2 = pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"TurningAngles");
+          S3 = pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"AvailableAngles");
+          S4 = pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"JumbleAngle");
+          S5 = pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"FixedLayers");
+          S6 = pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"MinAngles");
+          S7 = pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"MaxAngles");
+          i1 = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"TurnAxesWithLayer",-1);
+          i2 = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"TurnAxesWithPartNo",-1);
+        };
+        for (var $l = 0, $end = Vectors.FLength - 1; $l <= $end; $l++) {
+          i = $l;
+          Axis = pas.uAxis.TAxis.$create("Create$1");
+          Axis.Line.NormVector.x = Vectors.GetItem(i).x;
+          Axis.Line.NormVector.y = Vectors.GetItem(i).y;
+          Axis.Line.NormVector.z = Vectors.GetItem(i).z;
+          Axis.Line.NormVector.Normalize();
+          this.FillAxis(Axis,S1,S2,S3,S4,S5,S6,S7,i1,i2);
+          Axes.Add(Axis);
+        };
+      } finally {
+        Vectors = rtl.freeLoc(Vectors);
+      };
+      for (var $l1 = 0, $end1 = XmlNode.GetChildNodes().Count() - 1; $l1 <= $end1; $l1++) {
+        i = $l1;
+        if (XmlNode.GetChildNodes().GetItem(i).CompareName("Axis") === 0) {
+          Axis = pas.uAxis.TAxis.$create("Create$1");
+          if (!this.AxisLoadFromXml(Axis,XmlNode.GetChildNodes().GetItem(i))) return Result;
+          Axes.Add(Axis);
+        };
+      };
+      Result = true;
+      return Result;
+    };
+    this.FaceLoadFromXml = function (Face, XmlNode) {
+      var $Self = this;
+      var Result = false;
+      function AddIndexesFromString(S) {
+        var Splitted = [];
+        var VIndex = "";
+        var V = pas.uScript.TVar.$new();
+        Splitted = pas.strutils.SplitString(S,";");
+        for (var $in = Splitted, $l = 0, $end = rtl.length($in) - 1; $l <= $end; $l++) {
+          VIndex = $in[$l];
+          pas.uScript.ExecuteScript("Result := " + VIndex);
+          if (!pas.uScript.Calc.VarByName("Result",V)) return;
+          if (pas.Variants.VarType(V.Value) === 256) {
+            AddIndexesFromString(pas.JS.ToString(V.Value))}
+           else Face.AddVertexByIndex(Math.round(pas.uScript.CalcExpression(VIndex,0)),true);
+        };
+      };
+      var i = 0;
+      var InvisibleEdges = 0;
+      Face.Clear();
+      Face.Color = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode,"Color",-1);
+      AddIndexesFromString($impl.XmlTrim(pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"VertexIndexes")));
+      InvisibleEdges = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"InvisibleEdges",0);
+      if (InvisibleEdges !== 0) for (var $l = 0, $end = Face.GetVertexCount() - 1; $l <= $end; $l++) {
+        i = $l;
+        Face.SetEdgeVisibility(i,(InvisibleEdges & (1 << i)) === 0);
+      };
+      Result = true;
+      return Result;
+    };
+    this.FacesLoadFromXml = function (Faces, XmlNode, Points) {
+      var $Self = this;
+      var Result = false;
+      var i = 0;
+      var XmlSubNode = null;
+      var Face = null;
+      var S = "";
+      function ExecMacro(XmlNode) {
+        var Result = false;
+        var i = 0;
+        var n = 0;
+        var MacroNodes = null;
+        var MacroNode = null;
+        Result = false;
+        MacroNodes = pas["Generics.Collections"].TList$G19.$create("Create$1");
+        try {
+          if ($Self.FindMacros(XmlNode,{get: function () {
+              return MacroNodes;
+            }, set: function (v) {
+              MacroNodes = v;
+            }},{get: function () {
+              return n;
+            }, set: function (v) {
+              n = v;
+            }})) for (var $l = 0, $end = n - 1; $l <= $end; $l++) {
+            i = $l;
+            var $in = MacroNodes.GetEnumerator$1();
+            try {
+              while ($in.MoveNext()) {
+                MacroNode = $in.DoGetCurrent();
+                if (!$Self.FacesLoadFromXml(Faces,MacroNode,Points)) return Result;
+              }
+            } finally {
+              $in = rtl.freeLoc($in)
+            };
+          };
+          Result = true;
+        } finally {
+          MacroNodes = rtl.freeLoc(MacroNodes);
+        };
+        return Result;
+      };
+      Result = false;
+      if (XmlNode === null) return Result;
+      for (var $l = 0, $end = XmlNode.GetChildNodes().Count() - 1; $l <= $end; $l++) {
+        i = $l;
+        XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
+        S = XmlSubNode.GetNodeName();
+        if (S === "Face") {
+          Face = pas.uFace.TFace.$create("Create$1",[Points]);
+          if (!this.FaceLoadFromXml(Face,XmlSubNode)) return Result;
+          Faces.Add(Face);
+        } else if (S === "ExecMacro") {
+          if (!ExecMacro(XmlSubNode)) return Result;
+        } else if (S === "Script") pas.uScript.ExecuteScript(XmlSubNode.GetTextContent());
+      };
+      Result = true;
+      return Result;
+    };
+    this.PartLoadFromXml = function (Part, XmlNode) {
+      var Result = false;
+      var i = 0;
+      var XmlSubNode = null;
+      var S = "";
+      Part.Clear();
+      for (var $l = 0, $end = XmlNode.GetChildNodes().Count() - 1; $l <= $end; $l++) {
+        i = $l;
+        XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
+        S = XmlSubNode.GetNodeName();
+        if (S === "Script") {
+          pas.uScript.ExecuteScript(XmlSubNode.GetTextContent())}
+         else if (S === "Vertices") {
+          this.VectorsLoadFromXml(Part.FVertices,XmlSubNode)}
+         else if (S === "Faces") this.FacesLoadFromXml(Part.FFaces,XmlSubNode,Part.FVertices);
+      };
+      Result = (Part.FFaces.FLength !== 0) && (Part.FVertices.FLength !== 0);
+      return Result;
+    };
+    this.PartLoadCylinder = function (Part, XmlNode) {
+      var Result = false;
+      var Radius = 0.0;
+      var Color = 0;
+      var BaseColor = 0;
+      var TopColor = 0;
+      var Base = pas.uVector.TVector.$new();
+      var Top = pas.uVector.TVector.$new();
+      Result = false;
+      if (XmlNode === null) return Result;
+      Radius = pas.uXmlUtils.ReadDoubleExpressionFromXml(XmlNode,"Radius");
+      Color = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode,"Color",-1);
+      pas.uXmlUtils.ReadVectorFromXml(Base,XmlNode,"Base");
+      BaseColor = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode,"BaseColor",-1);
+      if (BaseColor === -1) BaseColor = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode.FindNode("Base"),"Color",-1);
+      pas.uXmlUtils.ReadVectorFromXml(Top,XmlNode,"Top");
+      TopColor = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode,"TopColor",-1);
+      if (TopColor === -1) TopColor = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode.FindNode("Top"),"Color",-1);
+      this.AddCylinder(Part,Base,Top,Radius,Color,BaseColor,TopColor);
+      Result = true;
+      return Result;
+    };
+    this.PartLoadCircle = function (Part, XmlNode) {
+      var Result = false;
+      var Base = pas.uVector.TVector.$new();
+      var Center = pas.uVector.TVector.$new();
+      var Radius = 0.0;
+      var Color = 0;
+      Result = false;
+      if (XmlNode === null) return Result;
+      Radius = pas.uXmlUtils.ReadDoubleExpressionFromXml(XmlNode,"Radius");
+      Color = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode,"Color",-1);
+      if (!pas.uXmlUtils.ReadVectorFromXml(Base,XmlNode,"Base")) Base.$assign(pas.uVector.Vector(0,0,0));
+      if (!pas.uXmlUtils.ReadVectorFromXml(Center,XmlNode,"Center")) Center.$assign(pas.uVector.Vector(1,0,0));
+      this.AddCircle(Part,Base,Center,Radius,Color);
+      Result = true;
+      return Result;
+    };
+    this.PuzzleCheckVersionFromXml = function (Puzzle, XmlNode) {
+      var Result = false;
+      Result = $impl.XmlStrToInt(XmlNode.GetAttribute("Data_Version")) === $mod.XML_VERSION;
+      return Result;
+    };
+    this.PuzzleLoadHeaderFromXml = function (Puzzle, XmlNode) {
+      var Result = false;
+      var InterfaceNode = null;
+      var FileName = "";
+      Result = false;
+      FileName = Puzzle.Header.FileName;
+      Puzzle.ClearHeader();
+      Puzzle.Header.FileName = FileName;
+      if (XmlNode === null) return Result;
+      if (!this.PuzzleCheckVersionFromXml(Puzzle,XmlNode)) return Result;
+      InterfaceNode = XmlNode.FindNode("Interface");
+      if (InterfaceNode === null) return Result;
+      var $with = Puzzle.Header;
+      $with.Name = pas.uXmlUtils.ReadStringFromXml$2(InterfaceNode,"Name");
+      $with.Aliases = pas.uXmlUtils.ReadStringFromXml$2(InterfaceNode,"Aliases");
+      $with.ClassString = pas.uXmlUtils.ReadStringFromXml$2(InterfaceNode,"Class");
+      $with.MenuString = pas.uXmlUtils.ReadMultiStringFromXml(InterfaceNode,"Menu",";");
+      $with.Inventor = pas.uXmlUtils.ReadStringFromXml$2(InterfaceNode,"Inventor");
+      $with.Programmer = pas.uXmlUtils.ReadStringFromXml$2(InterfaceNode,"Programmer");
+      $with.Added = pas.uXmlUtils.ReadStringFromXml$2(InterfaceNode,"Added");
+      $with.Link = pas.uXmlUtils.ReadMultiStringFromXml(InterfaceNode,"Link",";");
+      Result = true;
+      return Result;
+    };
+    this.PuzzleLoadFromXml = function (Puzzle, XmlNode) {
+      var $Self = this;
+      var Result = false;
+      function UndoRepeat(XmlNode) {
+        var i = 0;
+        var n = 0;
+        n = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Repeat",1);
+        for (var $l = 0, $end = n - 1; $l <= $end; $l++) {
+          i = $l;
+          if (!Puzzle.Undo(false)) return;
+        };
+      };
+      function Split(XmlNode) {
+        var AxisNo = 0;
+        var FromPlane = 0;
+        var PlaneX = pas.uPlane.TPlane.$new();
+        var Color1 = 0;
+        var Color2 = 0;
+        var InvisibleEdges1 = 0;
+        var InvisibleEdges2 = 0;
+        AxisNo = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Axis",-1);
+        FromPlane = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"From",-1) - 1;
+        Color1 = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode,"Color1",-1);
+        Color2 = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode,"Color2",-1);
+        InvisibleEdges1 = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"InvisibleEdges1",0);
+        InvisibleEdges2 = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"InvisibleEdges2",0);
+        if ((AxisNo !== -1) && (FromPlane !== -1)) {
+          pas.uPuzzleUtils.TPuzzleUtils.SplitByPlane(Puzzle,pas.uPlane.TPlane.$clone(Puzzle.FAxes.GetItem(AxisNo).GetLayerPlaneTo(FromPlane)),Color1,Color2,InvisibleEdges1,InvisibleEdges2)}
+         else {
+          if ($Self.PlaneLoadFromXml(PlaneX,XmlNode.FindNode("Plane"))) pas.uPuzzleUtils.TPuzzleUtils.SplitByPlane(Puzzle,pas.uPlane.TPlane.$clone(PlaneX),Color1,Color2,InvisibleEdges1,InvisibleEdges2);
+        };
+      };
+      function Cut(XmlNode) {
+        var AxisNo = 0;
+        var FromPlane = 0;
+        var ToPlane = 0;
+        var PlaneX = pas.uPlane.TPlane.$new();
+        var Color = 0;
+        var InvisibleEdges = 0;
+        AxisNo = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Axis",-1);
+        InvisibleEdges = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"InvisibleEdges",0);
+        if (AxisNo !== -1) {
+          FromPlane = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"From",-1) - 1;
+          ToPlane = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"To",-1) - 1;
+          Color = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode,"Color",-1);
+          if (FromPlane > -1) pas.uPuzzleUtils.TPuzzleUtils.CutByPlane(Puzzle,pas.uPlane.TPlane.$clone(Puzzle.FAxes.GetItem(AxisNo).GetLayerPlaneTo(FromPlane)),Color,InvisibleEdges);
+          if (ToPlane !== -2) {
+            PlaneX.$assign(Puzzle.FAxes.GetItem(AxisNo).GetLayerPlaneTo(ToPlane));
+            PlaneX.TurnRound();
+            pas.uPuzzleUtils.TPuzzleUtils.CutByPlane(Puzzle,pas.uPlane.TPlane.$clone(PlaneX),Color,InvisibleEdges);
+          };
+        } else {
+          if ($Self.PlaneLoadFromXml(PlaneX,XmlNode.FindNode("Plane"))) {
+            Color = pas.uXmlUtils.ReadColorExpressionFromXml(XmlNode,"Color",-1);
+            pas.uPuzzleUtils.TPuzzleUtils.CutByPlane(Puzzle,pas.uPlane.TPlane.$clone(PlaneX),Color,InvisibleEdges);
+          };
+        };
+      };
+      function Hide(XmlNode) {
+        var AxisNo = 0;
+        var FromLayer = 0;
+        var ToLayer = 0;
+        var Layer = 0;
+        var iFrom = 0;
+        var iTo = 0;
+        var PlaneX = pas.uPlane.TPlane.$new();
+        var hp = 0;
+        var i = 0;
+        var j = 0;
+        var Layers = [];
+        var sLayers = "";
+        AxisNo = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Axis",-1);
+        if (AxisNo !== -1) {
+          FromLayer = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"From",-1);
+          ToLayer = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"To",-1);
+          Layer = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Layer",-1);
+          if ((FromLayer > -1) && (ToLayer === -1) && (Layer === -1)) {
+            ToLayer = Puzzle.FAxes.GetItem(AxisNo).Layers.FLength - 1}
+           else if ((FromLayer === -1) && (ToLayer > -1) && (Layer === -1)) {
+            FromLayer = 0}
+           else if (((FromLayer === -1) || (ToLayer === -1)) && (Layer !== -1)) {
+            FromLayer = Layer;
+            ToLayer = Layer;
+          };
+          for (var $l = 0, $end = Puzzle.FParts.FLength - 1; $l <= $end; $l++) {
+            i = $l;
+            Puzzle.GetPartPosition(AxisNo,i,{get: function () {
+                return iFrom;
+              }, set: function (v) {
+                iFrom = v;
+              }},{get: function () {
+                return iTo;
+              }, set: function (v) {
+                iTo = v;
+              }});
+            if ((iFrom >= FromLayer) && (iTo <= ToLayer)) Puzzle.FParts.GetItem(i).FVisible = false;
+          };
+          sLayers = pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"Layers");
+          if (sLayers !== "") {
+            Layers = rtl.arraySetLength(Layers,false,Puzzle.FAxes.GetItem(AxisNo).Layers.FLength);
+            $Self.DecodeLayers(sLayers,{get: function () {
+                return Layers;
+              }, set: function (v) {
+                Layers = v;
+              }});
+            for (var $l1 = 0, $end1 = Puzzle.FParts.FLength - 1; $l1 <= $end1; $l1++) {
+              i = $l1;
+              Puzzle.GetPartPosition(AxisNo,i,{get: function () {
+                  return iFrom;
+                }, set: function (v) {
+                  iFrom = v;
+                }},{get: function () {
+                  return iTo;
+                }, set: function (v) {
+                  iTo = v;
+                }});
+              for (var $l2 = iFrom, $end2 = iTo; $l2 <= $end2; $l2++) {
+                j = $l2;
+                if (Layers[j]) Puzzle.FParts.GetItem(i).FVisible = false;
+              };
+            };
+          };
+        } else {
+          if ($Self.PlaneLoadFromXml(PlaneX,XmlNode.FindNode("Plane"))) {
+            for (var $l3 = 0, $end3 = Puzzle.FParts.FLength - 1; $l3 <= $end3; $l3++) {
+              i = $l3;
+              hp = Puzzle.FParts.GetItem(i).HalfPlane(PlaneX);
+              if (hp === pas.uGeometryUtils.THalfOfPlane.hopInside) Puzzle.FParts.GetItem(i).FVisible = false;
+            };
+          };
+        };
+      };
+      function HideContaining(XmlNode) {
+        var Vector = pas.uVector.TVector.$new();
+        var Vectors = null;
+        var Part = null;
+        Vectors = pas["Generics.Collections"].TList$G7.$create("Create$1");
+        try {
+          $Self.GetVectorsFromString(pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"Vectors"),Vectors);
+          $Self.GetVectorsFromString(pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"Vector"),Vectors);
+          var $in = Puzzle.FParts.GetEnumerator$1();
+          try {
+            while ($in.MoveNext()) {
+              Part = $in.DoGetCurrent();
+              if (Part.FVisible) {
+                var $in1 = Vectors.GetEnumerator$1();
+                try {
+                  while ($in1.MoveNext()) {
+                    Vector = $in1.DoGetCurrent();
+                    if (Part.Contains(Vector)) {
+                      Part.FVisible = false;
+                      break;
+                    };
+                  }
+                } finally {
+                  $in1 = rtl.freeLoc($in1)
+                };
+              };
+            }
+          } finally {
+            $in = rtl.freeLoc($in)
+          };
+        } finally {
+          Vectors = rtl.freeLoc(Vectors);
+        };
+      };
+      function RemoveAllVisible() {
+        var Part = null;
+        var i = 0;
+        for (var $l = Puzzle.FParts.FLength - 1; $l >= 0; $l--) {
+          i = $l;
+          Part = Puzzle.FParts.GetItem(i);
+          if (Part.FVisible) {
+            Part = rtl.freeLoc(Part);
+            Puzzle.FParts.Delete(i);
+            Puzzle.PositionsInvalidate();
+          };
+        };
+      };
+      function RemoveContaining(XmlNode) {
+        var Vector = pas.uVector.TVector.$new();
+        var Vectors = null;
+        var Part = null;
+        var i = 0;
+        Vectors = pas["Generics.Collections"].TList$G7.$create("Create$1");
+        try {
+          $Self.GetVectorsFromString(pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"Vectors"),Vectors);
+          $Self.GetVectorsFromString(pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"Vector"),Vectors);
+          for (var $l = Puzzle.FParts.FLength - 1; $l >= 0; $l--) {
+            i = $l;
+            Part = Puzzle.FParts.GetItem(i);
+            if (Part.FVisible) {
+              var $in = Vectors.GetEnumerator$1();
+              try {
+                while ($in.MoveNext()) {
+                  Vector = $in.DoGetCurrent();
+                  if (Part.Contains(Vector)) {
+                    Part = rtl.freeLoc(Part);
+                    Puzzle.FParts.Delete(i);
+                    Puzzle.PositionsInvalidate();
+                    break;
+                  };
+                }
+              } finally {
+                $in = rtl.freeLoc($in)
+              };
+            };
+          };
+        } finally {
+          Vectors = rtl.freeLoc(Vectors);
+        };
+      };
+      function SetSpike(XmlNode) {
+        var Vector = pas.uVector.TVector.$new();
+        var Vectors = null;
+        var Level = 0;
+        var Face = null;
+        Vectors = pas["Generics.Collections"].TList$G7.$create("Create$1");
+        try {
+          Level = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Level",0);
+          if (Level !== 0) {
+            $Self.GetVectorsFromString(pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"Near"),Vectors);
+            var $in = Vectors.GetEnumerator$1();
+            try {
+              while ($in.MoveNext()) {
+                Vector = $in.DoGetCurrent();
+                Face = pas.uPuzzleUtils.TPuzzleUtils.GetNearestVisibleFace(Puzzle,pas.uVector.TVector.$clone(Vector));
+                if (Face !== null) Face.SetSpike(Level);
+              }
+            } finally {
+              $in = rtl.freeLoc($in)
+            };
+          };
+        } finally {
+          Vectors = rtl.freeLoc(Vectors);
+        };
+      };
+      function LoadProcedures(XmlNode) {
+        var ProcName = "";
+        if (XmlNode === null) return;
+        pas.uXmlUtils.ReadStringFromXml(XmlNode,"CheckSolved",{get: function () {
+            return ProcName;
+          }, set: function (v) {
+            ProcName = v;
+          }},"");
+        if ($impl.XmlSameText(ProcName,"EachColorHasSameOrOppositeDirection")) {
+          Puzzle.FCheckSolvedProc = pas.uPuzzle.TCheckSolvedProc.cspEachColorHasSameOrOppositeDirection}
+         else if ($impl.XmlSameText(pas.System.Copy(ProcName,1,17),"CountUniquePlanes")) {
+          Puzzle.FCheckSolvedProc = pas.uPuzzle.TCheckSolvedProc.cspCountUniquePlanes;
+          pas.uUtils.TUtils.Parse({get: function () {
+              return ProcName;
+            }, set: function (v) {
+              ProcName = v;
+            }},"=");
+          Puzzle.FSolvedStates.UniquePlanes = pas.uUtils.TUtils.ParseInt({get: function () {
+              return ProcName;
+            }, set: function (v) {
+              ProcName = v;
+            }});
+        } else if ($impl.XmlSameText(ProcName,"EachFaceConsistsOfDifferentColors")) {
+          Puzzle.FCheckSolvedProc = pas.uPuzzle.TCheckSolvedProc.cspEachFaceConsistsOfDifferentColors}
+         else if ($impl.XmlSameText(ProcName,"EachRowColConsistsOfDifferentColors")) {
+          Puzzle.FCheckSolvedProc = pas.uPuzzle.TCheckSolvedProc.cspEachRowColConsistsOfDifferentColors}
+         else if ($impl.XmlSameText(ProcName,"EachRowColDiagConsistsOfDifferentColors")) {
+          Puzzle.FCheckSolvedProc = pas.uPuzzle.TCheckSolvedProc.cspEachRowColDiagConsistsOfDifferentColors}
+         else if ($impl.XmlSameText(ProcName,"CheckSavedStates")) {
+          Puzzle.FCheckSolvedProc = pas.uPuzzle.TCheckSolvedProc.cspCheckSavedStates}
+         else if ($impl.XmlSameText(ProcName,"EachPlaneHasOneColor")) {
+          Puzzle.FCheckSolvedProc = pas.uPuzzle.TCheckSolvedProc.cspEachPlaneHasOneColor}
+         else if ($impl.XmlSameText(pas.System.Copy(ProcName,1,44),"EachColorHasSameDirectionOrCountUniquePlanes")) {
+          Puzzle.FCheckSolvedProc = pas.uPuzzle.TCheckSolvedProc.cspEachColorHasSameDirectionOrCountUniquePlanes;
+          pas.uUtils.TUtils.Parse({get: function () {
+              return ProcName;
+            }, set: function (v) {
+              ProcName = v;
+            }},"=");
+          Puzzle.FSolvedStates.UniquePlanes = pas.uUtils.TUtils.ParseInt({get: function () {
+              return ProcName;
+            }, set: function (v) {
+              ProcName = v;
+            }});
+        } else if ($impl.XmlSameText(ProcName,"AdjoiningFacesHaveSameColors")) {
+          Puzzle.FCheckSolvedProc = pas.uPuzzle.TCheckSolvedProc.cspAdjoiningFacesHaveSameColors}
+         else Puzzle.FCheckSolvedProc = pas.uPuzzle.TCheckSolvedProc.cspEachColorHasSameDirection;
+      };
+      function LoadTextures(XmlNode) {
+        var i = 0;
+        var XmlSubNode = null;
+        var S = "";
+        var Texture = null;
+        for (var $l = 0, $end = XmlNode.GetChildNodes().Count() - 1; $l <= $end; $l++) {
+          i = $l;
+          XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
+          S = XmlSubNode.GetNodeName();
+          if (S === "Texture") {
+            Texture = pas.uTexture.TTexture.$create("Create$1");
+            $Self.TextureLoadFromXml(Texture,XmlSubNode);
+            Puzzle.FTextures.Add(Texture);
+          };
+        };
+      };
+      function FindByName(Name) {
+        var Result = 0;
+        var i = 0;
+        Result = -1;
+        for (var $l = 0, $end = Puzzle.FTextures.FLength - 1; $l <= $end; $l++) {
+          i = $l;
+          if ($impl.XmlSameText(Name,Puzzle.FTextures.GetItem(i).Name)) {
+            Result = i;
+            return Result;
+          };
+        };
+        return Result;
+      };
+      function SetTextures(XmlNode) {
+        var i = 0;
+        var TextureId = 0;
+        var iPart = 0;
+        var iFace = 0;
+        var S = "";
+        var SP = "";
+        var sl = null;
+        var Face = null;
+        var Part = null;
+        sl = pas.Classes.TStringList.$create("Create$1");
+        S = XmlNode.GetTextContent();
+        sl.SetTextStr(S);
+        Result = false;
+        if (sl.GetCount() !== 0) {
+          for (var $l = sl.GetCount() - 1; $l >= 0; $l--) {
+            i = $l;
+            if (($impl.XmlTrim(sl.Get(i)) === "") || (pas.System.Copy($impl.XmlTrim(sl.Get(i)),1,1) === ";")) sl.Delete(i);
+          };
+          for (var $l1 = 0, $end = sl.GetCount() - 1; $l1 <= $end; $l1++) {
+            i = $l1;
+            S = $impl.XmlTrim(sl.Get(i));
+            SP = $impl.XmlTrim(pas.uUtils.TUtils.Parse({get: function () {
+                return S;
+              }, set: function (v) {
+                S = v;
+              }},"="));
+            TextureId = FindByName(SP);
+            if (TextureId !== -1) while ($impl.XmlTrim(S) !== "") {
+              iPart = pas.uUtils.TUtils.ParseInt({get: function () {
+                  return S;
+                }, set: function (v) {
+                  S = v;
+                }});
+              if ((iPart < 0) || (iPart >= Puzzle.FParts.FLength)) continue;
+              Part = Puzzle.FParts.GetItem(iPart);
+              if (Part === null) continue;
+              iFace = pas.uUtils.TUtils.ParseInt({get: function () {
+                  return S;
+                }, set: function (v) {
+                  S = v;
+                }});
+              if ((iFace < 0) || (iFace >= Part.FFaces.FLength)) continue;
+              Face = Part.FFaces.GetItem(iFace);
+              if (Face === null) continue;
+              Face.Rotate(pas.uUtils.TUtils.ParseInt({get: function () {
+                  return S;
+                }, set: function (v) {
+                  S = v;
+                }}));
+              Face.TextureId = TextureId;
+            };
+          };
+        };
+        sl = rtl.freeLoc(sl);
+      };
+      function LoadFrom(XmlNode) {
+        var Result = false;
+        var XmlDoc = null;
+        var S = "";
+        var AttrName = "";
+        var i = 0;
+        for (var $l = 0, $end = XmlNode.GetAttributes().Length() - 1; $l <= $end; $l++) {
+          i = $l;
+          AttrName = XmlNode.GetAttributes().GetItem(i).GetNodeName();
+          if (AttrName !== "File") pas.uScript.ExecuteScript(AttrName + ":=" + XmlNode.GetAttribute(AttrName));
+        };
+        pas.uXmlUtils.ReadStringFromXml(XmlNode,"File",{get: function () {
+            return S;
+          }, set: function (v) {
+            S = v;
+          }},"");
+        S = $impl.XmlTrim(S);
+        Result = false;
+        if (Result) {
+          LoadFigure(XmlDoc.GetDocumentElement());
+        };
+        return Result;
+      };
+      function ExecMacro(XmlNode) {
+        var i = 0;
+        var k = 0;
+        var n = 0;
+        var SpacePos = 0;
+        var MacroName = "";
+        var MacroText = "";
+        var AttrName = "";
+        MacroText = $impl.XmlTrim(XmlNode.GetAttribute("MacroName"));
+        n = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Repeat",1);
+        for (var $l = 0, $end = XmlNode.GetAttributes().Length() - 1; $l <= $end; $l++) {
+          i = $l;
+          AttrName = XmlNode.GetAttributes().GetItem(i).GetNodeName();
+          if ((AttrName !== "MacroName") && (AttrName !== "Repeat")) pas.uScript.ExecuteScript(AttrName + ":=" + XmlNode.GetAttribute(AttrName));
+        };
+        for (var $l1 = 0, $end1 = n - 1; $l1 <= $end1; $l1++) {
+          k = $l1;
+          while (MacroText !== "") {
+            MacroText = $impl.XmlTrim(MacroText);
+            if (MacroText === "") break;
+            SpacePos = pas.System.Pos(" ",MacroText);
+            if (SpacePos > 0) {
+              MacroName = pas.System.Copy(MacroText,1,SpacePos - 1);
+              pas.System.Delete({get: function () {
+                  return MacroText;
+                }, set: function (v) {
+                  MacroText = v;
+                }},1,SpacePos);
+            } else {
+              MacroName = MacroText;
+              MacroText = "";
+            };
+            for (var $l2 = $Self.lMacros.FLength - 1; $l2 >= 0; $l2--) {
+              i = $l2;
+              XmlNode = $Self.lMacros.GetItem(i);
+              if ($impl.XmlSameText(MacroName,$impl.XmlTrim(XmlNode.GetAttribute("Name")))) {
+                LoadFigure(XmlNode);
+                break;
+              };
+            };
+          };
+        };
+      };
+      function Connect(XmlNode) {
+        function ParseInt(S) {
+          var Result = 0;
+          Result = $impl.XmlStrToIntDef($impl.XmlTrim(pas.uUtils.TUtils.Parse(S,";")),-1);
+          return Result;
+        };
+        var AxisNo = 0;
+        var Layer1 = 0;
+        var Layer2 = 0;
+        var i = 0;
+        var SLayers = "";
+        AxisNo = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Axis",-1);
+        SLayers = XmlNode.GetAttribute("Layers");
+        Layer1 = ParseInt({get: function () {
+            return SLayers;
+          }, set: function (v) {
+            SLayers = v;
+          }});
+        Layer2 = ParseInt({get: function () {
+            return SLayers;
+          }, set: function (v) {
+            SLayers = v;
+          }});
+        while ((Layer1 !== -1) && (Layer2 !== -1)) {
+          if (AxisNo >= 0) {
+            Puzzle.FAxes.GetItem(AxisNo).ConnectLayers(Layer1,Layer2)}
+           else for (var $l = 0, $end = Puzzle.FAxes.FLength - 1; $l <= $end; $l++) {
+            i = $l;
+            Puzzle.FAxes.GetItem(i).ConnectLayers(Layer1,Layer2);
+          };
+          Layer1 = Layer2;
+          Layer2 = ParseInt({get: function () {
+              return SLayers;
+            }, set: function (v) {
+              SLayers = v;
+            }});
+        };
+      };
+      function LoadFigure(XmlNode) {
+        var i = 0;
+        var XmlSubNode = null;
+        var S = "";
+        var Script = "";
+        var Part = null;
+        var SolvedState = null;
+        for (var $l = 0, $end = XmlNode.GetChildNodes().Count() - 1; $l <= $end; $l++) {
+          i = $l;
+          XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
+          S = XmlSubNode.GetNodeName();
+          if (S === "LoadFrom") {
+            LoadFrom(XmlSubNode);
+          } else if (S === "Part") {
+            Part = pas.uPart.TPart.$create("Create$1");
+            if ($Self.PartLoadFromXml(Part,XmlSubNode)) {
+              Puzzle.FParts.Add(Part);
+              Puzzle.PositionsInvalidate();
+            } else Part = rtl.freeLoc(Part);
+          } else if (S === "Macro") {
+            $Self.lMacros.Add(XmlSubNode)}
+           else if (S === "ExecMacro") {
+            ExecMacro(XmlSubNode);
+          } else if (S === "Circle") {
+            Part = pas.uPart.TPart.$create("Create$1");
+            if ($Self.PartLoadCircle(Part,XmlSubNode)) {
+              Puzzle.FParts.Add(Part);
+              Puzzle.PositionsInvalidate();
+            } else Part = rtl.freeLoc(Part);
+          } else if (S === "Cylinder") {
+            Part = pas.uPart.TPart.$create("Create$1");
+            if ($Self.PartLoadCylinder(Part,XmlSubNode)) {
+              Puzzle.FParts.Add(Part);
+              Puzzle.PositionsInvalidate();
+            } else Part = rtl.freeLoc(Part);
+          } else if (S === "Script") {
+            pas.uXmlUtils.ReadStringFromXml(XmlSubNode,"",{get: function () {
+                return Script;
+              }, set: function (v) {
+                Script = v;
+              }},"");
+            pas.uScript.ExecuteScript(Script);
+          } else if (S === "SplitByAxes") {
+            pas.uPuzzleUtils.TPuzzleUtils.SplitByAxes(Puzzle)}
+           else if (S === "Split") {
+            Split(XmlSubNode)}
+           else if (S === "Cut") {
+            Cut(XmlSubNode)}
+           else if (S === "Transfer") {
+            $Self.Transfer(Puzzle,XmlSubNode)}
+           else if (S === "Turn") {
+            $Self.Turn(Puzzle,XmlSubNode)}
+           else if (S === "Undo") {
+            UndoRepeat(XmlSubNode)}
+           else if (S === "Hide") {
+            Hide(XmlSubNode)}
+           else if (S === "HideAll") {
+            pas.uPuzzleUtils.TPuzzleUtils.SetAllInvisible(Puzzle)}
+           else if (S === "HideContaining") {
+            HideContaining(XmlSubNode)}
+           else if (S === "SetSpike") {
+            SetSpike(XmlSubNode)}
+           else if (S === "ShowAll") {
+            pas.uPuzzleUtils.TPuzzleUtils.SetAllVisible(Puzzle)}
+           else if (S === "InvertVisibility") {
+            pas.uPuzzleUtils.TPuzzleUtils.InvertVisibility(Puzzle)}
+           else if (S === "RemoveAllVisible") {
+            RemoveAllVisible()}
+           else if (S === "RemoveGrayParts") {
+            pas.uPuzzleUtils.TPuzzleUtils.RemoveGrayParts(Puzzle)}
+           else if (S === "RemoveContaining") {
+            RemoveContaining(XmlSubNode)}
+           else if (S === "Connect") {
+            Connect(XmlSubNode)}
+           else if (S === "SaveSolvedState") {
+            SolvedState = pas.uSolvedState.TSolvedState.$create("Create$1");
+            SolvedState.CalcFromPuzzle(Puzzle);
+            Puzzle.FSolvedStates.FSolvedStates.Add(SolvedState);
+          };
+        };
+      };
+      function LoadGraphicsOptions(XmlNode) {
+      };
+      var i = 0;
+      var S = "";
+      var XmlSubNode = null;
+      Result = false;
+      $mod.TXmlReadWrite.lMacros = pas["Generics.Collections"].TList$G19.$create("Create$1");
+      try {
+        pas.uScript.Calc.ClearVars();
+        pas.uScript.Calc.ClearProcs();
+        pas.uScript.Calc.DefineConsts();
+        pas.uScript.ExecuteScript(pas.uUtils.TSettings.PreScript);
+        if (!this.PuzzleLoadHeaderFromXml(Puzzle,XmlNode)) return Result;
+        Puzzle.BeforeLoadFromXmlEvent(XmlNode);
+        for (var $l = 0, $end = XmlNode.GetChildNodes().Count() - 1; $l <= $end; $l++) {
+          i = $l;
+          XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
+          S = XmlSubNode.GetNodeName();
+          if (S === "Script") {
+            pas.uScript.ExecuteScript(XmlSubNode.GetTextContent())}
+           else if (S === "Axes") {
+            this.AxesLoadFromXml(Puzzle.FAxes,XmlSubNode)}
+           else if (S === "Figure") {
+            LoadFigure(XmlSubNode)}
+           else if (S === "Macros") {
+            this.MacrosLoadFromXml(Puzzle.Macros,XmlSubNode)}
+           else if (S === "Procedures") {
+            LoadProcedures(XmlSubNode)}
+           else if (S === "GraphicsOptions") {
+            LoadGraphicsOptions(XmlSubNode)}
+           else if (S === "Textures") {
+            LoadTextures(XmlSubNode)}
+           else if (S === "SetTextures") {
+            SetTextures(XmlSubNode)}
+           else if (S === "Undo") this.TurnsLoadFromXml(Puzzle,Puzzle.UndoStack,XmlSubNode);
+        };
+        Puzzle.AfterLoadFromXmlEvent(XmlNode);
+      } finally {
+        rtl.free(this,"lMacros");
+        $mod.TXmlReadWrite.lMacros = null;
+      };
+      Result = true;
+      return Result;
+    };
+    this.MacroLoadFromXml = function (Macro, XmlNode) {
+      var Result = false;
+      Macro.Name = XmlNode.GetAttribute("Name");
+      Macro.Description = XmlNode.GetAttribute("Description");
+      Macro.Sequence = XmlNode.GetAttribute("Sequence");
+      Result = true;
+      return Result;
+    };
+    this.MacrosLoadFromXml = function (Macros, XmlNode) {
+      var Result = false;
+      var i = 0;
+      var Macro = null;
+      var XmlSubNode = null;
+      var S = "";
+      for (var $l = 0, $end = XmlNode.GetChildNodes().Count() - 1; $l <= $end; $l++) {
+        i = $l;
+        XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
+        S = XmlSubNode.GetNodeName();
+        if (S === "Macro") {
+          Macro = pas.uMacro.TMacro.$create("Create");
+          if (this.MacroLoadFromXml(Macro,XmlSubNode) && (XmlSubNode.GetAttribute("Public") === "1")) {
+            Macros.Add(Macro)}
+           else Macro = rtl.freeLoc(Macro);
+        };
+      };
+      Result = true;
+      return Result;
+    };
+    this.TextureLoadFromXml = function (Texture, XmlNode) {
+      var Result = false;
+      Texture.Name = $impl.XmlTrim(XmlNode.GetAttribute("Name"));
+      Texture.FileName = $impl.XmlTrim(XmlNode.GetAttribute("File"));
+      Result = true;
+      return Result;
+    };
+    this.TurnLoadFromXml = function (Puzzle, Turn, XmlNode) {
+      var Result = false;
+      var S = "";
+      Turn.AxisNo = pas.uXmlUtils.ReadIntExpressionFromXml(XmlNode,"Axis",0);
+      Turn.Layers = rtl.arraySetLength(Turn.Layers,false,Puzzle.FAxes.GetItem(Turn.AxisNo).Layers.FLength);
+      S = pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"Layers");
+      this.DecodeLayers(S,{p: Turn, get: function () {
+          return this.p.Layers;
+        }, set: function (v) {
+          this.p.Layers = v;
+        }});
+      S = pas.uXmlUtils.ReadStringFromXml$2(XmlNode,"type");
+      if ((S === "") || $impl.XmlSameText(S,"LayerTurn")) {
+        Turn.typ = pas.uTurn.TTurningType.ttyLayerTurn;
+        Turn.Angle = pas.uXmlUtils.ReadDoubleExpressionFromXml(XmlNode,"Angle");
+      } else if ($impl.XmlSameText(S,"PartsMove")) {
+        Turn.typ = pas.uTurn.TTurningType.ttyPartsMove;
+        Turn.Distance = pas.uXmlUtils.ReadDoubleExpressionFromXml(XmlNode,"Distance");
+      } else Turn.typ = pas.uTurn.TTurningType.ttyNone;
+      Result = true;
+      return Result;
+    };
+    this.TurnsLoadFromXml = function (Puzzle, Turns, XmlNode) {
+      var Result = false;
+      var i = 0;
+      var Turn = null;
+      var XmlSubNode = null;
+      Result = false;
+      for (var $l = 0, $end = XmlNode.GetChildNodes().Count() - 1; $l <= $end; $l++) {
+        i = $l;
+        XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
+        if ($impl.XmlSameText(XmlSubNode.GetNodeName(),"Turn")) {
+          Turn = pas.uTurn.TTurn.$create("Create");
+          if (!this.TurnLoadFromXml(Puzzle,Turn,XmlSubNode)) {
+            Turn = rtl.freeLoc(Turn);
+            return Result;
+          };
+          Turns.Add(Turn);
+        };
+      };
+      Result = true;
+      return Result;
+    };
+  });
+  $mod.$implcode = function () {
+    $impl.XmlUpperCase = function (S) {
+      var Result = "";
+      var I = 0;
+      var C = 0;
+      Result = S;
+      for (var $l = 1, $end = Result.length; $l <= $end; $l++) {
+        I = $l;
+        C = Result.charCodeAt(I - 1);
+        if ((C >= 97) && (C <= 122)) Result = rtl.setCharAt(Result,I - 1,String.fromCharCode(C - 32));
+      };
+      return Result;
+    };
+    $impl.XmlSameText = function (A, B) {
+      var Result = false;
+      Result = $impl.XmlUpperCase(A) === $impl.XmlUpperCase(B);
+      return Result;
+    };
+    $impl.XmlStrToIntDef = function (S, Default) {
+      var Result = 0;
+      var I = 0;
+      var Sign = 0;
+      var N = 0;
+      if (S === "") return Default;
+      I = 1;
+      Sign = 1;
+      if (S.charAt(0) === "-") {
+        Sign = -1;
+        I = 2;
+      };
+      if (I > S.length) return Default;
+      N = 0;
+      while (I <= S.length) {
+        if ((S.charAt(I - 1) < "0") || (S.charAt(I - 1) > "9")) return Default;
+        N = ((N * 10) + S.charCodeAt(I - 1)) - 48;
+        I += 1;
+      };
+      Result = N * Sign;
+      return Result;
+    };
+    $impl.XmlStrToInt = function (S) {
+      var Result = 0;
+      var I = 0;
+      var Sign = 0;
+      var N = 0;
+      Result = 0;
+      I = 1;
+      Sign = 1;
+      if ((S.length > 0) && (S.charAt(0) === "-")) {
+        Sign = -1;
+        I = 2;
+      };
+      while (I <= S.length) {
+        N = S.charCodeAt(I - 1) - 48;
+        if ((N < 0) || (N > 9)) return 0;
+        Result = (Result * 10) + N;
+        I += 1;
+      };
+      Result = Result * Sign;
+      return Result;
+    };
+    $impl.XmlIntToStr = function (Value) {
+      var Result = "";
+      var N = 0;
+      if (Value === 0) return "0";
+      N = Value;
+      Result = "";
+      while (N > 0) {
+        Result = String.fromCharCode(48 + (N % 10)) + Result;
+        N = rtl.trunc(N / 10);
+      };
+      return Result;
+    };
+    $impl.XmlTrim = function (S) {
+      var Result = "";
+      var First = 0;
+      var Last = 0;
+      First = 1;
+      Last = S.length;
+      while ((First <= Last) && (S.charAt(First - 1) <= " ")) First += 1;
+      while ((Last >= First) && (S.charAt(Last - 1) <= " ")) Last -= 1;
+      Result = pas.System.Copy(S,First,(Last - First) + 1);
+      return Result;
+    };
+    $impl.CIRCLE_SECTORS = 64;
+  };
+},["uScript","uUtils","uXmlUtils","uMatrix","uSolvedState","uPuzzleUtils","uSelection","uGeometryUtils","JS","Variants","strutils","Classes","Math"]);
+rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWrite"],function () {
   "use strict";
   var $mod = this;
   this.StatusNode = null;
   this.API = null;
   this.CurrentPuzzle = null;
-  this.OriginalXml = "";
   this.SetStatus = function (S) {
     $mod.StatusNode = document.getElementById("engine-status");
     if ($mod.StatusNode !== null) $mod.StatusNode.textContent = S;
@@ -4614,7 +13272,7 @@ rtl.module("program",["System","JS","Web","SysUtils","uPuzzle"],function () {
   };
   this.APIGetVersion = function () {
     var Result = "";
-    Result = "0.1.0";
+    Result = "0.2.0";
     return Result;
   };
   this.APIIsPuzzleReady = function () {
@@ -4669,17 +13327,38 @@ rtl.module("program",["System","JS","Web","SysUtils","uPuzzle"],function () {
   this.APIOpenLibrary = function () {
     $mod.SetStatus("Puzzle library is not ported to the browser yet.");
   };
-  this.APILoadXML = function (XmlText) {
+  this.APILoadXML = function (XmlRoot) {
     var Result = false;
+    var NewPuzzle = null;
     Result = false;
-    if (pas.SysUtils.Trim(XmlText) === "") {
-      $mod.SetStatus("XML load failed: selected file is empty.")}
-     else $mod.SetStatus("XML received (" + pas.SysUtils.IntToStr(XmlText.length) + " characters), but XML-to-TPuzzle loading is not implemented yet.");
+    if (XmlRoot === null) {
+      $mod.SetStatus("XML load failed: no XML root element was supplied.");
+      return Result;
+    };
+    NewPuzzle = pas.uPuzzle.TPuzzle.$create("Create$1");
+    try {
+      NewPuzzle.DisableAnimation();
+      if (!pas.uXmlReadWrite.TXmlReadWrite.PuzzleLoadFromXml(NewPuzzle,pas.DOM.WrapDomNode(XmlRoot))) {
+        $mod.SetStatus("XML load failed: pCubes rejected the puzzle definition.");
+        return Result;
+      };
+      if ($mod.CurrentPuzzle !== null) rtl.free($mod,"CurrentPuzzle");
+      $mod.CurrentPuzzle = NewPuzzle;
+      NewPuzzle = null;
+      $mod.SetStatus('Loaded "' + $mod.CurrentPuzzle.Header.Name + '" from XML (' + pas.SysUtils.IntToStr($mod.CurrentPuzzle.FParts.FLength) + " parts, " + pas.SysUtils.IntToStr($mod.CurrentPuzzle.FAxes.FLength) + " axes).");
+      Result = true;
+    } catch ($e) {
+      if (pas.SysUtils.Exception.isPrototypeOf($e)) {
+        var E = $e;
+        $mod.SetStatus("XML load failed: " + E.fMessage);
+      } else throw $e
+    };
+    if (NewPuzzle !== null) NewPuzzle = rtl.freeLoc(NewPuzzle);
     return Result;
   };
   this.InstallBrowserAPI = function () {
     $mod.API = pas.JS.New([]);
-    $mod.API["version"] = "0.1.0";
+    $mod.API["version"] = "0.2.0";
     $mod.API["getStatus"] = $mod.APIGetStatus;
     $mod.API["getVersion"] = $mod.APIGetVersion;
     $mod.API["isPuzzleReady"] = $mod.APIIsPuzzleReady;
@@ -4695,7 +13374,6 @@ rtl.module("program",["System","JS","Web","SysUtils","uPuzzle"],function () {
   $mod.$main = function () {
     $mod.CurrentPuzzle = pas.uPuzzle.TPuzzle.$create("Create$1");
     $mod.CurrentPuzzle.DisableAnimation();
-    $mod.OriginalXml = "";
     $mod.InstallBrowserAPI();
     $mod.SetStatus("Pascal TPuzzle model instantiated. Load a puzzle definition to begin.");
   };
