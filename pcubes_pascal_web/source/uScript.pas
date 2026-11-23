@@ -2026,7 +2026,6 @@ var
   h: THandle;
   sOperator, CmdLine, Op, Lbl: String;
   s: String;
-  AnsiS: AnsiString;
   V: TVar;
 begin // PreProcess
   Index := 1;
