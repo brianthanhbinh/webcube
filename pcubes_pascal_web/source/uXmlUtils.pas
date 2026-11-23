@@ -218,7 +218,7 @@ begin // ReadColorExpressionFromXml
     ExecuteScript('Result := ' + Text);
 
     if Calc.VarByName('Result', V) then
-      Text := V.Value;
+      Text := JS.toString(V.Value);
   end;
 
   Result := TUtils.StrToColor(Text);
