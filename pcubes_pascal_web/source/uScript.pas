@@ -3375,7 +3375,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Tan(ScriptToFloat(Vars[0].Value));
+  Res.Value := Sin(ScriptToFloat(Vars[0].Value)) / Cos(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fTan
 
