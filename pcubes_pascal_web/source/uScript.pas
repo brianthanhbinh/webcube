@@ -540,11 +540,11 @@ begin
   ErrCode := errOK;
   IdleProc := nil;
   CallGlobalProc := nil;
-  { The browser XML loader also uses Calc.ClearVars/ClearProcs.
-    These dictionaries must exist in both native and Pas2JS builds. }
+  {$IFNDEF PAS2JS}
   VarList := TDictionary<String, Variant>.Create;
   FuncList := TDictionary<String, TFunc>.Create;
   ProcList := TDictionary<String, TProcedure>.Create;
+  {$ENDIF}
   LastString := '';
   LastParsed := '';
 
@@ -556,9 +556,11 @@ end; // Create
 
 destructor TScript.Destroy;
 begin
+  {$IFNDEF PAS2JS}
   VarList.Free;
   FuncList.Free;
   ProcList.Free;
+  {$ENDIF}
 end; // Destroy
 
 procedure TScript.Clear;
@@ -596,17 +598,23 @@ end; // Process
 
 procedure TScript.ClearVars;
 begin
+  {$IFNDEF PAS2JS}
   VarList.Clear;
+  {$ENDIF}
 end; // ClearVars
 
 procedure TScript.ClearProcs;
 begin
+  {$IFNDEF PAS2JS}
   ProcList.Clear;
+  {$ENDIF}
 end; // ClearVars
 
 procedure TScript.ClearFuncs;
 begin
+  {$IFNDEF PAS2JS}
   FuncList.Clear;
+  {$ENDIF}
 end; // ClearFuncs
 
 procedure TScript.DefineConsts;
