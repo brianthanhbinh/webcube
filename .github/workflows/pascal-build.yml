@@ -22,13 +22,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install Free Pascal tools and Pas2JS
+      - name: Install Free Pascal build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y fp-compiler-3.2.2 fp-utils-3.2.2
-          PAS2JS_BIN="$(command -v pas2js-3.2.2)"
-          sudo ln -sf "$PAS2JS_BIN" /usr/local/bin/pas2js
-          pas2js -iV
+          sudo apt-get install -y fp-compiler-3.2.2 fp-utils-3.2.2 make
 
       # Use the official GitHub mirror. The GitLab checkout recursively fetched
       # its compiler submodule and failed before the Pascal compile could start.
@@ -36,7 +33,11 @@ jobs:
         env:
           PAS2JS_RTL_COMMIT: 8cd10d88cc81868bce6f03f481b0bc83946d6ace
         run: |
-          git clone --depth 1 https://github.com/fpc/pas2js.git /tmp/pas2js-rtl
+          git clone --recurse-submodules --depth 1 https://github.com/fpc/pas2js.git /tmp/pas2js-rtl
+          test -f /tmp/pas2js-rtl/compiler/compiler/utils/pas2js/pas2js.pp || test -d /tmp/pas2js-rtl/compiler
+          make -C /tmp/pas2js-rtl all
+          sudo ln -sf /tmp/pas2js-rtl/bin/x86_64-linux/pas2js /usr/local/bin/pas2js
+          pas2js -iV
           test -f /tmp/pas2js-rtl/packages/rtl/system.pas
           mkdir -p /tmp/pas2js-rtl/packages/rtl
           curl --fail --silent --show-error --location \
