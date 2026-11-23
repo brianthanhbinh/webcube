@@ -2,24 +2,26 @@
 
 ## Browser architecture
 
-- `web/index.html` contains the page structure and loads the compiled Pascal runtime.
-- `web/style.css` contains the browser interface styling.
-- `web/app.js` handles browser events and calls the Pascal bridge.
-- `web/renderer.js` is the Canvas drawing layer. It accepts face geometry from Pascal in the form `{ faces: [{ vertices: [[x, y, z], ...], color: "#rrggbb" }] }`.
-- `web/pcubes_web.pas` remains the browser-facing Pascal entry point.
-- Puzzle rules, turns, scramble, undo, and redo remain in the original Pascal model.
+- `web/index.html`: page structure and runtime loading.
+- `web/style.css`: browser interface styling.
+- `web/app.js`: file loading, controls, and Pascal bridge calls.
+- `web/renderer.js`: Canvas projection and face drawing.
+- `web/pcubes_web.pas`: browser-facing Pascal API.
+- `source/`: original Pascal puzzle model and XML loader.
+
+Puzzle rules, turns, scramble, undo, and redo remain in the original Pascal model.
 
 ## Implemented
 
-- The browser UI, application controller, and Canvas renderer are now separate files.
-- The renderer has an empty-state view and a face-polygon drawing path for geometry supplied by the Pascal engine.
-- The HTML page loads the Pas2JS RTL, compiled Pascal program, and JavaScript application module separately.
+- Reproducible Pas2JS CI compilation and generated runtime asset commit.
+- Browser XML parsing and loading through `TXmlReadWrite.PuzzleLoadFromXml`.
+- Pascal geometry export for visible puzzle faces, vertices, and colors.
+- Canvas rendering of the exported geometry.
+- Pascal-engine scramble, undo, and redo controls.
+- Reset by reloading the last successfully loaded XML file.
 
-## Not complete yet
+## Remaining limitations
 
-- XML-to-`TPuzzle` loading is not implemented; the file picker currently passes text to a placeholder.
-- The Pascal bridge does not yet export render geometry, so the Canvas viewport currently displays its empty state.
-- The reset adapter and browser puzzle library are not implemented.
-- The browser build still needs a successful CI compile and browser runtime test.
-
-Do not treat the browser page as a complete working puzzle app yet.
+- The desktop puzzle library UI is not ported; users load a puzzle XML file.
+- Browser interaction for directly turning puzzle layers with the mouse/touch has not been implemented.
+- CI confirms compilation and generated assets. A real-browser end-to-end interaction test has not yet been added.
