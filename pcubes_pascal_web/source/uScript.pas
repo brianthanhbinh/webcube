@@ -490,28 +490,25 @@ var
   i: integer;
 begin
   i := VarType(v);
-  case i of
-    varEmpty: Result := 'Empty';
-    varNull: Result := 'Null';
-    varSmallint: Result := 'SmallInt';
-    varInteger: Result := 'Integer';
-    varSingle: Result := 'Single';
-    varDouble: Result := 'Double';
-    varCurrency: Result := 'Currency ';
-    varDate: Result := 'Date';
-    varOleStr: Result := 'OleStr';
-    varDispatch: Result := 'Dispatch';
-    varError: Result := 'Error';
-    varBoolean: Result := 'Boolean';
-    varVariant: Result := 'Variant';
-    varUnknown: Result := 'Unknown';
-    varByte: Result := 'Byte';
-    varString: Result := 'String';
-    varTypeMask: Result := 'TypeMask';
-    varArray: Result := 'Array';
-  else
-    Result := '';
-  end;
+  if i = varEmpty then Result := 'Empty'
+  else if i = varNull then Result := 'Null'
+  else if i = varSmallint then Result := 'SmallInt'
+  else if i = varInteger then Result := 'Integer'
+  else if i = varSingle then Result := 'Single'
+  else if i = varDouble then Result := 'Double'
+  else if i = varCurrency then Result := 'Currency'
+  else if i = varDate then Result := 'Date'
+  else if i = varOleStr then Result := 'OleStr'
+  else if i = varDispatch then Result := 'Dispatch'
+  else if i = varError then Result := 'Error'
+  else if i = varBoolean then Result := 'Boolean'
+  else if i = varVariant then Result := 'Variant'
+  else if i = varUnknown then Result := 'Unknown'
+  else if i = varByte then Result := 'Byte'
+  else if i = varString then Result := 'String'
+  else if i = varTypeMask then Result := 'TypeMask'
+  else if i = varArray then Result := 'Array'
+  else Result := '';
 end; // VarTypeName
 
 {------------------------------- TScript ------------------------------------}
