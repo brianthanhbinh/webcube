@@ -19,7 +19,7 @@ import { PuzzleRenderer } from "./renderer.js";
   }
 
   function addBuiltinCubeFigure(loadNode) {
-    const fileName = (loadNode.getAttribute("File") || "").replace(/\\\\/g, "/").toLowerCase();
+    const fileName = (loadNode.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
     if (!fileName.endsWith("figures/cube.xml") && fileName !== "cube.xml") {
       throw new Error('Missing external figure "' + loadNode.getAttribute("File") +
         '". This browser build currently includes Figures/Cube.xml only.');
