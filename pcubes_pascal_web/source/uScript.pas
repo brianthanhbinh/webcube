@@ -530,11 +530,9 @@ begin
   ErrCode := errOK;
   IdleProc := nil;
   CallGlobalProc := nil;
-  {$IFNDEF PAS2JS}
   VarList := TDictionary<String, Variant>.Create;
   FuncList := TDictionary<String, TFunc>.Create;
   ProcList := TDictionary<String, TProcedure>.Create;
-  {$ENDIF}
   LastString := '';
   LastParsed := '';
 
@@ -565,7 +563,7 @@ end; // Clear
 
 procedure TScript.SetIdleProc(P: Pointer);
 begin
-  IdleProc := P;
+  IdleProc := PIdleProc(P);
 end; // SetProcessProc
 
 procedure TScript.SetCallGlobalProc(P: TFunction);
