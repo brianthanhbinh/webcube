@@ -940,7 +940,7 @@ begin // AddCylinder
   FaceSide.SetEdgeVisibility(0, False);
   FaceSide.SetEdgeVisibility(2, False);
 
-  V := Top - Base;
+  V := VectorSubtract(Top, Base);
   Height := V.Abs;
   V.Normalize;
 
