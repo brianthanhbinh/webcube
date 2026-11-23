@@ -3750,6 +3750,7 @@ end; // fGetTickCount
 
 procedure TScript.SetFunctions;
 begin
+  {$IFNDEF PAS2JS}
   // String routines
   SetFunction('Val',            FuncValCompat);
   SetFunction('IntToStr',       FuncIntToStr);
@@ -3825,6 +3826,7 @@ begin
   SetFunction('Random', FuncRandom);
   SetFunction('GetTickCount', FuncGetTickCount);
   SetFunction('RequestNumbers', FuncRequestNumbers);
+  {$ENDIF}
 end; // SetFunctions
 
 procedure TScript.DisableInteractiveFunctions;
