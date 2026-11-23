@@ -57,17 +57,17 @@ var
   I, J: Integer;
 begin
   Result := new([]);
-  FacesArray := TJSArray.new;
+  FacesArray := TJSArray(TJSArray.new);
   if CurrentPuzzle <> nil then
     for Part in CurrentPuzzle.Parts do
       if Part.Visible then
         for Face in Part.Faces do
           if Face.GetVertexCount >= 3 then begin
             FaceObject := TJSObject.new;
-            VerticesArray := TJSArray.new;
+            VerticesArray := TJSArray(TJSArray.new);
             for I := 0 to Face.GetVertexCount - 1 do begin
               V := Face.GetVertex(I);
-              VertexArray := TJSArray.new;
+              VertexArray := TJSArray(TJSArray.new);
               VertexArray.push(V.X);
               VertexArray.push(V.Y);
               VertexArray.push(V.Z);
