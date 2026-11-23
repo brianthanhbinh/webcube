@@ -2406,7 +2406,11 @@ begin
   end;
 
   try
+    {$IFDEF PAS2JS}
+    ForFrom := Trunc(JS.toNumber(R.Value));
+    {$ELSE}
     ForFrom := R.Value;
+    {$ENDIF}
   except
     Error('Invalid loop variable value ', e, errTypeCast);
     Exit;
@@ -2427,7 +2431,11 @@ begin
   end;
 
   try
+    {$IFDEF PAS2JS}
+    ForTo := Trunc(JS.toNumber(R.Value));
+    {$ELSE}
     ForTo := R.Value;
+    {$ENDIF}
   except
     Error('Invalid loop variable value ', e, errTypeCast);
     Exit;
