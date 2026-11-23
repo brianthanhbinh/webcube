@@ -8,11 +8,21 @@ import { PuzzleRenderer } from "./renderer.js";
   const file = $("puzzle-file");
   const renderer = new PuzzleRenderer($("puzzle-canvas"));
   const controls = ["scramble", "undo", "redo", "reset", "library"];
+  let originalXmlText = "";
+
+  function parseXml(text) {
+    const xmlDocument = new DOMParser().parseFromString(text, "application/xml");
+    const parseError = xmlDocument.getElementsByTagName("parsererror")[0];
+    if (parseError) throw new Error(parseError.textContent || "Invalid XML.");
+    if (!xmlDocument.documentElement) throw new Error("XML has no root element.");
+    return xmlDocument;
+  }
 
   function updateModelInfo(api) {
     const model = api.getModelInfo();
-    info.textContent = `Pascal ${api.getVersion()} · model ${model.connected ? "connected" : "offline"} · ${model.parts} parts · ${model.axes} axes`;
+    info.textContent = `Pascal ${api.getVersion()} · model ${model.connected ? "connected" : "offline"} · ${model.parts} parts · ${model.axes} axes · undo ${model.undoCount} · redo ${model.redoCount}`;
     for (const id of controls) $(id).disabled = !model.ready;
+    $("load").disabled = false;
     if (typeof api.getRenderData === "function") renderer.setGeometry(api.getRenderData());
   }
 
@@ -20,16 +30,25 @@ import { PuzzleRenderer } from "./renderer.js";
     const api = window.pCubes;
     if (!api || typeof api[name] !== "function") {
       status.textContent = "Pascal API unavailable: " + name;
-      return;
+      return false;
     }
     try {
       const result = api[name](...args);
       if (typeof result === "string") status.textContent = result;
       else if (result === false) status.textContent = "Pascal could not complete this request.";
       updateModelInfo(api);
+      return result !== false;
     } catch (error) {
       status.textContent = "Pascal error: " + error.message;
+      return false;
     }
+  }
+
+  function loadXmlText(xmlText) {
+    const xmlDocument = parseXml(xmlText);
+    if (!call("loadXML", xmlDocument.documentElement)) return false;
+    originalXmlText = xmlText;
+    return true;
   }
 
   function start() {
@@ -51,8 +70,17 @@ import { PuzzleRenderer } from "./renderer.js";
   $("scramble").addEventListener("click", () => call("scramble"));
   $("undo").addEventListener("click", () => call("undo"));
   $("redo").addEventListener("click", () => call("redo"));
-  $("reset").addEventListener("click", () => call("reset"));
-  $("library").addEventListener("click", () => call("openLibrary"));
+  $("reset").addEventListener("click", () => {
+    if (!originalXmlText) {
+      status.textContent = "Load a puzzle XML file before using Reset.";
+      return;
+    }
+    try { loadXmlText(originalXmlText); }
+    catch (error) { status.textContent = "Reset failed: " + error.message; }
+  });
+  $("library").addEventListener("click", () => {
+    status.textContent = "The built-in library is not available in this browser build yet. Use Load puzzle XML.";
+  });
   $("load").addEventListener("click", () => file.click());
   file.addEventListener("change", async () => {
     const selected = file.files && file.files[0];
@@ -63,14 +91,8 @@ import { PuzzleRenderer } from "./renderer.js";
       const declaredEncoding = header.match(/<\?xml[^>]*encoding\s*=\s*["']([^"']+)["']/i);
       const encoding = declaredEncoding ? declaredEncoding[1] : "utf-8";
       let xmlText = new TextDecoder(encoding).decode(bytes);
-      // The file is already decoded to Unicode; the XML declaration must not
-      // ask the browser parser to reinterpret the original byte encoding.
       xmlText = xmlText.replace(/(<\?xml[^>]*?)\s+encoding\s*=\s*(["'])[^"']+\2/i, "$1");
-      const xmlDocument = new DOMParser().parseFromString(xmlText, "application/xml");
-      const parseError = xmlDocument.getElementsByTagName("parsererror")[0];
-      if (parseError) throw new Error(parseError.textContent || "Invalid XML.");
-      if (!xmlDocument.documentElement) throw new Error("XML has no root element.");
-      call("loadXML", xmlDocument.documentElement);
+      loadXmlText(xmlText);
     } catch (error) {
       status.textContent = "XML load failed: " + error.message;
     } finally {
