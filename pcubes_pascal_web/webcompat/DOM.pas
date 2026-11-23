@@ -52,12 +52,13 @@ type
     function GetNodeName: String;
     function GetNodeValue: String;
     function GetTextContent: String;
+    procedure SetTextContent(const AValue: String);
     property Attributes: TDomNamedNodeMap read GetAttributes;
     property ChildNodes: TDomNodeList read GetChildNodes;
     property ParentNode: TDomNode read GetParentNode;
     property NodeName: String read GetNodeName;
     property NodeValue: String read GetNodeValue;
-    property TextContent: String read GetTextContent;
+    property TextContent: String read GetTextContent write SetTextContent;
     property NativeNode: TJSNode read FNode;
   end;
 
@@ -200,6 +201,11 @@ end;
 function TDomNode.GetTextContent: String;
 begin
   Result := FNode.textContent;
+end;
+
+procedure TDomNode.SetTextContent(const AValue: String);
+begin
+  FNode.textContent := AValue;
 end;
 
 constructor TDomElement.Create(ANode: TJSElement);
