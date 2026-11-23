@@ -190,6 +190,15 @@ begin
   Result := Copy(S, First, Last - First + 1);
 end;
 
+function XmlExtractFilePath(const FileName: String): String;
+begin
+  {$IFDEF PAS2JS}
+  Result := '';
+  {$ELSE}
+  Result := SysUtils.ExtractFilePath(FileName);
+  {$ENDIF}
+end;
+
 function XmlFileExists(const FileName: String): Boolean;
 begin
   {$IFDEF PAS2JS}
@@ -1597,7 +1606,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
     {$ELSE}
     Result := Load(TUtils.GetStartDir + S);
     if not Result then
-      Result := Load(ExtractFilePath(Puzzle.Header.FileName) + S);
+      Result := Load(XmlExtractFilePath(Puzzle.Header.FileName) + S);
     {$ENDIF}
     if Result then begin
       LoadFigure(XmlDoc.DocumentElement);
