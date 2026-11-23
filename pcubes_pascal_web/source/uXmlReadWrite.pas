@@ -2277,7 +2277,7 @@ begin
       SBase := TDomElement(XmlNode).GetAttribute('BaseVector');
       if SBase <> '' then begin
         VS := GetVectorFromString(SBase);
-        Puzzle.Trans(TMatrix.GetMoveMatrix(-VS));
+        Puzzle.Trans(TMatrix.GetMoveMatrix(VectorNegate(VS)));
         Puzzle.Trans(TMatrix.GetRotateMatrix(V, Angle));
         Puzzle.Trans(TMatrix.GetMoveMatrix(VS));
       end else
