@@ -916,12 +916,12 @@ begin // AddCylinder
 
   // top and bottom
   for i := 0 to CIRCLE_SECTORS - 1 do begin
-    Vec := [x[i], y[i], 0];
+    Vec := Vector(x[i], y[i], 0);
     Part.Vertices.Add(Vec);
     FaceBottom.AddVector(Vec);
     FaceBottom.Rotate(-1);
 
-    Vec := [x[i], y[i], 1];
+    Vec := Vector(x[i], y[i], 1);
     Part.Vertices.Add(Vec);
     FaceTop.AddVector(Vec);
   end;
