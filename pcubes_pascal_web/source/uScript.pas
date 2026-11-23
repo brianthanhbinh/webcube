@@ -276,7 +276,7 @@ uses
 function ScriptToFloat(const V: Variant): Extended;
 begin
   {$IFDEF PAS2JS}
-  Result := JS.toNumber(V);
+  Result := StrToFloat(JS.toString(V));
   {$ELSE}
   Result := Extended(V);
   {$ENDIF}
