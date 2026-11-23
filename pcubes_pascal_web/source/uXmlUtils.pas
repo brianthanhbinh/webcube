@@ -84,13 +84,13 @@ begin
     Exit(False);
 
   if AttrName = '' then begin
-    Str := UTF8ToString(GetNodeText(XmlNode));
+    Str := XmlTextToString(GetNodeText(XmlNode));
     Exit(Str <> '');
   end;
 
   i := GetAttrIndex(XmlNode, AttrName);
   if i >= 0 then begin
-    Str := UTF8ToString(XmlNode.Attributes[i].NodeValue);
+    Str := XmlTextToString(XmlNode.Attributes[i].NodeValue);
     Exit(Str <> ''); // ?? Exit(True)
   end;
 
@@ -98,7 +98,7 @@ begin
   if XmlNode = nil then
     Exit(False);
 
-  Str := UTF8ToString(XmlNode.TextContent);
+  Str := XmlTextToString(XmlNode.TextContent);
   Result := Str <> '';
 end; // ReadStringFromXml
 
