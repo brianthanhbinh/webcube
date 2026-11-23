@@ -116,7 +116,7 @@ implementation
 
 uses
   uScript, uUtils, uXmlUtils, uMatrix, uSolvedState, uPuzzleUtils, uSelection, uGeometryUtils,
-  {$IFDEF PAS2JS} JS, Variants, {$ELSE} Variants, {$ENDIF} StrUtils, Classes, Math,
+  {$IFDEF PAS2JS} JS, Variants, {$ELSE} Variants, {$ENDIF} SysUtils, StrUtils, Classes, Math,
 {Unzip,} XmlRead, XMLWrite{, ZipUtils};
 
 function XmlUpperCase(const S: String): String;
