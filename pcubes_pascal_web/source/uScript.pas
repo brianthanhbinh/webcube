@@ -1196,7 +1196,11 @@ begin // GetIndex
       end;
 
       try
+        {$IFDEF PAS2JS}
+        i := Trunc(JS.toNumber(R.Value));
+        {$ELSE}
         i := R.Value;
+        {$ENDIF}
       except
         Error('Invalid index: ' + UnParse(ind, True), S, errTypeCast);
         Exit;
