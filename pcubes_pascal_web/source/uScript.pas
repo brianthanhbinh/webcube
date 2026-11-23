@@ -194,7 +194,7 @@ type
     function FuncStrToFloat(Vars: TList<TVar>; var Res: TVar): Boolean;
     function FuncStrToInt(Vars: TList<TVar>; var Res: TVar): Boolean;
     function FuncHexToInt(Vars: TList<TVar>; var Res: TVar): Boolean;
-    function FuncVal(Vars: TList<TVar>; var Res: TVar): Boolean;
+    function FuncValCompat(Vars: TList<TVar>; var Res: TVar): Boolean;
     function FuncCopy(Vars: TList<TVar>; var Res: TVar): Boolean;
     function FuncPos(Vars: TList<TVar>; var Res: TVar): Boolean;
     function FuncLength(Vars: TList<TVar>; var Res: TVar): Boolean;
@@ -2871,7 +2871,7 @@ begin
   Result := True;
 end; // fHexToInt
 
-function TScript.FuncVal(Vars: TList<TVar>; var Res: TVar): Boolean;
+function TScript.FuncValCompat(Vars: TList<TVar>; var Res: TVar): Boolean;
 var
   x: extended;
   i: integer;
@@ -3751,7 +3751,7 @@ end; // fGetTickCount
 procedure TScript.SetFunctions;
 begin
   // String routines
-  SetFunction('Val',            FuncVal);
+  SetFunction('Val',            FuncValCompat);
   SetFunction('IntToStr',       FuncIntToStr);
   SetFunction('StrToInt',       FuncStrToInt);
   SetFunction('FloatToStr',     FuncFloatToStr);
