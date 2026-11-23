@@ -119,6 +119,44 @@ uses
   {$IFDEF PAS2JS} JS, Variants, {$ELSE} Variants, {$ENDIF} StrUtils, Classes, Math,
 {Unzip,} XmlRead, XMLWrite{, ZipUtils};
 
+function XmlUpperCase(const S: String): String;
+var
+  I: Integer;
+  C: Integer;
+begin
+  Result := S;
+  for I := 1 to Length(Result) do begin
+    C := Ord(Result[I]);
+    if (C >= Ord('a')) and (C <= Ord('z')) then
+      Result[I] := Chr(C - 32);
+  end;
+end;
+
+function XmlSameText(const A, B: String): Boolean;
+begin
+  Result := XmlUpperCase(A) = XmlUpperCase(B);
+end;
+
+function XmlStrToInt(const S: String): Integer;
+var
+  I, Sign, N: Integer;
+begin
+  Result := 0;
+  I := 1;
+  Sign := 1;
+  if (Length(S) > 0) and (S[1] = '-') then begin
+    Sign := -1;
+    I := 2;
+  end;
+  while I <= Length(S) do begin
+    N := Ord(S[I]) - Ord('0');
+    if (N < 0) or (N > 9) then Exit(0);
+    Result := Result * 10 + N;
+    Inc(I);
+  end;
+  Result := Result * Sign;
+end;
+
 function XmlFloatToStr(Value: Extended): String;
 begin
   {$IFDEF PAS2JS}
@@ -272,7 +310,7 @@ var
   procedure InitDim(Dim: integer);
   begin
     isArray[Dim] := True;
-    ArrayName[Dim] := UpperCase(XmlTrim(TUtils.Parse(S, ';')));
+    ArrayName[Dim] := XmlUpperCase(XmlTrim(TUtils.Parse(S, ';')));
     isArray[Dim] := GetArrayValue(0, Dim);
     if not isArray[Dim] then
       Vec[Dim] := CalcExpression(ArrayName[Dim]);
@@ -805,7 +843,7 @@ begin
     if Length(MacroName) > 0 then
       for i := lMacros.Count - 1 downto 0 do begin
         MacroNode := lMacros[i];
-        if SameText(MacroName, XmlTrim(TDomElement(MacroNode).GetAttribute('Name'))) then begin
+        if XmlSameText(MacroName, XmlTrim(TDomElement(MacroNode).GetAttribute('Name'))) then begin
           MacroNodes.Add(MacroNode);
           break;
         end;
@@ -1097,7 +1135,7 @@ end; // PartLoadCircle
 
 class function TXmlReadWrite.PuzzleCheckVersionFromXml(Puzzle: TPuzzle; XmlNode: TDomNode): Boolean;
 begin
-  Result := StrToInt(TDomElement(XmlNode).GetAttribute('Data_Version')) = XML_VERSION;
+  Result := XmlStrToInt(TDomElement(XmlNode).GetAttribute('Data_Version')) = XML_VERSION;
 //  if not Result then
 //    ShowMessage('Wrong version of file ' + FileName); // TODO :
 end; // PuzzleCheckVersionFromXml
@@ -1416,27 +1454,27 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
       exit;
 
     ReadStringFromXml(XmlNode, 'CheckSolved', ProcName, '');
-    if SameText(ProcName, 'EachColorHasSameOrOppositeDirection') then
+    if XmlSameText(ProcName, 'EachColorHasSameOrOppositeDirection') then
       Puzzle.CheckSolvedProc := cspEachColorHasSameOrOppositeDirection
-    else if SameText(copy(ProcName, 1, 17), 'CountUniquePlanes') then begin
+    else if XmlSameText(copy(ProcName, 1, 17), 'CountUniquePlanes') then begin
       Puzzle.CheckSolvedProc := cspCountUniquePlanes;
       TUtils.Parse(ProcName, '=');
       Puzzle.SolvedStates.UniquePlanes := TUtils.ParseInt(ProcName);
-    end else if SameText(ProcName, 'EachFaceConsistsOfDifferentColors') then
+    end else if XmlSameText(ProcName, 'EachFaceConsistsOfDifferentColors') then
       Puzzle.CheckSolvedProc := cspEachFaceConsistsOfDifferentColors
-    else if SameText(ProcName, 'EachRowColConsistsOfDifferentColors') then
+    else if XmlSameText(ProcName, 'EachRowColConsistsOfDifferentColors') then
       Puzzle.CheckSolvedProc := cspEachRowColConsistsOfDifferentColors
-    else if SameText(ProcName, 'EachRowColDiagConsistsOfDifferentColors') then
+    else if XmlSameText(ProcName, 'EachRowColDiagConsistsOfDifferentColors') then
       Puzzle.CheckSolvedProc := cspEachRowColDiagConsistsOfDifferentColors
-    else if SameText(ProcName, 'CheckSavedStates') then
+    else if XmlSameText(ProcName, 'CheckSavedStates') then
       Puzzle.CheckSolvedProc := cspCheckSavedStates
-    else if SameText(ProcName, 'EachPlaneHasOneColor') then
+    else if XmlSameText(ProcName, 'EachPlaneHasOneColor') then
       Puzzle.CheckSolvedProc := cspEachPlaneHasOneColor
-    else if SameText(copy(ProcName, 1, 44), 'EachColorHasSameDirectionOrCountUniquePlanes') then begin
+    else if XmlSameText(copy(ProcName, 1, 44), 'EachColorHasSameDirectionOrCountUniquePlanes') then begin
       Puzzle.CheckSolvedProc := cspEachColorHasSameDirectionOrCountUniquePlanes;
       TUtils.Parse(ProcName, '=');
       Puzzle.SolvedStates.UniquePlanes := TUtils.ParseInt(ProcName);
-    end else if SameText(ProcName, 'AdjoiningFacesHaveSameColors') then
+    end else if XmlSameText(ProcName, 'AdjoiningFacesHaveSameColors') then
       Puzzle.CheckSolvedProc := cspAdjoiningFacesHaveSameColors
     else
       Puzzle.CheckSolvedProc := cspEachColorHasSameDirection;
@@ -1465,7 +1503,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
   begin
     Result := -1;
     for i := 0 to Puzzle.Textures.Count - 1 do
-      if SameText(Name, Puzzle.Textures[i].Name) then begin
+      if XmlSameText(Name, Puzzle.Textures[i].Name) then begin
         Result := i;
         exit;
       end;
@@ -1587,7 +1625,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
         if Length(MacroName) > 0 then
           for i := lMacros.Count - 1 downto 0 do begin
             XmlNode := lMacros[i];
-            if SameText(MacroName, XmlTrim(TDomElement(XmlNode).GetAttribute('Name'))) then begin
+            if XmlSameText(MacroName, XmlTrim(TDomElement(XmlNode).GetAttribute('Name'))) then begin
               LoadFigure(XmlNode);
               break;
             end;
@@ -1711,8 +1749,8 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
 //    for i := 0 to XmlNode.ChildNodes.Count - 1 do begin
 //      XmlSubNode := XmlNode.ChildNodes[i];
 //      S := XmlSubNode.Get_NodeName;
-//      if SameText(S, 'BSP') then begin
-//        if SameText(ReadStringFromXml(XmlSubNode, 'AlwaysRecalcBspPlanes'), 'yes') then
+//      if XmlSameText(S, 'BSP') then begin
+//        if XmlSameText(ReadStringFromXml(XmlSubNode, 'AlwaysRecalcBspPlanes'), 'yes') then
 //          AlwaysRecalcBspPlanes := True;
 //      end;
 //    end;
@@ -1980,10 +2018,10 @@ begin
   DecodeLayers(S, Turn.Layers);
 
   S := ReadStringFromXml(XmlNode, 'type');
-  if (S = '') or SameText(S, 'LayerTurn') then begin
+  if (S = '') or XmlSameText(S, 'LayerTurn') then begin
     Turn.typ      := ttyLayerTurn;
     Turn.Angle    := ReadDoubleExpressionFromXml(XmlNode, 'Angle');
-  end else if SameText(S, 'PartsMove') then begin
+  end else if XmlSameText(S, 'PartsMove') then begin
     Turn.typ      := ttyPartsMove;
     Turn.Distance := ReadDoubleExpressionFromXml(XmlNode, 'Distance');
   end else
@@ -2033,7 +2071,7 @@ begin
 
   for i := 0 to XmlNode.ChildNodes.Count - 1 do begin
     XmlSubNode := XmlNode.ChildNodes[i];
-    if SameText(XmlSubNode.NodeName, 'Turn') then begin
+    if XmlSameText(XmlSubNode.NodeName, 'Turn') then begin
       Turn := TTurn.Create;
       if not TurnLoadFromXml(Puzzle, Turn, XmlSubNode) then begin
         Turn.Free;
@@ -2125,7 +2163,7 @@ var lMacros: TDomNodeList;
   begin // ExecMacroBody
     for i := 0 to XmlNode.ChildNodes.Count - 1 do begin
       XmlSubNode := XmlNode.ChildNodes[i];
-      if SameText(XmlSubNode.NodeName, 'ExecMacro') then begin
+      if XmlSameText(XmlSubNode.NodeName, 'ExecMacro') then begin
         ExecMacro(XmlSubNode);
       end else if S = 'Script' then begin
         ReadStringFromXml(XmlSubNode, '', Script, '');
@@ -2176,7 +2214,7 @@ begin // PuzzleExecMacroFromXmlFile
   // only 'public' macros allowed
 //  Found := False;
 //  for i := 0 to Puzzle.Macros.Count - 1 do
-//    if SameText(MacroName, Puzzle.Macros[i].Name) then begin
+//    if XmlSameText(MacroName, Puzzle.Macros[i].Name) then begin
 //      Found := True;
 //      break;
 //    end;
@@ -2194,7 +2232,7 @@ begin // PuzzleExecMacroFromXmlFile
     Result := True;
     for i := 0 to nodeMacros.ChildNodes.Count - 1 do begin
       XmlSubNode := nodeMacros.ChildNodes[i];
-      if SameText(XmlSubNode.NodeName, 'Macro') then begin
+      if XmlSameText(XmlSubNode.NodeName, 'Macro') then begin
         Macro := XmlTrim(TUtils.Parse(MacroString, ' '));
         Found := False;
         if SameStr(XmlTrim(TDomElement(XmlSubNode).GetAttribute('Name')), Macro) then begin
