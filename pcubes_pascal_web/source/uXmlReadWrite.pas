@@ -2308,22 +2308,35 @@ end; // PuzzleExecMacroFromXmlFile
 
 // private
 class procedure TXmlReadWrite.DecodeLayers(const LayersString: String; var Layers: array of Boolean);
-var Splitted1, Splitted2: TArray<String>;
-    S1: String;
-    LayerFrom, LayerTo, i: integer;
+var
+  Remaining, Item, RangeStart, RangeEnd: String;
+  SeparatorPos, DashPos: integer;
+  LayerFrom, LayerTo, i: integer;
 begin
-  if LayersString = '' then
-    exit;
-  Splitted1 := LayersString.Trim.Split([';']);
-  for S1 in Splitted1 do begin
-    Splitted2 := S1.Split(['-'], 2);
-    if Length(Splitted2) = 1 then begin
-      LayerFrom := Round(CalcExpression(Splitted2[0]));
+  Remaining := LayersString;
+  while Remaining <> '' do begin
+    SeparatorPos := Pos(';', Remaining);
+    if SeparatorPos > 0 then begin
+      Item := Copy(Remaining, 1, SeparatorPos - 1);
+      Delete(Remaining, 1, SeparatorPos);
+    end else begin
+      Item := Remaining;
+      Remaining := '';
+    end;
+    Item := XmlTrim(Item);
+    if Item = '' then
+      continue;
+
+    DashPos := Pos('-', Item);
+    if DashPos = 0 then begin
+      LayerFrom := Round(CalcExpression(Item));
       if (LayerFrom >= 0) and (LayerFrom < Length(Layers)) then
         Layers[LayerFrom] := True;
-    end else if Length(Splitted2) = 2 then begin
-      LayerFrom := Round(CalcExpression(Splitted2[0]));
-      LayerTo := Round(CalcExpression(Splitted2[1]));
+    end else begin
+      RangeStart := XmlTrim(Copy(Item, 1, DashPos - 1));
+      RangeEnd := XmlTrim(Copy(Item, DashPos + 1, Length(Item)));
+      LayerFrom := Round(CalcExpression(RangeStart));
+      LayerTo := Round(CalcExpression(RangeEnd));
       if (LayerFrom >= 0) and (LayerFrom < Length(Layers)) and
          (LayerTo > 0) and (LayerTo < Length(Layers)) then
         for i := LayerFrom to LayerTo do
