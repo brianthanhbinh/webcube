@@ -46,7 +46,7 @@ end;
 
 procedure VarClear(var Value: Variant);
 begin
-  Value := JSValue(nil);
+  Value := nil;
 end;
 
 end.
