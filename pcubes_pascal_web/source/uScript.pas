@@ -272,6 +272,14 @@ uses
      uUtils, SysUtils, Types, Math
      {$IFNDEF PAS2JS}, Windows, Messages, Dialogs, Controls, Forms {$ENDIF};
 
+type
+  TScriptCharSet = set of Char;
+
+function ScriptScriptCharInSet(C: Char; const Allowed: TScriptCharSet): Boolean;
+begin
+  Result := C in Allowed;
+end;
+
 const
   {$IFDEF PAS2JS}
   SpaceSet: set of Char = [' ', #9, #10, #13];
