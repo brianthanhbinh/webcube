@@ -2281,7 +2281,11 @@ begin // DoSet
         RR.Value := s;
       end else begin
         try
+          {$IFDEF PAS2JS}
+          i := Trunc(JS.toNumber(R.Value));
+          {$ELSE}
           i := R.Value;
+          {$ENDIF}
         except
           Error('Invalid variable type: ' + v, CmdLine, errTypeCast);
           Exit;
