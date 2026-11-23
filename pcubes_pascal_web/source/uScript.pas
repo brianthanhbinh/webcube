@@ -1950,8 +1950,10 @@ begin
 end; // ParseOperator
 
 procedure TScript.Exec(Txt: String);
+{$IFNDEF PAS2JS}
 label
   EXECUTE;
+{$ENDIF}
 var
   t: TToken;
   Ind: integer;
@@ -1966,7 +1968,9 @@ begin
     if CmdLine = '' then
       break;
     t := ParseOperator(CmdLine, c, s, l);
+    {$IFNDEF PAS2JS}
     EXECUTE:
+    {$ENDIF}
     case t of
       tVR: DoSet(CmdLine, c, s);
       tIF: DoIf(CmdLine, s);
@@ -2000,7 +2004,9 @@ begin
           t := ParseOperator(CmdLine, c, s, l);
           if l = GotoLabel then begin
             BlockCmd := tEMPTY;
+            {$IFNDEF PAS2JS}
             goto EXECUTE;
+            {$ENDIF}
           end;
         until False;
       end;
