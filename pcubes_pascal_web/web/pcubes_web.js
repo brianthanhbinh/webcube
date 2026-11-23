@@ -1835,7 +1835,7 @@ rtl.module("Web",["System","Types","JS","weborworker"],function () {
 rtl.module("RTLConsts",["System"],function () {
   "use strict";
   var $mod = this;
-  $mod.$resourcestrings = {SArgumentMissing: {org: 'Missing argument in format "%s"'}, SInvalidFormat: {org: 'Invalid format specifier : "%s"'}, SInvalidArgIndex: {org: 'Invalid argument index in format: "%s"'}, SListCapacityError: {org: "List capacity (%s) exceeded."}, SListIndexError: {org: "List index (%s) out of bounds"}, SSortedListError: {org: "Operation not allowed on sorted list"}, SDuplicateString: {org: "String list does not allow duplicates"}, SErrFindNeedsSortedList: {org: "Cannot use find on unsorted list"}, SErrInvalidInteger: {org: 'Invalid integer value: "%s"'}, SErrInvalidFloat: {org: 'Invalid floating-point value: "%s"'}};
+  $mod.$resourcestrings = {SArgumentMissing: {org: 'Missing argument in format "%s"'}, SInvalidFormat: {org: 'Invalid format specifier : "%s"'}, SInvalidArgIndex: {org: 'Invalid argument index in format: "%s"'}, SListCapacityError: {org: "List capacity (%s) exceeded."}, SListIndexError: {org: "List index (%s) out of bounds"}, SSortedListError: {org: "Operation not allowed on sorted list"}, SDuplicateString: {org: "String list does not allow duplicates"}, SErrFindNeedsSortedList: {org: "Cannot use find on unsorted list"}, SErrInvalidInteger: {org: 'Invalid integer value: "%s"'}};
 });
 rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
   "use strict";
@@ -2352,20 +2352,6 @@ rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
     J = parseFloat(N);
     Result = !isNaN(J);
     if (Result) res.set(rtl.getNumber(J));
-    return Result;
-  };
-  this.StrToFloat = function (S) {
-    var Result = 0.0;
-    Result = $mod.StrToFloat$1(S,$mod.FormatSettings);
-    return Result;
-  };
-  this.StrToFloat$1 = function (S, aSettings) {
-    var Result = 0.0;
-    if (!$mod.TryStrToFloat$3(S,{get: function () {
-        return Result;
-      }, set: function (v) {
-        Result = v;
-      }},aSettings)) throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SErrInvalidFloat"),pas.System.VarRecs(18,S)]);
     return Result;
   };
   this.TimeSeparator = "";
@@ -9411,7 +9397,6 @@ rtl.module("uScript",["System","Classes","Generics.Collections","Variants"],func
     this.ClearProcs = function () {
     };
     this.DefineConsts = function () {
-      this.SetValue("PI",Math.PI);
     };
     this.VarExists = function (N) {
       var Result = false;
@@ -11266,20 +11251,17 @@ rtl.module("uScript",["System","Classes","Generics.Collections","Variants"],func
   };
   this.CalcExpression = function (Text, Default) {
     var Result = 0.0;
-    var V = $mod.TVar.$new();
     Result = Default;
     if (Text === "") return Result;
-    $mod.ExecuteScript("Result := " + Text);
-    if ($mod.Calc.VarByName("Result",V)) Result = $impl.ScriptToFloat(V.Value);
+    try {
+      Result = pas.JS.toNumber(eval(Text));
+    } catch ($e) {
+      Result = Default;
+    };
     return Result;
   };
   this.Calc = null;
   $mod.$implcode = function () {
-    $impl.ScriptToFloat = function (V) {
-      var Result = 0.0;
-      Result = pas.SysUtils.StrToFloat(pas.JS.ToString(V));
-      return Result;
-    };
     $impl.ScriptIsAlpha = function (C) {
       var Result = false;
       Result = ((C >= "a") && (C <= "z")) || ((C >= "A") && (C <= "Z")) || (C === "_") || ((C >= "0") && (C <= "9"));
