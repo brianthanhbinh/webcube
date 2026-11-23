@@ -568,9 +568,14 @@ begin
 end; // SetCallProcessProc
 
 procedure TScript.Process;
+{$IFNDEF PAS2JS}
 var
   Msg: TMsg;
+{$ENDIF}
 begin // Process
+  {$IFDEF PAS2JS}
+  Exit;
+  {$ELSE}
   if Stop then
     BlockCmd := tEXIT;
 
@@ -587,6 +592,7 @@ begin // Process
     TranslateMessage(Msg);
     DispatchMessage(Msg);
   end;
+  {$ENDIF}
 end; // Process
 
 procedure TScript.ClearVars;
