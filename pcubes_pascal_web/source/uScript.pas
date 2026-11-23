@@ -267,9 +267,10 @@ var Calc: TScript;
 
 implementation
 
-uses fOrderDialog,
-     uUtils,
-     SysUtils, Types, Windows, Messages, Math, Dialogs, Controls, Forms;
+uses
+     {$IFNDEF PAS2JS} fOrderDialog, {$ENDIF}
+     uUtils, SysUtils, Types, Math,
+     {$IFNDEF PAS2JS} Windows, Messages, Dialogs, Controls, Forms, {$ENDIF}
 
 const
   {$IFDEF PAS2JS}
@@ -2922,8 +2923,10 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
+  {$IFNDEF PAS2JS}
   if FInteractiveFunctionsEnabled then
     ShowMessage(Vars[0].Value);
+  {$ENDIF}
   Result := True;
 end; // fShowMessage
 
@@ -2940,6 +2943,11 @@ end; // fLog
 function TScript.FuncRequestNumbers(Vars: TList<TVar>; var Res: TVar): Boolean;
 var VTemp: TVar;
 begin
+  {$IFDEF PAS2JS}
+  Result := False;
+  Res.Value := False;
+  Exit;
+  {$ELSE}
   Result := False;
   if not Vars.Count in [3, 5, 7] then
     exit;
@@ -3011,6 +3019,7 @@ begin
     Res.Value := False;
 
   Result := True;
+  {$ENDIF}
 end; // fRequestNumbers
 
 function TScript.FuncDateToStr(Vars: TList<TVar>; var Res: TVar): Boolean;
@@ -3577,7 +3586,11 @@ function TScript.FuncGetTickCount(Vars: TList<TVar>; var Res: TVar): Boolean;
 begin
   if Vars.Count <> 0 then
     Exit(False);
+  {$IFDEF PAS2JS}
+  Res.Value := Trunc(Now * 86400000);
+  {$ELSE}
   Res.Value := GetTickCount;
+  {$ENDIF}
   Result := True;
 end; // fGetTickCount
 
