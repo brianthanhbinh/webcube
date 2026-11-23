@@ -50,32 +50,32 @@ end;
 
 function APIGetRenderData: TJSObject;
 var
-  FacesArray, FaceObject, VerticesArray, VertexArray: TJSArray;
+  FacesArray, FaceObject, VerticesArray, VertexArray: TJSObject;
   Part: TPart;
   Face: TFace;
   V: TVector;
   I, J: Integer;
 begin
   Result := new([]);
-  FacesArray := TJSArray(TJSArray.new);
+  FacesArray := TJSArray.new;
   if CurrentPuzzle <> nil then
     for Part in CurrentPuzzle.Parts do
       if Part.Visible then
         for Face in Part.Faces do
           if Face.GetVertexCount >= 3 then begin
             FaceObject := TJSObject.new;
-            VerticesArray := TJSArray(TJSArray.new);
+            VerticesArray := TJSArray.new;
             for I := 0 to Face.GetVertexCount - 1 do begin
               V := Face.GetVertex(I);
-              VertexArray := TJSArray(TJSArray.new);
-              VertexArray.push(V.X);
-              VertexArray.push(V.Y);
-              VertexArray.push(V.Z);
-              VerticesArray.push(VertexArray);
+              VertexArray := TJSArray.new;
+              TJSArray(VertexArray).push(V.X);
+              TJSArray(VertexArray).push(V.Y);
+              TJSArray(VertexArray).push(V.Z);
+              TJSArray(VerticesArray).push(VertexArray);
             end;
             FaceObject['vertices'] := VerticesArray;
             FaceObject['color'] := Face.Color;
-            FacesArray.push(FaceObject);
+            TJSArray(FacesArray).push(FaceObject);
           end;
   Result['faces'] := FacesArray;
 end;
