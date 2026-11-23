@@ -1655,7 +1655,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
 
     for k := 0 to n - 1 do begin
       while MacroText <> '' do begin
-        MacroText := Trim(MacroText);
+        MacroText := XmlTrim(MacroText);
         if MacroText = '' then
           break;
         SpacePos := Pos(' ', MacroText);
