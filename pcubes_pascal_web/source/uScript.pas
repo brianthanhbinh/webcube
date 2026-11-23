@@ -113,6 +113,7 @@ type
     function Execute(S: String): Boolean;
     procedure DisableInteractiveFunctions;
     procedure EnableInteractiveFunctions;
+  {$IFNDEF PAS2JS}
   private
     Expr: String;
     ExprIndex: integer;
@@ -246,6 +247,7 @@ type
     function FuncCallGlobal(Vars: TList<TVar>; var Res: TVar): Boolean;
     function FuncGetTickCount(Vars: TList<TVar>; var Res: TVar): Boolean;
 
+  {$ENDIF}
   public
     Stop: Boolean;
     ErrCode: integer;
