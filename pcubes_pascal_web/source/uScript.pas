@@ -258,6 +258,8 @@ type
     ErrLine: String;
   end;
 
+implementation
+
 //procedure SetFunctions(Script: TScript);
 
 procedure ExecuteScript(Text: String);
