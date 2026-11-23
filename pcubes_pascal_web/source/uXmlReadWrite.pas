@@ -1016,7 +1016,7 @@ begin // AddCircle
     if Abs(Abs(Al) - Pi) < 1e-6 then
       Part.Trans(TMatrix.GetRotateMatrix(Vector(1, 0, 0), Al))
     else if Abs(Al) > 1e-6 then begin
-      a := a * V;
+      a := VectorCross(a, V);
       a.Normalize;
       Part.Trans(TMatrix.GetRotateMatrix(a, Al));
     end;
