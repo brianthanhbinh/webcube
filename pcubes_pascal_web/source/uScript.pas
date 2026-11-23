@@ -3868,7 +3868,9 @@ initialization
 
   Calc := TScript.Create;
 
+{$IFNDEF PAS2JS}
 finalization
   Calc.Free;
+{$ENDIF}
 end.
 
