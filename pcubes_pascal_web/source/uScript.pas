@@ -3850,6 +3850,12 @@ begin
   if Text = '' then
     exit;
 
+  {$IFDEF PAS2JS}
+  if TryStrToFloat(Trim(Text), Result) then
+    Exit;
+  Exit;
+  {$ENDIF}
+
   ExecuteScript('Result := ' + Text);
 
   if Calc.VarByName('Result', V) then
