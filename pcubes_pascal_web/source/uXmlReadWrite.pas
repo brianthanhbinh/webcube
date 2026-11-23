@@ -1005,7 +1005,7 @@ begin // AddCircle
   Face.Color := Color;
   Part.Faces.Add(Face);
 
-  V := Center - Base;
+  V := VectorSubtract(Center, Base);
   V.Normalize;
 
   Part.Trans(TMatrix.GetScaleMatrix(Radius, Radius, 1));
