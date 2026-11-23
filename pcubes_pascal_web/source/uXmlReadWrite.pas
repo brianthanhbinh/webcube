@@ -546,7 +546,7 @@ begin
     if i < Axis.Layers.Count - 2 then
       S := S + ';';
   end;
-  TDomElement(XmlNode).AttribStrings['PlaneDistances'] := AnsiString(S);
+  TDomElement(XmlNode).AttribStrings['PlaneDistances'] := String(S);
 
   S := '';
   for i := 0 to Axis.Layers.Count - 1 do begin
@@ -554,7 +554,7 @@ begin
     if i < Axis.Layers.Count - 1 then
       S := S + ';';
   end;
-  TDomElement(XmlNode).AttribStrings['TurningAngles'] := AnsiString(S);
+  TDomElement(XmlNode).AttribStrings['TurningAngles'] := String(S);
 
   S := '';
   for i := 0 to Axis.Layers.Count - 1 do begin
@@ -563,7 +563,7 @@ begin
   end;
   if Length(S) > 0 then begin
     Delete(S, Length(S), 1);
-    TDomElement(XmlNode).AttribStrings['FixedLayers'] := AnsiString(S);
+    TDomElement(XmlNode).AttribStrings['FixedLayers'] := String(S);
   end;
 
   if Axis.TurnAxesWithLayer >= 0 then
@@ -707,7 +707,7 @@ var
   S: String;
 begin
   if Face.Color <> -1 then
-    TDomElement(XmlNode).AttribStrings['Color'] :=  AnsiString(TUtils.ColorToStr(Face.Color));
+    TDomElement(XmlNode).AttribStrings['Color'] :=  String(TUtils.ColorToStr(Face.Color));
 
   S := '';
   n := Face.GetVertexCount;
@@ -717,7 +717,7 @@ begin
     S := S + IntToStr(Face.GetVertexIndex(i));
   end;
 
-  TDomElement(XmlNode).AttribStrings['VertexIndexes'] := AnsiString(S);
+  TDomElement(XmlNode).AttribStrings['VertexIndexes'] := String(S);
 
   InvisibleEdges := 0;
   ei := 1;
@@ -731,11 +731,11 @@ begin
 
   // TODO !!
 //  if Face.TextureFileName <> '' then begin
-//    XmlNode.SetAttr('Texture', AnsiString(Face.TextureFileName));
+//    XmlNode.SetAttr('Texture', String(Face.TextureFileName));
 //    S := '';
 //    for i := 0 to Face.GetVertexCount - 1 do
 //      S := S + IntToStr(Face.TextureXCoords[i]) + ';' + IntToStr(Face.TextureYCoords[i]) + ';';
-//    XmlNode.SetAttr('TextureCoordinates', AnsiString(S));
+//    XmlNode.SetAttr('TextureCoordinates', String(S));
 //  end;
 end; // FaceSaveToXml
 
@@ -1490,7 +1490,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
       Result := FileExists(FileName);
       if Result then
         ReadXMLFile(XmlDoc, FileName);
-//        XmlDoc.Load(AnsiString(FileName));
+//        XmlDoc.Load(String(FileName));
     end;
   var
     S, AttrName: String;
@@ -1535,7 +1535,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
     for i := 0 to XmlNode.Attributes.Length - 1 do begin
       AttrName := XmlNode.Attributes[i].NodeName;
       if (AttrName <> 'MacroName') and (AttrName <> 'Repeat') then
-        ExecuteScript(AttrName + ':=' + TDomElement(XmlNode).GetAttribute(AnsiString(AttrName)));
+        ExecuteScript(AttrName + ':=' + TDomElement(XmlNode).GetAttribute(String(AttrName)));
     end;
 
     for k := 0 to n - 1 do
@@ -1702,7 +1702,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
 
 var
   i{, j}: integer;
-  S: AnsiString;
+  S: String;
   XmlSubNode: TDomNode;
 begin // PuzzleLoadFromXml
   Result := False;
@@ -1793,7 +1793,7 @@ begin
 
   ReadXMLFile(XmlDoc, FileName);
   try
-    //  XmlDoc := LoadXmlDocument(AnsiString(FileName));
+    //  XmlDoc := LoadXmlDocument(String(FileName));
     Result := PuzzleLoadFromXmlCommon(Puzzle, XmlDoc, FileName);
   finally
     {$IFNDEF PAS2JS}
@@ -1899,7 +1899,7 @@ begin
 
     {$ENDIF}
   end;
-//  XmlDoc.Save(AnsiString(FileName));
+//  XmlDoc.Save(String(FileName));
 end; // PuzzleSaveToXmlFile
 
 // ========================= Textures ===================================
@@ -1950,7 +1950,7 @@ begin
       else
         S := S + ';' + IntToStr(i);
     end;
-  XmlNode.SetAttribute('Layers', AnsiString(S));
+  XmlNode.SetAttribute('Layers', String(S));
 
   case Turn.typ of
     ttyNone: XmlNode.SetAttribute('typ', 'None');
@@ -2013,9 +2013,9 @@ end; // MacroLoadFromXml
 
 class procedure TXmlReadWrite.MacroSaveToXml(Macro: TMacro; XmlNode: TDomNode);
 begin
-  TDomElement(XmlNode).SetAttribute('Name', AnsiString(Macro.Name));
-  TDomElement(XmlNode).SetAttribute('Description', AnsiString(Macro.Description));
-  TDomElement(XmlNode).SetAttribute('Sequence', AnsiString(Macro.Sequence));
+  TDomElement(XmlNode).SetAttribute('Name', String(Macro.Name));
+  TDomElement(XmlNode).SetAttribute('Description', String(Macro.Description));
+  TDomElement(XmlNode).SetAttribute('Sequence', String(Macro.Sequence));
 end;
 
 class function TXmlReadWrite.MacrosLoadFromXml(Macros: TList<TMacro>; XmlNode: TDomNode): Boolean;
