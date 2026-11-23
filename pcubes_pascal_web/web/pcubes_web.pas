@@ -1,7 +1,7 @@
 program pcubes_web;
 {$mode objfpc}{$H+}
 { Browser bridge for the original Pascal pCubes puzzle model. }
-uses JS, Web, SysUtils, DOM, uPuzzle, uXmlReadWrite;
+uses JS, Web, SysUtils, DOM, uPuzzle, uXmlReadWrite, uPart, uFace, uVector;
 var
   StatusNode: TJSElement;
   API: TJSObject;
@@ -23,7 +23,7 @@ begin
 end;
 
 function APIGetVersion: String;
-begin Result := '0.2.0'; end;
+begin Result := '0.3.0'; end;
 
 function APIIsPuzzleReady: Boolean;
 begin
@@ -48,6 +48,38 @@ begin
   end;
 end;
 
+function APIGetRenderData: TJSObject;
+var
+  FacesArray, FaceObject, VerticesArray, VertexArray: TJSArray;
+  Part: TPart;
+  Face: TFace;
+  V: TVector;
+  I, J: Integer;
+begin
+  Result := new([]);
+  FacesArray := TJSArray.new;
+  if CurrentPuzzle <> nil then
+    for Part in CurrentPuzzle.Parts do
+      if Part.Visible then
+        for Face in Part.Faces do
+          if Face.GetVertexCount >= 3 then begin
+            FaceObject := TJSObject.new;
+            VerticesArray := TJSArray.new;
+            for I := 0 to Face.GetVertexCount - 1 do begin
+              V := Face.GetVertex(I);
+              VertexArray := TJSArray.new;
+              VertexArray.push(V.X);
+              VertexArray.push(V.Y);
+              VertexArray.push(V.Z);
+              VerticesArray.push(VertexArray);
+            end;
+            FaceObject['vertices'] := VerticesArray;
+            FaceObject['color'] := Face.Color;
+            FacesArray.push(FaceObject);
+          end;
+  Result['faces'] := FacesArray;
+end;
+
 procedure APIScramble;
 begin
   if not APIIsPuzzleReady then begin SetStatus('Scramble unavailable: load a valid puzzle XML first.'); Exit; end;
@@ -70,11 +102,11 @@ end;
 procedure APIReset;
 begin
   if not APIIsPuzzleReady then SetStatus('Reset unavailable: no puzzle is loaded.')
-  else SetStatus('Reset adapter is not implemented yet.');
+  else SetStatus('Reset requires the original puzzle XML; use the Reset control to reload it.');
 end;
 
 procedure APIOpenLibrary;
-begin SetStatus('Puzzle library is not ported to the browser yet.'); end;
+begin SetStatus('Choose a puzzle XML file to load a puzzle.'); end;
 
 function APILoadXML(XmlRoot: TJSObject): Boolean;
 var
@@ -91,6 +123,11 @@ begin
     NewPuzzle.DisableAnimation;
     if not TXmlReadWrite.PuzzleLoadFromXml(NewPuzzle, WrapDomNode(TJSNode(XmlRoot))) then begin
       SetStatus('XML load failed: pCubes rejected the puzzle definition.');
+      Exit;
+    end;
+
+    if (NewPuzzle.Parts.Count = 0) or (NewPuzzle.Axes.Count = 0) then begin
+      SetStatus('XML load failed: the file contains no usable puzzle parts or axes.');
       Exit;
     end;
 
@@ -111,11 +148,12 @@ end;
 procedure InstallBrowserAPI;
 begin
   API := new([]);
-  API['version'] := '0.2.0';
+  API['version'] := '0.3.0';
   API['getStatus'] := TJSFunction(@APIGetStatus);
   API['getVersion'] := TJSFunction(@APIGetVersion);
   API['isPuzzleReady'] := TJSFunction(@APIIsPuzzleReady);
   API['getModelInfo'] := TJSFunction(@APIGetModelInfo);
+  API['getRenderData'] := TJSFunction(@APIGetRenderData);
   API['scramble'] := TJSFunction(@APIScramble);
   API['undo'] := TJSFunction(@APIUndo);
   API['redo'] := TJSFunction(@APIRedo);
