@@ -264,12 +264,7 @@ procedure ExecuteScript(Text: String);
 begin
   if Text = '' then
     Exit;
-
-  {$IFDEF PAS2JS}
-  // The desktop Pascal interpreter uses generic dictionaries that are not
-  // initialized in the browser build. Browser XML scripts are not supported.
-  Exit;
-  {$ELSE}
+  {$IFNDEF PAS2JS}
   Calc.Execute(Text);
   if Calc.ErrCode <> 0 then
     raise Exception.Create(Calc.ErrMsg + ': ''' + Calc.ErrLine + '''');
