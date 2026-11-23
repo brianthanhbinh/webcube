@@ -1627,8 +1627,9 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
 //    XmlDoc := TXmlDocument.Create;
 
     {$IFDEF PAS2JS}
-    // Browser XML is supplied by the caller; nested filesystem includes are unavailable.
-    Result := False;
+    // Browser file input supplies one file, not its sibling directory.
+    raise Exception.Create('This puzzle needs the external figure file "' + S +
+      '". Load the complete puzzle folder or provide the referenced figure XML.');
     {$ELSE}
     Result := Load(TUtils.GetStartDir + S);
     if not Result then
@@ -1842,11 +1843,12 @@ begin // PuzzleLoadFromXml
   lMacros := TList<TDomNode>.Create;
   try
 
-    Calc.ClearVars; // î÷èùàåì Script âî èçáåæàíèå íàêëàäîê îò ïðåäûäóùèõ ñêðèïòîâ
+    {$IFNDEF PAS2JS}
+    Calc.ClearVars;
     Calc.ClearProcs;
     Calc.DefineConsts;
-
-    ExecuteScript(TSettings.PreScript); // 03.08.2017 ïî ïðîñüáå Åâãåíèÿ Ãðèãîðüåâà - ïðåñêðèïò
+    ExecuteScript(TSettings.PreScript);
+    {$ENDIF}
 
     //Clear;
 
