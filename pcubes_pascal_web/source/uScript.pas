@@ -266,7 +266,7 @@ uses
   Math, Dialogs
   {$IFNDEF PAS2JS}, Controls, Forms{$ENDIF};
 
-constconst
+const
   errOK            = 0; // O.K.
   errExprSyntax    = 1; // Error in expression/statement
   errParentheses   = 2; // Unpaired parentheses
