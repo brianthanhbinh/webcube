@@ -737,11 +737,11 @@ class function TXmlReadWrite.FaceLoadFromXml(Face: TFace; XmlNode: TDomNode): Bo
 
   procedure AddIndexesFromString(const S: string);
   var
-    Splitted: TArray<String>;
+    Splitted: TStringDynArray;
     VIndex: String;
     V: TVar;
   begin
-    Splitted := S.Trim.Split([';'], TStringSplitOptions.ExcludeEmpty);
+    Splitted := SplitString(S, ';');
     for VIndex in Splitted do begin
       ExecuteScript('Result := ' + VIndex);
       if not Calc.VarByName('Result', V) then
