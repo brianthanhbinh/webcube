@@ -3357,7 +3357,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Sin(Vars[0].Value);
+  Res.Value := Sin(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fSin
 
@@ -3366,7 +3366,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Cos(Vars[0].Value);
+  Res.Value := Cos(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fCos
 
@@ -3375,7 +3375,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Tan(Vars[0].Value);
+  Res.Value := Tan(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fTan
 
@@ -3384,7 +3384,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := ArcSin(Vars[0].Value);
+  Res.Value := ArcSin(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fArcSin
 
@@ -3393,7 +3393,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := ArcCos(Vars[0].Value);
+  Res.Value := ArcCos(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fArcCos
 
@@ -3402,7 +3402,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := ArcTan(Vars[0].Value);
+  Res.Value := ArcTan(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fArcTan
 
@@ -3411,7 +3411,7 @@ begin
   Result := False;
   if Vars.Count <> 2 then
     Exit;
-  Res.Value := ArcTan2(Vars[0].Value, Vars[1].Value);
+  Res.Value := ArcTan2(ScriptToFloat(Vars[0].Value), ScriptToFloat(Vars[1].Value));
   Result := True;
 end; // fArcTan2
 
@@ -3420,7 +3420,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Exp(Vars[0].Value);
+  Res.Value := Exp(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fExp
 
@@ -3429,7 +3429,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Ln(Vars[0].Value);
+  Res.Value := Ln(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fLn
 
@@ -3438,7 +3438,7 @@ begin
   Result := False;
   if Vars.Count <> 2 then
     Exit;
-  Res.Value := IntPower(Vars[0].Value, Round(ScriptToFloat(Vars[1].Value)));
+  Res.Value := IntPower(Round(ScriptToFloat(Vars[0].Value)), Round(ScriptToFloat(Vars[1].Value)));
   Result := True;
 end; // fIntPower
 
@@ -3447,7 +3447,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Sqr(Vars[0].Value);
+  Res.Value := Sqr(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fSqr
 
@@ -3456,7 +3456,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Sqrt(Vars[0].Value);
+  Res.Value := Sqrt(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fSqrt
 
@@ -3465,7 +3465,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Abs(Vars[0].Value);
+  Res.Value := Abs(ScriptToFloat(Vars[0].Value));
   Result := True;
 end; // fAbs
 
