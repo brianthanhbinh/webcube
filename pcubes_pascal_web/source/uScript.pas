@@ -356,6 +356,11 @@ var
   c: Char;
   st: String;
   i, nt, nz: integer;
+  {$IFDEF PAS2JS}
+  valError: Boolean;
+  {$ELSE}
+  valError: integer;
+  {$ENDIF}
 begin
   Result := False;
   nz := 0;
@@ -382,8 +387,12 @@ begin
     st := ReplaceChrs(st, ',', '.');
   end;
 
-  Val(st, x, i);
-  Result := i = 0;
+  Val(st, x, valError);
+  {$IFDEF PAS2JS}
+  Result := not valError;
+  {$ELSE}
+  Result := valError = 0;
+  {$ENDIF}
 end; // StrToNum
 
 
