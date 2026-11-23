@@ -531,9 +531,9 @@ begin
   ErrCode := errOK;
   IdleProc := nil;
   CallGlobalProc := nil;
-  VarList := TDictionary<String, Variant>.Create;
-  FuncList := TDictionary<String, TFunc>.Create;
-  ProcList := TDictionary<String, TProcedure>.Create;
+  VarList := TDictionary<String, Variant>.Create(0);
+  FuncList := TDictionary<String, TFunc>.Create(0);
+  ProcList := TDictionary<String, TProcedure>.Create(0);
   LastString := '';
   LastParsed := '';
 
