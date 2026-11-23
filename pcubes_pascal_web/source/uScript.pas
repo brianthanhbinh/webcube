@@ -1792,7 +1792,7 @@ begin
       if InString then
         ss := ss + S[i]
       else
-        ss := ss + AnsiUpperCase(S[i]);
+        ss := ss + UpperCase(S[i]);
     inc(i);
   end;
   Result := ss;
@@ -2037,7 +2037,7 @@ begin // PreProcess
           ParseOperator(sOperator, CmdLine, Op, Lbl);
 
           i := 1;
-          Proc.Name := AnsiUpperCase(GetToken(Op, i, TT));
+          Proc.Name := UpperCase(GetToken(Op, i, TT));
 
           if TT <> tVR then begin
             Error('Invalid procedure name', sOperator, errInvalidName);
@@ -2069,7 +2069,7 @@ begin // PreProcess
             end;
             if Proc.Params <> '' then
               Proc.Params := Proc.Params + #13#10;
-            Proc.Params := Proc.Params + AnsiUpperCase(s);
+            Proc.Params := Proc.Params + UpperCase(s);
             s := GetToken(Op, i, TT);
             if TT = tRBR then
               break;
@@ -2951,7 +2951,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := AnsiUpperCase(Vars[0].Value);
+  Res.Value := UpperCase(Vars[0].Value);
   Result := True;
 end; // fUpperCase
 
@@ -2960,7 +2960,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := AnsiLowerCase(Vars[0].Value);
+  Res.Value := LowerCase(Vars[0].Value);
   Result := True;
 end; // fLowerCase
 
@@ -3545,7 +3545,7 @@ begin
   // Get variable value
   if (Vars.Count <> 1) then
     Exit(False);
-  Result := VarByName(AnsiUpperCase(Vars[0].Value), Res);
+  Result := VarByName(UpperCase(Vars[0].Value), Res);
 end; // fGetVar
 
 function TScript.FuncVarExists(Vars: TList<TVar>; var Res: TVar): Boolean;
@@ -3555,8 +3555,8 @@ begin
 
 //  ShowMEssage(Vars[0].Value);
 
-//  Res.Value := VarByName(AnsiUpperCase(Vars[0].Value), Res);
-  Res.Value := VarExists(AnsiUpperCase(Vars[0].Value));
+//  Res.Value := VarByName(UpperCase(Vars[0].Value), Res);
+  Res.Value := VarExists(UpperCase(Vars[0].Value));
   Result := True;
 end; // fSin
 
