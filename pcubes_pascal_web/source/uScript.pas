@@ -264,9 +264,13 @@ var
 
 implementation
 
-uses fOrderDialog,
-     uUtils,
-     SysUtils, Variants, Types, Windows, Messages, Math, Dialogs, Controls, Forms;
+uses
+  {$IFNDEF PAS2JS} fOrderDialog, {$ENDIF}
+  uUtils,
+  SysUtils, Types,
+  {$IFNDEF PAS2JS} Windows, Messages, {$ENDIF}
+  Math, Dialogs
+  {$IFNDEF PAS2JS}, Controls, Forms{$ENDIF};
 
 const
   SpaceSet: set of AnsiChar = [' ', #9, #10, #13];
