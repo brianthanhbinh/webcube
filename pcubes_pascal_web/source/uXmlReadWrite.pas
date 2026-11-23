@@ -119,6 +119,15 @@ uses
   {$IFDEF PAS2JS} JS, Variants, {$ELSE} Variants, {$ENDIF} StrUtils, Classes, Math,
 {Unzip,} XmlRead, XMLWrite{, ZipUtils};
 
+function XmlFloatToStr(Value: Extended): String;
+begin
+  {$IFDEF PAS2JS}
+  Result := JS.toString(Value);
+  {$ELSE}
+  Result := SysUtils.FloatToStr(Value);
+  {$ENDIF}
+end;
+
 function XmlIntToStr(Value: Integer): String;
 var
   N: Integer;
@@ -228,9 +237,9 @@ end;
 
 class function TXmlReadWrite.VectorSaveToXml(Vector: TVector; XmlNode: TDomElement): Boolean;
 begin
-  XmlNode.AttribStrings['X'] := FloatToStr(Vector.X);
-  XmlNode.AttribStrings['Y'] := FloatToStr(Vector.Y);
-  XmlNode.AttribStrings['Z'] := FloatToStr(Vector.Z);
+  XmlNode.AttribStrings['X'] := XmlFloatToStr(Vector.X);
+  XmlNode.AttribStrings['Y'] := XmlFloatToStr(Vector.Y);
+  XmlNode.AttribStrings['Z'] := XmlFloatToStr(Vector.Z);
   Result := True;
 end;
 
@@ -360,7 +369,7 @@ begin
     with Vector do begin
 //      XmlNode.AppendElement('Add').SetAttr('Vector', FloatToXSTR(X) + '; ' + FloatToXSTR(Y) + '; ' + FloatToXSTR(Z));
       NewNode := XmlDoc.CreateElement('Add');
-      NewNode.AttribStrings['Vector'] := FloatToStr(Vector.X) + '; ' + FloatToStr(Vector.Y) + '; ' + FloatToStr(Vector.Z);
+      NewNode.AttribStrings['Vector'] := XmlFloatToStr(Vector.X) + '; ' + XmlFloatToStr(Vector.Y) + '; ' + XmlFloatToStr(Vector.Z);
       XmlNode.AppendChild(NewNode);
     end;
 end;
@@ -443,7 +452,7 @@ begin
   VectorSaveToXml(Plane.NormVect, NewNode);
   XmlNode.AppendChild(NewNode);
 
-  NewNode.AttribStrings['NormDistance'] := FloatToStr(Plane.NormDistance);
+  NewNode.AttribStrings['NormDistance'] := XmlFloatToStr(Plane.NormDistance);
 end;
 
 // ========================= Layer ===================================
@@ -577,7 +586,7 @@ begin
 
   S := '';
   for i := 0 to Axis.Layers.Count - 2 do begin
-    S := S + String(FloatToStr(Axis.Layers[i].DistanceTo));
+    S := S + String(XmlFloatToStr(Axis.Layers[i].DistanceTo));
     if i < Axis.Layers.Count - 2 then
       S := S + ';';
   end;
@@ -585,7 +594,7 @@ begin
 
   S := '';
   for i := 0 to Axis.Layers.Count - 1 do begin
-    S := S + FloatToStr(Axis.Layers[i].TurningAngle);
+    S := S + XmlFloatToStr(Axis.Layers[i].TurningAngle);
     if i < Axis.Layers.Count - 1 then
       S := S + ';';
   end;
@@ -1154,7 +1163,7 @@ begin
     NewNode := XmlDoc.CreateElement('Interface');
     XmlNode.AppendChild(NewNode);
 
-//    NewNode.AttribStrings['NormDistance'] := FloatToStr(Plane.NormDistance);
+//    NewNode.AttribStrings['NormDistance'] := XmlFloatToStr(Plane.NormDistance);
 
     with Puzzle.Header do begin
       NN := XmlDoc.CreateElement('Name');
@@ -2004,12 +2013,12 @@ begin
     ttyLayerTurn:
       begin
         XmlNode.SetAttribute('type', 'LayerTurn');
-        XmlNode.SetAttribute('Angle', FloatToStr(Turn.Angle));
+        XmlNode.SetAttribute('Angle', XmlFloatToStr(Turn.Angle));
       end;
     ttyPartsMove:
       begin
         XmlNode.SetAttribute('type', 'PartsMove');
-        XmlNode.SetAttribute('Distance', FloatToStr(Turn.Distance));
+        XmlNode.SetAttribute('Distance', XmlFloatToStr(Turn.Distance));
       end;
   end;
 end; // TurnSaveToXml
