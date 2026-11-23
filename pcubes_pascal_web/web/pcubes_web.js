@@ -13251,7 +13251,7 @@ rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine
     $impl.CIRCLE_SECTORS = 64;
   };
 },["uScript","uUtils","uXmlUtils","uMatrix","uSolvedState","uPuzzleUtils","uSelection","uGeometryUtils","JS","Variants","strutils","Classes","Math"]);
-rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWrite"],function () {
+rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWrite","uPart","uFace","uVector"],function () {
   "use strict";
   var $mod = this;
   this.StatusNode = null;
@@ -13272,7 +13272,7 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
   };
   this.APIGetVersion = function () {
     var Result = "";
-    Result = "0.2.0";
+    Result = "0.3.0";
     return Result;
   };
   this.APIIsPuzzleReady = function () {
@@ -13300,6 +13300,57 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
     };
     return Result;
   };
+  this.APIGetRenderData = function () {
+    var Result = null;
+    var FacesArray = null;
+    var VerticesArray = null;
+    var VertexArray = null;
+    var FaceObject = null;
+    var Part = null;
+    var Face = null;
+    var V = pas.uVector.TVector.$new();
+    var I = 0;
+    Result = pas.JS.New([]);
+    FacesArray = new Array();
+    if ($mod.CurrentPuzzle !== null) {
+      var $in = $mod.CurrentPuzzle.FParts.GetEnumerator$1();
+      try {
+        while ($in.MoveNext()) {
+          Part = $in.DoGetCurrent();
+          if (Part.FVisible) {
+            var $in1 = Part.FFaces.GetEnumerator$1();
+            try {
+              while ($in1.MoveNext()) {
+                Face = $in1.DoGetCurrent();
+                if (Face.GetVertexCount() >= 3) {
+                  FaceObject = new Object();
+                  VerticesArray = new Array();
+                  for (var $l = 0, $end = Face.GetVertexCount() - 1; $l <= $end; $l++) {
+                    I = $l;
+                    V.$assign(Face.GetVertex(I));
+                    VertexArray = new Array();
+                    VertexArray.push(V.x);
+                    VertexArray.push(V.y);
+                    VertexArray.push(V.z);
+                    VerticesArray.push(VertexArray);
+                  };
+                  FaceObject["vertices"] = VerticesArray;
+                  FaceObject["color"] = Face.Color;
+                  FacesArray.push(FaceObject);
+                };
+              }
+            } finally {
+              $in1 = rtl.freeLoc($in1)
+            };
+          };
+        }
+      } finally {
+        $in = rtl.freeLoc($in)
+      };
+    };
+    Result["faces"] = FacesArray;
+    return Result;
+  };
   this.APIScramble = function () {
     if (!$mod.APIIsPuzzleReady()) {
       $mod.SetStatus("Scramble unavailable: load a valid puzzle XML first.");
@@ -13322,10 +13373,10 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
   this.APIReset = function () {
     if (!$mod.APIIsPuzzleReady()) {
       $mod.SetStatus("Reset unavailable: no puzzle is loaded.")}
-     else $mod.SetStatus("Reset adapter is not implemented yet.");
+     else $mod.SetStatus("Reset requires the original puzzle XML; use the Reset control to reload it.");
   };
   this.APIOpenLibrary = function () {
-    $mod.SetStatus("Puzzle library is not ported to the browser yet.");
+    $mod.SetStatus("Choose a puzzle XML file to load a puzzle.");
   };
   this.APILoadXML = function (XmlRoot) {
     var Result = false;
@@ -13340,6 +13391,10 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
       NewPuzzle.DisableAnimation();
       if (!pas.uXmlReadWrite.TXmlReadWrite.PuzzleLoadFromXml(NewPuzzle,pas.DOM.WrapDomNode(XmlRoot))) {
         $mod.SetStatus("XML load failed: pCubes rejected the puzzle definition.");
+        return Result;
+      };
+      if ((NewPuzzle.FParts.FLength === 0) || (NewPuzzle.FAxes.FLength === 0)) {
+        $mod.SetStatus("XML load failed: the file contains no usable puzzle parts or axes.");
         return Result;
       };
       if ($mod.CurrentPuzzle !== null) rtl.free($mod,"CurrentPuzzle");
@@ -13358,11 +13413,12 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
   };
   this.InstallBrowserAPI = function () {
     $mod.API = pas.JS.New([]);
-    $mod.API["version"] = "0.2.0";
+    $mod.API["version"] = "0.3.0";
     $mod.API["getStatus"] = $mod.APIGetStatus;
     $mod.API["getVersion"] = $mod.APIGetVersion;
     $mod.API["isPuzzleReady"] = $mod.APIIsPuzzleReady;
     $mod.API["getModelInfo"] = $mod.APIGetModelInfo;
+    $mod.API["getRenderData"] = $mod.APIGetRenderData;
     $mod.API["scramble"] = $mod.APIScramble;
     $mod.API["undo"] = $mod.APIUndo;
     $mod.API["redo"] = $mod.APIRedo;
