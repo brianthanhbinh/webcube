@@ -60,13 +60,7 @@ const
     'FUNCTION', 'USES', 'INCLUDE', 'CASE', 'OF',
     '..');
 
-const
-  {$IFDEF PAS2JS}
-  Alpha: set of Char = ['_', '0'..'9', 'a'..'z', 'A'..'Z'];
-  {$ELSE}
-  Alpha: set of AnsiChar = ['_', '0'..'9', 'a'..'z', 'A'..'Z'];
-  {$ENDIF}
-  StrDelimiter: Char = '''';
+constStrDelimiter: Char = '''';
   DecimalPoint: Char = '.';
   TokenDelimiter: Char = #127;
 
@@ -272,14 +266,7 @@ uses
   Math, Dialogs
   {$IFNDEF PAS2JS}, Controls, Forms{$ENDIF};
 
-const
-  {$IFDEF PAS2JS}
-  SpaceSet: set of Char = [' ', #9, #10, #13];
-  {$ELSE}
-  SpaceSet: set of AnsiChar = [' ', #9, #10, #13];
-  {$ENDIF}
-
-const
+constconst
   errOK            = 0; // O.K.
   errExprSyntax    = 1; // Error in expression/statement
   errParentheses   = 2; // Unpaired parentheses
@@ -336,6 +323,34 @@ begin
 end; // ReplaceChrs
 
 
+function IsDigitTokenChar(C: Char): Boolean;
+begin
+  Result := (C >= '0') and (C <= '9');
+end;
+
+function IsAlphaTokenChar(C: Char): Boolean;
+begin
+  Result := (C = '_') or IsDigitTokenChar(C) or
+    ((C >= 'a') and (C <= 'z')) or ((C >= 'A') and (C <= 'Z'));
+end;
+
+function IsSpaceTokenChar(C: Char): Boolean;
+begin
+  Result := (C = ' ') or (C = #9) or (C = #10) or (C = #13);
+end;
+
+function IsNumberTokenChar(C: Char): Boolean;
+begin
+  Result := IsDigitTokenChar(C) or (C = '+') or (C = '-') or
+    (C = ',') or (C = '.') or (C = 'E');
+end;
+
+function IsLetterTokenChar(C: Char): Boolean;
+begin
+  Result := ((C >= 'A') and (C <= 'Z')) or
+    ((C >= 'a') and (C <= 'z'));
+end;
+
 function StrToNum(S: String; var X: extended): Boolean;
 var
   c: Char;
@@ -348,7 +363,7 @@ begin
   st := Trim(s);
   c := ' ';
   for i := 1 to length(st) do begin
-    if not CharInSet(st[i], ['0'..'9', '+', '-', ',', '.', 'E']) then
+    if not IsNumberTokenChar(st[i]) then
       exit;
     if st[i] = '.' then begin
       inc(nt);
@@ -405,7 +420,7 @@ var
 begin
   Result := False;
   for i := 1 to Length(s) do
-    if not CharInSet(s[i], Alpha) then
+    if not IsAlphaTokenChar(s[i]) then
       Exit;
   Result := True;
 end; // IsAlpha
@@ -419,21 +434,21 @@ begin
   Result := False;
   if S = '' then
     Exit;
-  if not CharInSet(S[1], Alpha) then
+  if not IsAlphaTokenChar(S[1]) then
     Exit;
-  if CharInSet(S[1], ['0'..'9']) then
+  if IsDigitTokenChar(S[1]) then
     Exit;
   Arr := False;
   n := length(S);
   for i := 2 to n do begin
     if not Arr then begin
-      if not CharInSet(S[i], Alpha) then begin
+      if not IsAlphaTokenChar(S[i]) then begin
         if S[i] <> ResWords[tLARR][1] then
           Exit;
         Arr := True;
       end;
     end else begin
-      if not CharInSet(S[i], ['0'..'9'])
+      if not IsDigitTokenChar(S[i])
          and (S[i] <> ResWords[tSUB][1])
          and (S[i] <> ResWords[tCOMMA][1])
          and (S[i] <> ResWords[tRARR][1]) then
@@ -1589,7 +1604,7 @@ begin // GetTextToken
   Code := tEMPTY;
   Result := '';
   sl := Length(s);
-  while (Index <= sl) and CharInSet(s[Index], SpaceSet) do
+  while (Index <= sl) and IsSpaceTokenChar(s[Index]) do
     inc(Index);
 
   if (Index > sl) then
@@ -1601,7 +1616,7 @@ begin // GetTextToken
     if CmpStr(ResWords[t], s, Index, tl)
       and (tl > Length(Result))
       and ((index + tl > sl)
-      or not CharInSet(s[index + tl], Alpha)
+      or not IsAlphaTokenChar(s[index + tl])
       or not IsAlpha(ResWords[t])) then begin
       Result := ResWords[t];
       Code := t;
@@ -1618,8 +1633,8 @@ begin // GetTextToken
   if s[i] <> StrDelimiter then begin
 
     while (Index <= sl) do begin
-      if CharInSet(s[Index], SpaceSet)
-        or ((Index > i) and not CharInSet(s[Index], Alpha)
+      if IsSpaceTokenChar(s[Index])
+        or ((Index > i) and not IsAlphaTokenChar(s[Index])
         and (s[Index] <> DecimalPoint)) then
         break;
       inc(Index);
@@ -1627,9 +1642,9 @@ begin // GetTextToken
     Result := Trim(copy(s, i, Index - i));
 
     //1.2E-16
-    if (Result <> '') and CharInSet(Result[1], ['0'..'9']) and (Result[Length(Result)] = 'E') then begin
+    if (Result <> '') and IsDigitTokenChar(Result[1]) and (Result[Length(Result)] = 'E') then begin
       while (Index <= sl) do begin
-        if not CharInSet(s[Index], ['-', '+', '0'..'9']) then
+        if not ((s[Index] = '-') or (s[Index] = '+') or IsDigitTokenChar(s[Index])) then
           break;
         inc(Index);
       end;
@@ -1637,7 +1652,7 @@ begin // GetTextToken
     end;
 
 
-    if (Result <> '') and CharInSet(Result[1], ['0'..'9']) then begin
+    if (Result <> '') and IsDigitTokenChar(Result[1]) then begin
       j := Pos(ResWords[tDOT2], Result);
       if j > 0 then begin
         Result := Trim(copy(Result, 1, j - 1));
@@ -2898,7 +2913,7 @@ begin
       fmt := fmt + fs[i]
     else
       s := s + fs[i];
-    if ff and CharInSet(fs[i], ['A'..'Z', 'a'..'z']) then begin
+    if ff and IsLetterTokenChar(fs[i]) then begin
       ff := False;
       inc(n);
       if n < Vars.Count then begin
