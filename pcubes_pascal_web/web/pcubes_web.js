@@ -9405,15 +9405,10 @@ rtl.module("uScript",["System","Classes","Generics.Collections","Variants"],func
       return this;
     };
     this.Destroy = function () {
-      rtl.free(this,"VarList");
-      rtl.free(this,"FuncList");
-      rtl.free(this,"ProcList");
     };
     this.ClearVars = function () {
-      this.VarList.Clear();
     };
     this.ClearProcs = function () {
-      this.ProcList.Clear();
     };
     this.DefineConsts = function () {
       this.SetValue("PI",Math.PI);
