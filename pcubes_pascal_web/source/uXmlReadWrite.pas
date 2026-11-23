@@ -1123,38 +1123,38 @@ begin
 
     with Puzzle.Header do begin
       NN := XmlDoc.CreateElement('Name');
-      NN.TextContent := Name;
+      NN.SetTextContent(Name);
       NewNode.AppendChild(NN);
 
       NN := XmlDoc.CreateElement('Aliases');
-      NN.TextContent := Aliases;
+      NN.SetTextContent(Aliases);
       NewNode.AppendChild(NN);
 
       NN := XmlDoc.CreateElement('Class');
-      NN.TextContent := ClassName;
+      NN.SetTextContent(ClassName);
       NewNode.AppendChild(NN);
 
       NN := XmlDoc.CreateElement('Inventor');
-      NN.TextContent := Inventor;
+      NN.SetTextContent(Inventor);
       NewNode.AppendChild(NN);
 
       NN := XmlDoc.CreateElement('Programmer');
-      NN.TextContent := Programmer;
+      NN.SetTextContent(Programmer);
       NewNode.AppendChild(NN);
 
       NN := XmlDoc.CreateElement('Added');
-      NN.TextContent := Added;
+      NN.SetTextContent(Added);
       NewNode.AppendChild(NN);
 
       NN := XmlDoc.CreateElement('Link');
-      NN.TextContent := Link;
+      NN.SetTextContent(Link);
       NewNode.AppendChild(NN);
 
 
       S := MenuString;
       while S <> '' do begin
         NN := XmlDoc.CreateElement('Menu');
-        NN.TextContent := TUtils.Parse(S, ';');
+        NN.SetTextContent(TUtils.Parse(S, ';'));
         NewNode.AppendChild(NN);
       end;
     end;
