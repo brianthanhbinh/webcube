@@ -1622,10 +1622,10 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
   var
     i, k, n: integer;
     MacroName, AttrName: String;
-    MacroNames: TArray<String>;
+    MacroNames: TStringDynArray;
   begin
     MacroName := XmlTrim(TDomElement(XmlNode).GetAttribute('MacroName'));
-    MacroNames := MacroName.Split([' ']);
+    MacroNames := SplitString(MacroName, ' ');
     n := ReadIntExpressionFromXml(XmlNode, 'Repeat', 1);
 
     for i := 0 to XmlNode.Attributes.Length - 1 do begin
