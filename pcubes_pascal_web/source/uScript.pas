@@ -2793,7 +2793,7 @@ end; // DoCase
 
 function TScript.FuncFloatToStr(Vars: TList<TVar>; var Res: TVar): Boolean;
 var
-  s: AnsiString;
+  s: String;
 begin
   Result := False;
   if Vars.Count <> 1 then
