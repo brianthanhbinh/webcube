@@ -2018,6 +2018,12 @@ begin
     Error('Label ' + GotoLabel + ' not exist or unreacheble', CmdLine, errLabelNotFound);
 end; // Exec
 
+{$IFDEF PAS2JS}
+function TScript.PreProcess(Txt: String): String;
+begin
+  Result := Txt;
+end; // PreProcess
+{$ELSE}
 function TScript.PreProcess(Txt: String): String;
 var
   T, TT: TToken;
@@ -2026,6 +2032,7 @@ var
   h: THandle;
   sOperator, CmdLine, Op, Lbl: String;
   s: String;
+  AnsiS: AnsiString;
   V: TVar;
 begin // PreProcess
   Index := 1;
@@ -2134,6 +2141,7 @@ begin // PreProcess
     end;
   until False;
 end; // PreProcess
+{$ENDIF}
 
 function TScript.Execute(S: String): Boolean;
 begin
