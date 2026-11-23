@@ -50,7 +50,8 @@ end;
 
 function APIGetRenderData: TJSObject;
 var
-  FacesArray, VerticesArray, VertexArray: TJSArray;\n  FaceObject: TJSObject;
+  FacesArray, VerticesArray, VertexArray: TJSArray;
+  FaceObject: TJSObject;
   Part: TPart;
   Face: TFace;
   V: TVector;
