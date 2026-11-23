@@ -38,6 +38,6 @@ fi
 
 # Keep each -Fu as its own argument.
 # shellcheck disable=SC2086
-pas2js -Tbrowser -Jc -Jirtl.js -dPCUBES_WEB \
+pas2js -va -Tbrowser -Jc -Jirtl.js -dPCUBES_WEB \
   -Fu"$ROOT/webcompat" -Fu"$ROOT/source" $RTL_FLAGS \
   pcubes_web.pas -opcubes_web.js
