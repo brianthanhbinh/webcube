@@ -161,7 +161,7 @@ begin
     for S in Values do begin
       PS := Trim(S);
       // check if it's an array
-      if Calc.VarByName(PS + '[0]', V) and (not Calc.VarByName(PS, V1)) and (IsNumberValue(V.Value)) then begin
+      if Calc.VarByName(PS + '[0]', V) and (not Calc.VarByName(PS, V1)) and ((VarType(V.Value) = varDouble)) then begin
         i := 0;
         repeat
           EList.Add(V.Value);
@@ -580,7 +580,7 @@ class function TXmlReadWrite.AxesLoadFromXml(Axes: TList<TAxis>; XmlNode: TDomNo
   begin
     Result := True;
 
-    if Calc.VarByName(Name, V) and (IsNumberValue(V.Value)) then
+    if Calc.VarByName(Name, V) and ((VarType(V.Value) = varDouble)) then
       D := V.Value
     else if Calc.VarByName(Name + '[' + IntToStr(idx) + ']', V) and (VarType(V.Value) in [varDouble, varInteger]) then
       D := V.Value
