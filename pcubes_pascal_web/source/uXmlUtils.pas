@@ -48,6 +48,16 @@ uses
   uScript, uUtils,
   SysUtils; // for Lazarus-xml
 
+function XmlTextToString(const S: String): String;
+begin
+  {$IFDEF PAS2JS}
+  Result := S;
+  {$ELSE}
+  Result := UTF8ToString(S);
+  {$ENDIF}
+end;
+
+
 function GetNodeText(XmlNode: TDomNode): string;
 var TextNode: TDomNode;
 begin
