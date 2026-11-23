@@ -2846,7 +2846,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  i := StrToInt(Vars[0].Value);
+  i := StrToInt(JS.toString(Vars[0].Value));
   Res.value := i;
   Result := True;
 end; // fStrToInt
@@ -2857,7 +2857,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  i := TUtils.HexToInt(Vars[0].Value);
+  i := TUtils.HexToInt(JS.toString(Vars[0].Value));
   Res.value := i;
   Result := True;
 end; // fHexToInt
