@@ -827,7 +827,7 @@ var
   i: integer;
   MacroName, MacroNames, AttrName: String;
   MacroNode: TDomNode;
-  lNames: TArray<String>;
+  lNames: TStringDynArray;
 begin
   MacroNames := XmlTrim(TDomElement(XmlNode).GetAttribute('MacroName'));
   RepeatN := ReadIntExpressionFromXml(XmlNode, 'Repeat', 1);
@@ -838,7 +838,7 @@ begin
       ExecuteScript(AttrName + ':=' + String(TDomElement(XmlNode).GetAttribute(AttrName)));
   end;
 
-  lNames := MacroNames.Split([' ']);
+  lNames := SplitString(MacroNames, ' ');
   for MacroName in lNames do
     if Length(MacroName) > 0 then
       for i := lMacros.Count - 1 downto 0 do begin
