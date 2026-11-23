@@ -485,12 +485,13 @@ begin
   Result := (t = varString) or (t = varOleStr);
 end; // VarIsString
 
-function VarTypeName(V: variant): String;
 {$IFDEF PAS2JS}
+function VarTypeName(V: variant): String;
 begin
   Result := 'Variant';
 end;
 {$ELSE}
+function VarTypeName(V: variant): String;
 var
   i: integer;
 begin
