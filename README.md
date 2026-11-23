@@ -6,7 +6,7 @@ This repository contains a browser port of the Lazarus/Free Pascal pCubes puzzle
 
 The GitHub Actions workflow compiles the original Pascal puzzle model to JavaScript with Pas2JS and commits the generated runtime assets used by the static web app.
 
-Latest verified build: [GitHub Actions run](https://github.com/brianthanhbinh/webcube/actions/runs/45187710030) — successful, including Pascal compilation and generated JavaScript commit.
+Latest verified build: [GitHub Actions run](https://github.com/brianthanhbinh/webcube/actions/runs/45213362836) — successful, including Pascal compilation and generated JavaScript commit.
 
 ## Browser features
 
