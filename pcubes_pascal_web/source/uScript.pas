@@ -585,38 +585,14 @@ begin
   CallGlobalProc := P;
 end; // SetCallProcessProc
 
-{$IFDEF PAS2JS}
 procedure TScript.Process;
-begin // Process
+begin
   if Stop then
     BlockCmd := tEXIT;
 
   if Assigned(IdleProc) then
     IdleProc;
 end; // Process
-{$ELSE}
-procedure TScript.Process;
-var
-  Msg: TMsg;
-begin // Process
-  if Stop then
-    BlockCmd := tEXIT;
-
-  if Assigned(IdleProc) then begin
-    IdleProc;
-    Exit;
-  end;
-
-  while PeekMessage(Msg, 0, 0, 0, PM_REMOVE) do begin
-    if Msg.Message = WM_QUIT then begin
-      BlockCmd := tEXIT;
-      Exit;
-    end;
-    TranslateMessage(Msg);
-    DispatchMessage(Msg);
-  end;
-end; // Process
-{$ENDIF}
 
 procedure TScript.ClearVars;
 begin
