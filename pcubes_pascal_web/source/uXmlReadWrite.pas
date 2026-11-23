@@ -113,6 +113,12 @@ type
 
 implementation
 
+
+uses
+  uScript, uUtils, uXmlUtils, uMatrix, uSolvedState, uPuzzleUtils, uSelection, uGeometryUtils,
+  {$IFDEF PAS2JS} JS, Variants, {$ELSE} Variants, {$ENDIF} SysUtils, StrUtils, Classes, Math,
+{Unzip,} XmlRead, XMLWrite{, ZipUtils};
+
 function XmlFileExists(const FileName: String): Boolean;
 begin
   {$IFDEF PAS2JS}
@@ -121,11 +127,6 @@ begin
   Result := SysUtils.FileExists(FileName);
   {$ENDIF}
 end;
-
-uses
-  uScript, uUtils, uXmlUtils, uMatrix, uSolvedState, uPuzzleUtils, uSelection, uGeometryUtils,
-  {$IFDEF PAS2JS} JS, Variants, {$ELSE} Variants, {$ENDIF} SysUtils, StrUtils, Classes, Math,
-{Unzip,} XmlRead, XMLWrite{, ZipUtils};
 
 const
   CIRCLE_SECTORS = 64;
