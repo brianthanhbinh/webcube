@@ -272,12 +272,27 @@ uses
      uUtils, SysUtils, Types, Math
      {$IFNDEF PAS2JS}, Windows, Messages, Dialogs, Controls, Forms {$ENDIF};
 
-type
-  TScriptCharSet = set of Char;
-
-function ScriptCharInSet(C: Char; const Allowed: TScriptCharSet): Boolean;
+function ScriptIsAlpha(C: Char): Boolean;
 begin
-  Result := C in Allowed;
+  Result := ((C >= 'a') and (C <= 'z')) or
+    ((C >= 'A') and (C <= 'Z')) or (C = '_') or
+    ((C >= '0') and (C <= '9'));
+end;
+
+function ScriptIsDigit(C: Char): Boolean;
+begin
+  Result := (C >= '0') and (C <= '9');
+end;
+
+function ScriptIsSpace(C: Char): Boolean;
+begin
+  Result := (C = ' ') or (C = #9) or (C = #10) or (C = #13);
+end;
+
+function ScriptIsNumberChar(C: Char): Boolean;
+begin
+  Result := ScriptIsDigit(C) or (C = '+') or (C = '-') or
+    (C = ',') or (C = '.') or (C = 'E');
 end;
 
 const
@@ -356,7 +371,7 @@ begin
   st := Trim(s);
   c := ' ';
   for i := 1 to length(st) do begin
-    if not ScriptCharInSet(st[i], ['0'..'9', '+', '-', ',', '.', 'E']) then
+    if not ScriptIsNumberChar(st[i]) then
       exit;
     if st[i] = '.' then begin
       inc(nt);
@@ -413,7 +428,7 @@ var
 begin
   Result := False;
   for i := 1 to Length(s) do
-    if not ScriptCharInSet(s[i], Alpha) then
+    if not ScriptIsAlpha(s[i]) then
       Exit;
   Result := True;
 end; // IsAlpha
@@ -427,21 +442,21 @@ begin
   Result := False;
   if S = '' then
     Exit;
-  if not ScriptCharInSet(S[1], Alpha) then
+  if not ScriptIsAlpha(S[1]) then
     Exit;
-  if ScriptCharInSet(S[1], ['0'..'9']) then
+  if ScriptIsDigit(S[1]) then
     Exit;
   Arr := False;
   n := length(S);
   for i := 2 to n do begin
     if not Arr then begin
-      if not ScriptCharInSet(S[i], Alpha) then begin
+      if not ScriptIsAlpha(S[i]) then begin
         if S[i] <> ResWords[tLARR][1] then
           Exit;
         Arr := True;
       end;
     end else begin
-      if not ScriptCharInSet(S[i], ['0'..'9'])
+      if not ScriptIsDigit(S[i])
          and (S[i] <> ResWords[tSUB][1])
          and (S[i] <> ResWords[tCOMMA][1])
          and (S[i] <> ResWords[tRARR][1]) then
@@ -1597,7 +1612,7 @@ begin // GetTextToken
   Code := tEMPTY;
   Result := '';
   sl := Length(s);
-  while (Index <= sl) and ScriptCharInSet(s[Index], SpaceSet) do
+  while (Index <= sl) and ScriptIsSpace(s[Index]) do
     inc(Index);
 
   if (Index > sl) then
@@ -1609,7 +1624,7 @@ begin // GetTextToken
     if CmpStr(ResWords[t], s, Index, tl)
       and (tl > Length(Result))
       and ((index + tl > sl)
-      or not ScriptCharInSet(s[index + tl], Alpha)
+      or not ScriptIsAlpha(s[index + tl])
       or not IsAlpha(ResWords[t])) then begin
       Result := ResWords[t];
       Code := t;
@@ -1626,8 +1641,8 @@ begin // GetTextToken
   if s[i] <> StrDelimiter then begin
 
     while (Index <= sl) do begin
-      if ScriptCharInSet(s[Index], SpaceSet)
-        or ((Index > i) and not ScriptCharInSet(s[Index], Alpha)
+      if ScriptIsSpace(s[Index])
+        or ((Index > i) and not ScriptIsAlpha(s[Index])
         and (s[Index] <> DecimalPoint)) then
         break;
       inc(Index);
@@ -1635,9 +1650,9 @@ begin // GetTextToken
     Result := Trim(copy(s, i, Index - i));
 
     //1.2E-16
-    if (Result <> '') and ScriptCharInSet(Result[1], ['0'..'9']) and (Result[Length(Result)] = 'E') then begin
+    if (Result <> '') and ScriptIsDigit(Result[1]) and (Result[Length(Result)] = 'E') then begin
       while (Index <= sl) do begin
-        if not ScriptCharInSet(s[Index], ['-', '+', '0'..'9']) then
+        if not (ScriptIsDigit(s[Index]) or (s[Index] = '-') or (s[Index] = '+')) then
           break;
         inc(Index);
       end;
@@ -1645,7 +1660,7 @@ begin // GetTextToken
     end;
 
 
-    if (Result <> '') and ScriptCharInSet(Result[1], ['0'..'9']) then begin
+    if (Result <> '') and ScriptIsDigit(Result[1]) then begin
       j := Pos(ResWords[tDOT2], Result);
       if j > 0 then begin
         Result := Trim(copy(Result, 1, j - 1));
@@ -2906,7 +2921,7 @@ begin
       fmt := fmt + fs[i]
     else
       s := s + fs[i];
-    if ff and ScriptCharInSet(fs[i], ['A'..'Z', 'a'..'z']) then begin
+    if ff and (((fs[i] >= 'A') and (fs[i] <= 'Z')) or ((fs[i] >= 'a') and (fs[i] <= 'z'))) then begin
       ff := False;
       inc(n);
       if n < Vars.Count then begin
