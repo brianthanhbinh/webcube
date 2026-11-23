@@ -519,6 +519,102 @@ end; // VarTypeName
 
 {------------------------------- TScript ------------------------------------}
 
+{$IFDEF PAS2JS}
+constructor TScript.Create;
+begin
+  inherited Create;
+  Stop := False;
+  ErrCode := 0;
+  ErrMsg := '';
+  ErrLine := '';
+end;
+
+destructor TScript.Destroy;
+begin
+  inherited Destroy;
+end;
+
+procedure TScript.ClearVars;
+begin
+end;
+
+procedure TScript.ClearProcs;
+begin
+end;
+
+procedure TScript.ClearFuncs;
+begin
+end;
+
+procedure TScript.DefineConsts;
+begin
+end;
+
+function TScript.VarCount: integer;
+begin
+  Result := 0;
+end;
+
+function TScript.VarExists(const N: String): Boolean;
+begin
+  Result := False;
+end;
+
+procedure TScript.VarRemove(const N: String);
+begin
+end;
+
+function TScript.VarByName(const N: String; var V: TVar): Boolean;
+begin
+  Result := False;
+end;
+
+function TScript.SetVar(V: TVar): Boolean;
+begin
+  Result := False;
+end;
+
+function TScript.SetValue(N: String; V: variant): Boolean;
+begin
+  Result := False;
+end;
+
+function TScript.SetFunction(Name: String; F: TFunction): Boolean;
+begin
+  Result := False;
+end;
+
+procedure TScript.SetIdleProc(P: Pointer);
+begin
+end;
+
+procedure TScript.SetCallGlobalProc(P: TFunction);
+begin
+end;
+
+function TScript.Parse(S: String): String;
+begin
+  Result := S;
+end;
+
+function TScript.Calculate(S: String; var R: TVar): Boolean;
+begin
+  Result := False;
+end;
+
+function TScript.Execute(S: String): Boolean;
+begin
+  Result := False;
+end;
+
+procedure TScript.DisableInteractiveFunctions;
+begin
+end;
+
+procedure TScript.EnableInteractiveFunctions;
+begin
+end;
+{$ELSE}
 constructor TScript.Create;
 begin
   inherited Create;
@@ -3725,6 +3821,8 @@ procedure TScript.EnableInteractiveFunctions;
 begin
   FInteractiveFunctionsEnabled := True;
 end;
+
+{$ENDIF}
 
 procedure ExecuteScript(Text: String);
 //         var i:integer;
