@@ -275,7 +275,7 @@ uses
 type
   TScriptCharSet = set of Char;
 
-function ScriptScriptCharInSet(C: Char; const Allowed: TScriptCharSet): Boolean;
+function ScriptCharInSet(C: Char; const Allowed: TScriptCharSet): Boolean;
 begin
   Result := C in Allowed;
 end;
