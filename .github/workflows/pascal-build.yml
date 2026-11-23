@@ -99,6 +99,8 @@ jobs:
             echo "Generated JavaScript is already up to date."
           else
             git commit -m "Build Pascal browser output"
+            git stash push --include-untracked -m "temporary Pascal build artifacts"
             git pull --rebase origin main
-          git push origin HEAD:main
+            git stash pop
+            git push origin HEAD:main
           fi
