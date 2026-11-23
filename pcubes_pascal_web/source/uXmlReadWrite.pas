@@ -1092,6 +1092,10 @@ begin
 end; // PuzzleLoadHeaderFromXml
 
 class function TXmlReadWrite.PuzzleLoadHeaderFromXmlFile(Puzzle: TPuzzle; const FileName: String): Boolean;
+{$IFDEF PAS2JS}
+begin
+  Result := False;
+{$ELSE}
 var
   XmlDoc: TXmlDocument;
 begin
@@ -1113,6 +1117,7 @@ begin
 
 //  Clear;
 end; // PuzzleLoadHeaderFromXmlFile
+{$ENDIF}
 
 class procedure TXmlReadWrite.PuzzleSaveHeaderToXml(Puzzle: TPuzzle; XmlDoc: TXmlDocument; XmlNode: TDomNode);
 var S: String;
@@ -1785,6 +1790,10 @@ begin
 end; // PuzzleLoadFromXmlCommon
 
 class function TXmlReadWrite.PuzzleLoadFromXmlFile(Puzzle: TPuzzle; const FileName: String): Boolean;
+{$IFDEF PAS2JS}
+begin
+  Result := False;
+{$ELSE}
 var
   XmlDoc: TXmlDocument;
 begin
@@ -1803,12 +1812,17 @@ begin
     {$ENDIF}
   end;
 end; // PuzzleLoadFromXmlFile
+{$ENDIF}
 
 const
   CASESENSITIVITY = 0;
 //  WRITEBUFFERSIZE = 8192;
 
 class function TXmlReadWrite.PuzzleLoadFromCompressedXmlFile(Puzzle: TPuzzle; const FileName: String): Boolean;
+{$IFDEF PAS2JS}
+begin
+  Result := False;
+{$ELSE}
 var
   XmlDoc: TXmlDocument;
   mStream: TMemoryStream;
@@ -1832,6 +1846,7 @@ begin
     mStream.Free;
   end;
 end; // PuzzleLoadFromCompressedXmlFile
+{$ENDIF}
 
 class procedure TXmlReadWrite.PuzzleSaveToXml(Puzzle: TPuzzle; XmlDoc: TXmlDocument; XmlRoot: TDomNode);
 var
@@ -2052,6 +2067,10 @@ begin
 end; // MacrosSaveToXml
 
 class function TXmlReadWrite.PuzzleExecMacroFromXmlFile(Puzzle: TPuzzle; const FileName: String; MacroString: String): Boolean;
+{$IFDEF PAS2JS}
+begin
+  Result := False;
+{$ELSE}
 var lMacros: TDomNodeList;
 
   procedure ExecMacro(XmlNode: TDomNode); forward;
@@ -2158,6 +2177,7 @@ begin // PuzzleExecMacroFromXmlFile
     {$ENDIF}
   end;
 end; // PuzzleExecMacroFromXmlFile
+{$ENDIF}
 
 // private
 class procedure TXmlReadWrite.DecodeLayers(const LayersString: String; var Layers: array of Boolean);
