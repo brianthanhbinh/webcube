@@ -664,7 +664,7 @@ class function TXmlReadWrite.FaceLoadFromXml(Face: TFace; XmlNode: TDomNode): Bo
       ExecuteScript('Result := ' + VIndex);
       if not Calc.VarByName('Result', V) then
         exit;
-      if VarIsStr(V.Value) then
+      if (VarType(V.Value) = varString) then
         AddIndexesFromString(V.Value)
       else
         Face.AddVertexByIndex(Round(extended(V.Value)));
