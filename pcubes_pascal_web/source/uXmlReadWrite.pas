@@ -1889,7 +1889,8 @@ begin // PuzzleLoadFromXml
   //  Puzzle.CalcBsp;
 
   finally
-    FreeAndNil(lMacros);
+    lMacros.Free;
+    lMacros := nil;
   end;
 
   Result := True;
