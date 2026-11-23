@@ -3160,7 +3160,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := DateToStr(Vars[0].Value);
+  Res.Value := DateToStr(JS.toNumber(Vars[0].Value));
   Result := True;
 end; // fDateToStr
 
@@ -3169,7 +3169,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := StrToDate(Vars[0].Value);
+  Res.Value := StrToDate(String(Vars[0].Value));
   Result := True;
 end; // fStrToDate
 
@@ -3178,7 +3178,7 @@ begin
   Result := False;
   if Vars.Count <> 2 then
     Exit;
-  Res.Value := FormatDateTime(Vars[0].Value, Vars[1].Value);
+  Res.Value := FormatDateTime(String(Vars[0].Value), JS.toNumber(Vars[1].Value));
   Result := True;
 end; // fFormatDateTime
 
@@ -3214,7 +3214,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := StrToTime(Vars[0].Value);
+  Res.Value := StrToTime(String(Vars[0].Value));
   Result := True;
 end; // fStrToTime
 
@@ -3223,7 +3223,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := TimeToStr(Vars[0].Value);
+  Res.Value := TimeToStr(JS.toNumber(Vars[0].Value));
   Result := True;
 end; // fTimeToStr
 
@@ -3232,7 +3232,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := DayOfWeek(Vars[0].Value);
+  Res.Value := DayOfWeek(JS.toNumber(Vars[0].Value));
   Result := True;
 end; // fDayOfWeek
 
@@ -3241,7 +3241,7 @@ begin
   Result := False;
   if Vars.Count <> 2 then
     Exit;
-  Res.Value := IncMonth(Vars[0].Value, Round(extended(Vars[1].Value)));
+  Res.Value := IncMonth(JS.toNumber(Vars[0].Value), Round(extended(Vars[1].Value)));
   Result := True;
 end; // fIncMonth
 
@@ -3257,7 +3257,7 @@ begin
   for i := 1 to 3 do
     if Vars[i].Name <> 'VAR' then
       Exit;
-  DecodeDate(Vars[0].Value, Y, M, D);
+  DecodeDate(JS.toNumber(Vars[0].Value), Y, M, D);
 
   VTemp := Vars[1];
   VTemp.Value := Y;
@@ -3287,7 +3287,7 @@ begin
   for i := 1 to 4 do
     if Vars[i].Name <> 'VAR' then
       Exit;
-  DecodeTime(Vars[0].Value, H, M, S, MS);
+  DecodeTime(JS.toNumber(Vars[0].Value), H, M, S, MS);
   VTemp := Vars[1];
   VTemp.Value := H;
   Vars[1] := VTemp;
@@ -3643,7 +3643,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  DecodeDate(Vars[0].Value, y, m, d);
+  DecodeDate(JS.toNumber(Vars[0].Value), y, m, d);
   if IsLeapYear(y) then
     Res.Value := 366
   else
