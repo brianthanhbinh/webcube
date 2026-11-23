@@ -269,7 +269,7 @@ implementation
 
 uses fOrderDialog,
      uUtils,
-     SysUtils, Variants, Types, Windows, Messages, Math, Dialogs, Controls, Forms;
+     SysUtils, Types, Windows, Messages, Math, Dialogs, Controls, Forms;
 
 const
   {$IFDEF PAS2JS}
