@@ -390,8 +390,12 @@ begin
     st := ReplaceChrs(st, ',', '.');
   end;
 
+  {$IFDEF PAS2JS}
+  Result := TryStrToFloat(st, x);
+  {$ELSE}
   Val(st, x, i);
   Result := i = 0;
+  {$ENDIF}
 end; // StrToNum
 
 
