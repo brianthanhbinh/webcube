@@ -773,13 +773,18 @@ class function TXmlReadWrite.FaceLoadFromXml(Face: TFace; XmlNode: TDomNode): Bo
   begin
     Splitted := SplitString(S, ';');
     for VIndex in Splitted do begin
+      {$IFDEF PAS2JS}
+      // Browser XML supports literal numeric indexes and numeric expressions.
+      Face.AddVertexByIndex(Round(CalcExpression(XmlTrim(VIndex))));
+      {$ELSE}
       ExecuteScript('Result := ' + VIndex);
       if not Calc.VarByName('Result', V) then
-        exit;
+        Exit;
       if (VarType(V.Value) = varString) then
         AddIndexesFromString(JS.toString(V.Value))
       else
         Face.AddVertexByIndex(Round(CalcExpression(VIndex)));
+      {$ENDIF}
     end;
   end; // AddIndexesFromString
 
