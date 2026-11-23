@@ -75,6 +75,20 @@ jobs:
               raise SystemExit("Could not find TParser.LoadBuffer read loop")
           s = s.replace(old_loop, new_loop, 1)
           p.write_text(s)
+
+          # The overloaded generic TDictionary constructors trigger an access
+          # violation in this Pas2JS compiler revision. Keep the capacity
+          # constructor used by the browser app and remove unused overloads.
+          p = Path("/tmp/pas2js-rtl/packages/rtl/generics.collections.pas")
+          s = p.read_text()
+          s = s.replace(
+              "    constructor Create(const Collection: TEnumerable<TMyPair>); overload;\n"
+              "    constructor Create(const AComparer: IComparer<TKey>); overload;\n", "")
+          s = re.sub(
+              r"constructor TDictionary<TKey, TValue>\\.Create\\(const Collection: TEnumerable<TMyPair>\\);.*?"
+              r"(?=destructor TDictionary<TKey, TValue>\\.Destroy;)",
+              "", s, flags=re.S)
+          p.write_text(s)
           PY
 
       - name: Compile Pascal to browser JavaScript
