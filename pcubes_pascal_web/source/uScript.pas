@@ -2646,10 +2646,20 @@ procedure TScript.DoCase(CmdLine, Line: String);
     if VarIsString(x1) xor VarIsString(x2) then
       Exit;
     try
+      {$IFDEF PAS2JS}
+      if JS.isString(x1.Value) and JS.isString(x2.Value) then begin
+        if JS.toString(x1.Value) > JS.toString(x2.Value) then Cmp := 1;
+        if JS.toString(x1.Value) < JS.toString(x2.Value) then Cmp := -1;
+      end else begin
+        if JS.toNumber(x1.Value) > JS.toNumber(x2.Value) then Cmp := 1;
+        if JS.toNumber(x1.Value) < JS.toNumber(x2.Value) then Cmp := -1;
+      end;
+      {$ELSE}
       if x1.Value > x2.Value then
         Cmp := 1;
       if x1.Value < x2.Value then
         Cmp := -1;
+      {$ENDIF}
     except
       Exit;
     end;
