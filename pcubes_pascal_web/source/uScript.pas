@@ -483,6 +483,11 @@ begin
 end; // VarIsString
 
 function VarTypeName(V: variant): String;
+{$IFDEF PAS2JS}
+begin
+  Result := 'Variant';
+end; // VarTypeName
+{$ELSE}
 var
   i: integer;
 begin
@@ -510,6 +515,7 @@ begin
     Result := '';
   end;
 end; // VarTypeName
+{$ENDIF}
 
 {------------------------------- TScript ------------------------------------}
 
