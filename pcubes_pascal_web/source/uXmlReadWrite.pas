@@ -112,6 +112,16 @@ type
   end;
 
 implementation
+
+function XmlFileExists(const FileName: String): Boolean;
+begin
+  {$IFDEF PAS2JS}
+  Result := False;
+  {$ELSE}
+  Result := SysUtils.FileExists(FileName);
+  {$ENDIF}
+end;
+
 uses
   uScript, uUtils, uXmlUtils, uMatrix, uSolvedState, uPuzzleUtils, uSelection, uGeometryUtils,
   {$IFDEF PAS2JS} JS, Variants, {$ELSE} Variants, {$ENDIF} SysUtils, StrUtils, Classes, Math,
@@ -1099,7 +1109,7 @@ begin
   Result := False;
   {$ELSE}
   Result := False;
-  if not FileExists(FileName) then
+  if not XmlFileExists(FileName) then
     exit;
 
   try
@@ -1487,7 +1497,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
       {$IFDEF PAS2JS}
       Result := False;
       {$ELSE}
-      Result := FileExists(FileName);
+      Result := XmlFileExists(FileName);
       if Result then
         ReadXMLFile(XmlDoc, FileName);
       {$ENDIF}
@@ -1793,7 +1803,7 @@ end;
 var
   XmlDoc: TXmlDocument;
 begin
-  if not FileExists(FileName) then
+  if not XmlFileExists(FileName) then
     Exit(False);
 
   ReadXMLFile(XmlDoc, FileName);
@@ -2126,7 +2136,7 @@ var
   XmlSubNode: TDomNode;
 begin // PuzzleExecMacroFromXmlFile
   Result := False;
-  if not FileExists(FileName) then
+  if not XmlFileExists(FileName) then
     exit;
 
   // only 'public' macros allowed
