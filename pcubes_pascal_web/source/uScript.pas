@@ -269,8 +269,8 @@ implementation
 
 uses
      {$IFNDEF PAS2JS} fOrderDialog, {$ENDIF}
-     uUtils, SysUtils, Types, Math,
-     {$IFNDEF PAS2JS} Windows, Messages, Dialogs, Controls, Forms, {$ENDIF}
+     uUtils, SysUtils, Types, Math
+     {$IFNDEF PAS2JS}, Windows, Messages, Dialogs, Controls, Forms {$ENDIF};
 
 const
   {$IFDEF PAS2JS}
