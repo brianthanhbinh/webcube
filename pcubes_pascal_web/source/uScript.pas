@@ -3870,7 +3870,7 @@ begin
   ExecuteScript('Result := ' + Text);
 
   if Calc.VarByName('Result', V) then
-    Result := V.Value;
+    Result := ScriptToFloat(V.Value);
 end; // CalcExpression
 
 initialization
