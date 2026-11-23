@@ -270,6 +270,7 @@ implementation
 uses
      {$IFNDEF PAS2JS} fOrderDialog, {$ENDIF}
      uUtils, SysUtils, Types, Math
+     {$IFDEF PAS2JS}, JS {$ENDIF}
      {$IFNDEF PAS2JS}, Windows, Messages, Dialogs, Controls, Forms {$ENDIF};
 
 function ScriptIsAlpha(C: Char): Boolean;
@@ -530,11 +531,9 @@ begin
   ErrCode := errOK;
   IdleProc := nil;
   CallGlobalProc := nil;
-  {$IFNDEF PAS2JS}
   VarList := TDictionary<String, Variant>.Create;
   FuncList := TDictionary<String, TFunc>.Create;
   ProcList := TDictionary<String, TProcedure>.Create;
-  {$ENDIF}
   LastString := '';
   LastParsed := '';
 
@@ -1023,8 +1022,39 @@ begin // Level8
 end; // Level8
 
 procedure TScript.Arith(o: TToken; var R, H: TVar);
+{$IFDEF PAS2JS}
+var
+  A, B: Double;
+{$ENDIF}
 begin
   try
+    {$IFDEF PAS2JS}
+    A := JS.toNumber(R.Value);
+    B := JS.toNumber(H.Value);
+    case O of
+      tOR:     R.Value := JS.toBoolean(R.Value) or JS.toBoolean(H.Value);
+      tAND:    R.Value := JS.toBoolean(R.Value) and JS.toBoolean(H.Value);
+      tXOR:    R.Value := JS.toBoolean(R.Value) xor JS.toBoolean(H.Value);
+      tEQU:    R.Value := (A = B) or (JS.isString(R.Value) and JS.isString(H.Value) and (JS.toString(R.Value) = JS.toString(H.Value)));
+      tNEQ:    R.Value := not ((A = B) or (JS.isString(R.Value) and JS.isString(H.Value) and (JS.toString(R.Value) = JS.toString(H.Value))));
+      tGT:     R.Value := A > B;
+      tLS:     R.Value := A < B;
+      tGTE:    R.Value := A >= B;
+      tLSE:    R.Value := A <= B;
+      tADD:    if JS.isString(R.Value) or JS.isString(H.Value) then
+                 R.Value := JS.toString(R.Value) + JS.toString(H.Value)
+               else
+                 R.Value := A + B;
+      tSUB:    R.Value := A - B;
+      tMUL:    R.Value := A * B;
+      tDIVIDE: R.Value := A / B;
+      tDIV:    R.Value := Trunc(A) div Trunc(B);
+      tMOD:    R.Value := Trunc(A) mod Trunc(B);
+      tPWR:    R.Value := Power(A, B);
+      tSHL:    R.Value := Trunc(A) shl Trunc(B);
+      tSHR:    R.Value := Trunc(A) shr Trunc(B);
+    end;
+    {$ELSE}
     case O of
       tOR:     R.Value := R.Value or H.Value;
       tAND:    R.Value := R.Value and H.Value;
@@ -1045,6 +1075,7 @@ begin
       tSHL:    R.Value := R.Value shl H.Value;
       tSHR:    R.Value := R.Value shr H.Value;
     end;
+    {$ENDIF}
   except
     Error('Invalid operand types for "' + ResWords[o] + '"', Expr, errTypeCast);
     Exit;
@@ -1055,7 +1086,11 @@ procedure TScript.Unary(o: TToken; var R: TVar);
 begin
   if o = tSUB then
     try
+      {$IFDEF PAS2JS}
+      R.Value := -JS.toNumber(R.Value);
+      {$ELSE}
       R.Value := -R.Value;
+      {$ENDIF}
       Exit;
     except
       Error('Invalid operand types for "' + ResWords[o] + '"', Expr, errTypeCast);
@@ -1064,7 +1099,11 @@ begin
 
   if o = tNOT then
     try
+      {$IFDEF PAS2JS}
+      R.Value := not JS.toBoolean(R.Value);
+      {$ELSE}
       R.Value := not R.Value;
+      {$ENDIF}
       Exit;
     except
       Error('Invalid operand types for "' + ResWords[o] + '"', Expr, errTypeCast);
