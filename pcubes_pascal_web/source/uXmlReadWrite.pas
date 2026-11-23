@@ -119,6 +119,17 @@ uses
   {$IFDEF PAS2JS} JS, Variants, {$ELSE} Variants, {$ENDIF} StrUtils, Classes, Math,
 {Unzip,} XmlRead, XMLWrite{, ZipUtils};
 
+function XmlTrim(const S: String): String;
+var
+  First, Last: Integer;
+begin
+  First := 1;
+  Last := Length(S);
+  while (First <= Last) and (S[First] <= ' ') do Inc(First);
+  while (Last >= First) and (S[Last] <= ' ') do Dec(Last);
+  Result := Copy(S, First, Last - First + 1);
+end;
+
 function XmlFileExists(const FileName: String): Boolean;
 begin
   {$IFDEF PAS2JS}
@@ -170,7 +181,7 @@ begin
   try
     Values := SplitString(Names, ';');
     for S in Values do begin
-      PS := Trim(S);
+      PS := XmlTrim(S);
       // check if it's an array
       if Calc.VarByName(PS + '[0]', V) and (not Calc.VarByName(PS, V1)) and ((VarType(V.Value) = varDouble)) then begin
         i := 0;
@@ -212,9 +223,9 @@ end;
 
 class function TXmlReadWrite.GetVectorFromString(S: String): TVector;
 begin
-  Result.X := CalcExpression(Trim(TUtils.Parse(S, ';')));
-  Result.Y := CalcExpression(Trim(TUtils.Parse(S, ';')));
-  Result.Z := CalcExpression(Trim(TUtils.Parse(S, ';')));
+  Result.X := CalcExpression(XmlTrim(TUtils.Parse(S, ';')));
+  Result.Y := CalcExpression(XmlTrim(TUtils.Parse(S, ';')));
+  Result.Z := CalcExpression(XmlTrim(TUtils.Parse(S, ';')));
 end; // GetVectorFromString
 
 class procedure TXmlReadWrite.GetVectorsFromString(S: String; Vectors: TList<TVector>);
@@ -239,7 +250,7 @@ var
   procedure InitDim(Dim: integer);
   begin
     isArray[Dim] := True;
-    ArrayName[Dim] := UpperCase(Trim(TUtils.Parse(S, ';')));
+    ArrayName[Dim] := UpperCase(XmlTrim(TUtils.Parse(S, ';')));
     isArray[Dim] := GetArrayValue(0, Dim);
     if not isArray[Dim] then
       Vec[Dim] := CalcExpression(ArrayName[Dim]);
@@ -475,7 +486,7 @@ begin // FillAxis
   S := TurningAngles;
   if Pos(';', S) <> 0 then
     for i := 0 to Axis.Layers.Count - 1 do
-      Axis.Layers[i].TurningAngle := CalcExpression(Trim(TUtils.Parse(S, ';')))
+      Axis.Layers[i].TurningAngle := CalcExpression(XmlTrim(TUtils.Parse(S, ';')))
   else begin
     Al := CalcExpression(S);
     for i := 0 to Axis.Layers.Count - 1 do
@@ -487,8 +498,8 @@ begin // FillAxis
         Fixed := True;
 
   S := FixedLayers;
-  while Trim(S) <> '' do begin
-    i := Round(CalcExpression(Trim(TUtils.Parse(S, ';'))));
+  while XmlTrim(S) <> '' do begin
+    i := Round(CalcExpression(XmlTrim(TUtils.Parse(S, ';'))));
     if (i >= 0) and (i < Axis.Layers.Count) then
       Axis.Layers[i].Fixed := True
     else
@@ -507,10 +518,10 @@ begin // FillAxis
   SMax := MaxAngles;
   for i := 0 to Axis.Layers.Count - 1 do begin
     if (SMin <> '') or (SMax <> '') then begin
-      S := Trim(TUtils.Parse(SMin, ';'));
+      S := XmlTrim(TUtils.Parse(SMin, ';'));
       if S <> '' then
         Axis.Layers[i].MinAngle := CalcExpression(S);
-      S := Trim(TUtils.Parse(SMax, ';'));
+      S := XmlTrim(TUtils.Parse(SMax, ';'));
       if S <> '' then
         Axis.Layers[i].MaxAngle := CalcExpression(S);
     end;
@@ -689,7 +700,7 @@ begin // FaceLoadFromXml
   Face.Clear;
   Face.Color := ReadColorExpressionFromXml(XmlNode, 'Color', -1);
 
-  AddIndexesFromString(Trim(ReadStringFromXml(XmlNode, 'VertexIndexes')));
+  AddIndexesFromString(XmlTrim(ReadStringFromXml(XmlNode, 'VertexIndexes')));
 
   //âðåìåííî, ïåðåäåëàòü íà '1,10,...'
   InvisibleEdges := ReadIntExpressionFromXml(XmlNode, 'InvisibleEdges');
@@ -704,8 +715,8 @@ begin // FaceLoadFromXml
 //
 //    Coords := string(XmlNode.GetAttr('TextureCoordinates', ''));
 //    for i := 0 to Face.GetVertexCount - 1 do begin
-//      Face.TextureXCoords[i] := StrToIntDef(Trim(TUtils.Parse(Coords, ';')), 0);
-//      Face.TextureYCoords[i] := StrToIntDef(Trim(TUtils.Parse(Coords, ';')), 0);
+//      Face.TextureXCoords[i] := StrToIntDef(XmlTrim(TUtils.Parse(Coords, ';')), 0);
+//      Face.TextureYCoords[i] := StrToIntDef(XmlTrim(TUtils.Parse(Coords, ';')), 0);
 //    end;
 //  end;
 
@@ -758,7 +769,7 @@ var
   MacroNode: TDomNode;
   lNames: TArray<String>;
 begin
-  MacroNames := Trim(TDomElement(XmlNode).GetAttribute('MacroName'));
+  MacroNames := XmlTrim(TDomElement(XmlNode).GetAttribute('MacroName'));
   RepeatN := ReadIntExpressionFromXml(XmlNode, 'Repeat', 1);
 
   for i := 0 to XmlNode.Attributes.Length - 1 do begin
@@ -772,7 +783,7 @@ begin
     if Length(MacroName) > 0 then
       for i := lMacros.Count - 1 downto 0 do begin
         MacroNode := lMacros[i];
-        if SameText(MacroName, Trim(TDomElement(MacroNode).GetAttribute('Name'))) then begin
+        if SameText(MacroName, XmlTrim(TDomElement(MacroNode).GetAttribute('Name'))) then begin
           MacroNodes.Add(MacroNode);
           break;
         end;
@@ -1456,15 +1467,15 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
     if sl.Count <> 0 then begin
 
       for i := sl.Count - 1 downto 0 do
-        if (Trim(sl[i]) = '') or (copy(Trim(sl[i]), 1, 1) = ';') then
+        if (XmlTrim(sl[i]) = '') or (copy(XmlTrim(sl[i]), 1, 1) = ';') then
           sl.Delete(i);
 
       for i := 0 to sl.Count - 1 do begin
-        S := Trim(sl[i]);
-        SP := Trim(TUtils.Parse(S, '='));
+        S := XmlTrim(sl[i]);
+        SP := XmlTrim(TUtils.Parse(S, '='));
         TextureId := FindByName(SP);
         if TextureId <> -1 then
-          while Trim(S) <> '' do begin
+          while XmlTrim(S) <> '' do begin
             iPart := TUtils.ParseInt(S);
             if (iPart < 0) or (iPart >= Puzzle.Parts.Count) then
               continue;
@@ -1516,7 +1527,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
     ReadStringFromXml(XmlNode, 'File', S, '');
 //    if S = '' then
 //      ReadStringFromXml(XmlNode, '', S, '');
-    S := Trim(S);
+    S := XmlTrim(S);
 
 //    XmlDoc := TXmlDocument.Create;
 
@@ -1539,7 +1550,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
     MacroName, AttrName: String;
     MacroNames: TArray<String>;
   begin
-    MacroName := Trim(TDomElement(XmlNode).GetAttribute('MacroName'));
+    MacroName := XmlTrim(TDomElement(XmlNode).GetAttribute('MacroName'));
     MacroNames := MacroName.Split([' ']);
     n := ReadIntExpressionFromXml(XmlNode, 'Repeat', 1);
 
@@ -1554,7 +1565,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
         if Length(MacroName) > 0 then
           for i := lMacros.Count - 1 downto 0 do begin
             XmlNode := lMacros[i];
-            if SameText(MacroName, Trim(TDomElement(XmlNode).GetAttribute('Name'))) then begin
+            if SameText(MacroName, XmlTrim(TDomElement(XmlNode).GetAttribute('Name'))) then begin
               LoadFigure(XmlNode);
               break;
             end;
@@ -1565,7 +1576,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
 
     function ParseInt(var S: String): integer;
     begin
-      Result := StrToIntDef(Trim(TUtils.Parse(S, ';')), -1);
+      Result := StrToIntDef(XmlTrim(TUtils.Parse(S, ';')), -1);
     end; // ParseInt
 
   var
@@ -1929,8 +1940,8 @@ end; // PuzzleSaveToXmlFile
 
 class function TXmlReadWrite.TextureLoadFromXml(Texture: TTexture; XmlNode: TDomNode): Boolean;
 begin
-  Texture.Name := Trim(TDomElement(XmlNode).GetAttribute('Name'));
-  Texture.FileName := Trim(TDomElement(XmlNode).GetAttribute('File'));
+  Texture.Name := XmlTrim(TDomElement(XmlNode).GetAttribute('Name'));
+  Texture.FileName := XmlTrim(TDomElement(XmlNode).GetAttribute('File'));
   Result := True;
 end; // TextureLoadFromXml
 
@@ -2107,7 +2118,7 @@ var lMacros: TDomNodeList;
     i, k, n: integer;
     MacroName, MacroNames, AttrName: String;
   begin
-    MacroNames := Trim(TDomElement(XmlNode).AttribStrings['MacroName']);
+    MacroNames := XmlTrim(TDomElement(XmlNode).AttribStrings['MacroName']);
     n := ReadIntExpressionFromXml(XmlNode, 'Repeat', 1);
 
     for i := 0 to XmlNode.Attributes.Length - 1 do begin
@@ -2117,10 +2128,10 @@ var lMacros: TDomNodeList;
     end;
 
     while MacroNames <> '' do begin
-      MacroName := Trim(TUtils.Parse(MacroNames, ' ' + #9#10#13));
+      MacroName := XmlTrim(TUtils.Parse(MacroNames, ' ' + #9#10#13));
       if MacroName <> '' then begin
         for i := lMacros.Count - 1 downto 0 do begin
-          if SameStr(MacroName, Trim(TDomElement(lMacros[i]).GetAttribute('Name'))) then
+          if SameStr(MacroName, XmlTrim(TDomElement(lMacros[i]).GetAttribute('Name'))) then
             for k := 0 to n - 1 do
               ExecMacroBody(lMacros[i]);
         end;
@@ -2162,9 +2173,9 @@ begin // PuzzleExecMacroFromXmlFile
     for i := 0 to nodeMacros.ChildNodes.Count - 1 do begin
       XmlSubNode := nodeMacros.ChildNodes[i];
       if SameText(XmlSubNode.NodeName, 'Macro') then begin
-        Macro := Trim(TUtils.Parse(MacroString, ' '));
+        Macro := XmlTrim(TUtils.Parse(MacroString, ' '));
         Found := False;
-        if SameStr(Trim(TDomElement(XmlSubNode).GetAttribute('Name')), Macro) then begin
+        if SameStr(XmlTrim(TDomElement(XmlSubNode).GetAttribute('Name')), Macro) then begin
           Calc.ClearVars; // î÷èùàåì Script âî èçáåæàíèå íàêëàäîê îò ïðåäûäóùèõ ñêðèïòîâ
           Calc.ClearProcs;
           Calc.DefineConsts;
