@@ -356,7 +356,7 @@ begin
   st := Trim(s);
   c := ' ';
   for i := 1 to length(st) do begin
-    if not CharInSet(st[i], ['0'..'9', '+', '-', ',', '.', 'E']) then
+    if not ScriptCharInSet(st[i], ['0'..'9', '+', '-', ',', '.', 'E']) then
       exit;
     if st[i] = '.' then begin
       inc(nt);
@@ -413,7 +413,7 @@ var
 begin
   Result := False;
   for i := 1 to Length(s) do
-    if not CharInSet(s[i], Alpha) then
+    if not ScriptCharInSet(s[i], Alpha) then
       Exit;
   Result := True;
 end; // IsAlpha
@@ -427,21 +427,21 @@ begin
   Result := False;
   if S = '' then
     Exit;
-  if not CharInSet(S[1], Alpha) then
+  if not ScriptCharInSet(S[1], Alpha) then
     Exit;
-  if CharInSet(S[1], ['0'..'9']) then
+  if ScriptCharInSet(S[1], ['0'..'9']) then
     Exit;
   Arr := False;
   n := length(S);
   for i := 2 to n do begin
     if not Arr then begin
-      if not CharInSet(S[i], Alpha) then begin
+      if not ScriptCharInSet(S[i], Alpha) then begin
         if S[i] <> ResWords[tLARR][1] then
           Exit;
         Arr := True;
       end;
     end else begin
-      if not CharInSet(S[i], ['0'..'9'])
+      if not ScriptCharInSet(S[i], ['0'..'9'])
          and (S[i] <> ResWords[tSUB][1])
          and (S[i] <> ResWords[tCOMMA][1])
          and (S[i] <> ResWords[tRARR][1]) then
@@ -1597,7 +1597,7 @@ begin // GetTextToken
   Code := tEMPTY;
   Result := '';
   sl := Length(s);
-  while (Index <= sl) and CharInSet(s[Index], SpaceSet) do
+  while (Index <= sl) and ScriptCharInSet(s[Index], SpaceSet) do
     inc(Index);
 
   if (Index > sl) then
@@ -1609,7 +1609,7 @@ begin // GetTextToken
     if CmpStr(ResWords[t], s, Index, tl)
       and (tl > Length(Result))
       and ((index + tl > sl)
-      or not CharInSet(s[index + tl], Alpha)
+      or not ScriptCharInSet(s[index + tl], Alpha)
       or not IsAlpha(ResWords[t])) then begin
       Result := ResWords[t];
       Code := t;
@@ -1626,8 +1626,8 @@ begin // GetTextToken
   if s[i] <> StrDelimiter then begin
 
     while (Index <= sl) do begin
-      if CharInSet(s[Index], SpaceSet)
-        or ((Index > i) and not CharInSet(s[Index], Alpha)
+      if ScriptCharInSet(s[Index], SpaceSet)
+        or ((Index > i) and not ScriptCharInSet(s[Index], Alpha)
         and (s[Index] <> DecimalPoint)) then
         break;
       inc(Index);
@@ -1635,9 +1635,9 @@ begin // GetTextToken
     Result := Trim(copy(s, i, Index - i));
 
     //1.2E-16
-    if (Result <> '') and CharInSet(Result[1], ['0'..'9']) and (Result[Length(Result)] = 'E') then begin
+    if (Result <> '') and ScriptCharInSet(Result[1], ['0'..'9']) and (Result[Length(Result)] = 'E') then begin
       while (Index <= sl) do begin
-        if not CharInSet(s[Index], ['-', '+', '0'..'9']) then
+        if not ScriptCharInSet(s[Index], ['-', '+', '0'..'9']) then
           break;
         inc(Index);
       end;
@@ -1645,7 +1645,7 @@ begin // GetTextToken
     end;
 
 
-    if (Result <> '') and CharInSet(Result[1], ['0'..'9']) then begin
+    if (Result <> '') and ScriptCharInSet(Result[1], ['0'..'9']) then begin
       j := Pos(ResWords[tDOT2], Result);
       if j > 0 then begin
         Result := Trim(copy(Result, 1, j - 1));
@@ -2906,7 +2906,7 @@ begin
       fmt := fmt + fs[i]
     else
       s := s + fs[i];
-    if ff and CharInSet(fs[i], ['A'..'Z', 'a'..'z']) then begin
+    if ff and ScriptCharInSet(fs[i], ['A'..'Z', 'a'..'z']) then begin
       ff := False;
       inc(n);
       if n < Vars.Count then begin
