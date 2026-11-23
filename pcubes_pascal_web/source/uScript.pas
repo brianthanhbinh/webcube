@@ -273,6 +273,15 @@ uses
      {$IFDEF PAS2JS}, JS {$ENDIF}
      {$IFNDEF PAS2JS}, Windows, Messages, Dialogs, Controls, Forms {$ENDIF};
 
+function ScriptToFloat(const V: Variant): Extended;
+begin
+  {$IFDEF PAS2JS}
+  Result := JS.toNumber(V);
+  {$ELSE}
+  Result := Extended(V);
+  {$ENDIF}
+end;
+
 function ScriptIsAlpha(C: Char): Boolean;
 begin
   Result := ((C >= 'a') and (C <= 'z')) or
@@ -2798,7 +2807,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Str(extended(Vars[0].Value): 0: 15, s);
+  Str(ScriptToFloat(Vars[0].Value): 0: 15, s);
   while s[Length(s)] = '0' do
     s := copy(s, 1, Length(s) - 1);
   if s[Length(s)] = '.' then
@@ -2899,8 +2908,8 @@ begin
     Exit;
 
   Res.Value := copy(String(Vars[0].Value),
-    Round(extended(Vars[1].Value)),
-    Round(extended(Vars[2].Value)));
+    Round(ScriptToFloat(Vars[1].Value)),
+    Round(ScriptToFloat(Vars[2].Value)));
 
   Result := True;
 end; // fCopy
@@ -2935,7 +2944,7 @@ begin
     Exit;
 
   s := String(Vars[1].Value);
-  Insert(String(Vars[0].Value), s, Round(extended(Vars[2].Value)));
+  Insert(String(Vars[0].Value), s, Round(ScriptToFloat(Vars[2].Value)));
   VTemp := Vars[1];
   VTemp.Value := s;
   Vars[1] := VTemp;
@@ -2956,7 +2965,7 @@ begin
 
 
   s := String(Vars[0].Value);
-  Delete(s, Round(extended(Vars[1].Value)), Round(extended(Vars[2].Value)));
+  Delete(s, Round(ScriptToFloat(Vars[1].Value)), Round(ScriptToFloat(Vars[2].Value)));
   VTemp := Vars[0];
   VTemp.Value := s;
   Vars[0] := VTemp;
@@ -3039,7 +3048,7 @@ begin
           try
             s := s + Format(fmt, [Vars[n].Value]);
           except
-            s := s + Format(fmt, [Round(extended(Vars[n].Value))]);
+            s := s + Format(fmt, [Round(ScriptToFloat(Vars[n].Value))]);
           end;
         end else
           s := s + Format(fmt, [Vars[n].Value]);
@@ -3253,7 +3262,7 @@ begin
   Result := False;
   if Vars.Count <> 2 then
     Exit;
-  Res.Value := IncMonth(JS.toNumber(Vars[0].Value), Round(extended(Vars[1].Value)));
+  Res.Value := IncMonth(JS.toNumber(Vars[0].Value), Round(ScriptToFloat(Vars[1].Value)));
   Result := True;
 end; // fIncMonth
 
@@ -3325,9 +3334,9 @@ begin
   Result := False;
   if Vars.Count <> 3 then
     Exit;
-  Res.Value := EncodeDate(Round(extended(Vars[0].Value)),
-    Round(extended(Vars[1].Value)),
-    Round(extended(Vars[2].Value)));
+  Res.Value := EncodeDate(Round(ScriptToFloat(Vars[0].Value)),
+    Round(ScriptToFloat(Vars[1].Value)),
+    Round(ScriptToFloat(Vars[2].Value)));
   Result := True;
 end; // fEncodeDate
 
@@ -3336,10 +3345,10 @@ begin
   Result := False;
   if Vars.Count <> 4 then
     Exit;
-  Res.Value := EncodeTime(Round(extended(Vars[0].Value)),
-    Round(extended(Vars[1].Value)),
-    Round(extended(Vars[2].Value)),
-    Round(extended(Vars[3].Value)));
+  Res.Value := EncodeTime(Round(ScriptToFloat(Vars[0].Value)),
+    Round(ScriptToFloat(Vars[1].Value)),
+    Round(ScriptToFloat(Vars[2].Value)),
+    Round(ScriptToFloat(Vars[3].Value)));
   Result := True;
 end; // fEncodeTime
 
@@ -3429,7 +3438,7 @@ begin
   Result := False;
   if Vars.Count <> 2 then
     Exit;
-  Res.Value := IntPower(Vars[0].Value, Round(extended(Vars[1].Value)));
+  Res.Value := IntPower(Vars[0].Value, Round(ScriptToFloat(Vars[1].Value)));
   Result := True;
 end; // fIntPower
 
@@ -3483,7 +3492,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Integer(Round(extended(Vars[0].Value)));
+  Res.Value := Integer(Round(ScriptToFloat(Vars[0].Value)));
   Result := True;
 end; // fRound
 
@@ -3492,7 +3501,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Integer(Trunc(extended(Vars[0].Value)));
+  Res.Value := Integer(Trunc(ScriptToFloat(Vars[0].Value)));
   Result := True;
 end; // fTrunc
 
@@ -3710,7 +3719,7 @@ begin
   if Vars.Count = 0 then
     Res.Value := Random
   else if Vars.Count = 1 then
-    Res.Value := Random(Round(extended(Vars[0].Value)))
+    Res.Value := Random(Round(ScriptToFloat(Vars[0].Value)))
   else
     Exit(False);
   Result := True;
