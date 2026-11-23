@@ -50,7 +50,7 @@ end;
 
 function APIGetRenderData: TJSObject;
 var
-  FacesArray, FaceObject, VerticesArray, VertexArray: TJSObject;
+  FacesArray, VerticesArray, VertexArray: TJSArray;\n  FaceObject: TJSObject;
   Part: TPart;
   Face: TFace;
   V: TVector;
@@ -68,14 +68,14 @@ begin
             for I := 0 to Face.GetVertexCount - 1 do begin
               V := Face.GetVertex(I);
               VertexArray := TJSArray.new;
-              TJSArray(VertexArray).push(V.X);
-              TJSArray(VertexArray).push(V.Y);
-              TJSArray(VertexArray).push(V.Z);
-              TJSArray(VerticesArray).push(VertexArray);
+              VertexArray.push(V.X);
+              VertexArray.push(V.Y);
+              VertexArray.push(V.Z);
+              VerticesArray.push(VertexArray);
             end;
             FaceObject['vertices'] := VerticesArray;
             FaceObject['color'] := Face.Color;
-            TJSArray(FacesArray).push(FaceObject);
+            FacesArray.push(FaceObject);
           end;
   Result['faces'] := FacesArray;
 end;
