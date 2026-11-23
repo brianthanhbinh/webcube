@@ -33,8 +33,10 @@ jobs:
         env:
           PAS2JS_RTL_COMMIT: 8cd10d88cc81868bce6f03f481b0bc83946d6ace
         run: |
-          git clone --recurse-submodules --depth 1 https://github.com/fpc/pas2js.git /tmp/pas2js-rtl
-          test -f /tmp/pas2js-rtl/compiler/compiler/utils/pas2js/pas2js.pp || test -d /tmp/pas2js-rtl/compiler
+          git clone --depth 1 https://github.com/fpc/pas2js.git /tmp/pas2js-rtl
+          git clone --filter=blob:none https://github.com/fpc/FPCSource.git /tmp/pas2js-rtl/compiler
+          git -C /tmp/pas2js-rtl/compiler fetch --depth 1 origin "$PAS2JS_RTL_COMMIT"
+          git -C /tmp/pas2js-rtl/compiler checkout --detach "$PAS2JS_RTL_COMMIT"
           make -C /tmp/pas2js-rtl all
           sudo ln -sf /tmp/pas2js-rtl/bin/x86_64-linux/pas2js /usr/local/bin/pas2js
           pas2js -iV
