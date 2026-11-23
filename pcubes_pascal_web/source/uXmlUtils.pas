@@ -46,6 +46,7 @@ implementation
 
 uses
   uScript, uUtils,
+  {$IFDEF PAS2JS} JS, {$ENDIF}
   SysUtils; // for Lazarus-xml
 
 function XmlTextToString(const S: String): String;
