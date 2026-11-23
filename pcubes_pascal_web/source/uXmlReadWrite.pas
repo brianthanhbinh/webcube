@@ -1095,6 +1095,7 @@ class function TXmlReadWrite.PuzzleLoadHeaderFromXmlFile(Puzzle: TPuzzle; const 
 {$IFDEF PAS2JS}
 begin
   Result := False;
+end;
 {$ELSE}
 var
   XmlDoc: TXmlDocument;
@@ -1793,6 +1794,7 @@ class function TXmlReadWrite.PuzzleLoadFromXmlFile(Puzzle: TPuzzle; const FileNa
 {$IFDEF PAS2JS}
 begin
   Result := False;
+end;
 {$ELSE}
 var
   XmlDoc: TXmlDocument;
@@ -1822,6 +1824,7 @@ class function TXmlReadWrite.PuzzleLoadFromCompressedXmlFile(Puzzle: TPuzzle; co
 {$IFDEF PAS2JS}
 begin
   Result := False;
+end;
 {$ELSE}
 var
   XmlDoc: TXmlDocument;
@@ -2070,6 +2073,7 @@ class function TXmlReadWrite.PuzzleExecMacroFromXmlFile(Puzzle: TPuzzle; const F
 {$IFDEF PAS2JS}
 begin
   Result := False;
+end;
 {$ELSE}
 var lMacros: TDomNodeList;
 
