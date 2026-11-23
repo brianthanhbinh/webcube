@@ -18,6 +18,58 @@ import { PuzzleRenderer } from "./renderer.js";
     return xmlDocument;
   }
 
+  function addBuiltinCubeFigure(loadNode) {
+    const fileName = (loadNode.getAttribute("File") || "").replace(/\\\\/g, "/").toLowerCase();
+    if (!fileName.endsWith("figures/cube.xml") && fileName !== "cube.xml") {
+      throw new Error('Missing external figure "' + loadNode.getAttribute("File") +
+        '". This browser build currently includes Figures/Cube.xml only.');
+    }
+
+    const rawWidth = loadNode.getAttribute("W");
+    const width = rawWidth === null || rawWidth.trim() === "" ? 1 : Number(rawWidth);
+    if (!Number.isFinite(width) || width <= 0) {
+      throw new Error("The cube figure W attribute must be a positive number.");
+    }
+
+    const doc = loadNode.ownerDocument;
+    const part = doc.createElement("Part");
+    const vertices = doc.createElement("Vertices");
+    const faces = doc.createElement("Faces");
+    const coordinates = [
+      [-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1],
+      [1, -1, -1], [1, -1, 1], [1, 1, -1], [1, 1, 1]
+    ];
+
+    for (const point of coordinates) {
+      const vector = doc.createElement("Vector");
+      vector.setAttribute("X", String(point[0] * width));
+      vector.setAttribute("Y", String(point[1] * width));
+      vector.setAttribute("Z", String(point[2] * width));
+      vertices.appendChild(vector);
+    }
+
+    const definitions = [
+      ["C80000", "0;1;3;2"], ["FF800A", "5;4;6;7"],
+      ["0000C8", "1;0;4;5"], ["009600", "2;3;7;6"],
+      ["FFFF00", "0;2;6;4"], ["FFFFFF", "3;1;5;7"]
+    ];
+    for (const [color, indexes] of definitions) {
+      const face = doc.createElement("Face");
+      face.setAttribute("Color", color);
+      face.setAttribute("VertexIndexes", indexes);
+      faces.appendChild(face);
+    }
+
+    part.append(vertices, faces);
+    loadNode.parentNode.insertBefore(part, loadNode);
+    loadNode.parentNode.removeChild(loadNode);
+  }
+
+  function resolveExternalFigures(xmlDocument) {
+    const nodes = Array.from(xmlDocument.getElementsByTagName("LoadFrom"));
+    for (const node of nodes) addBuiltinCubeFigure(node);
+  }
+
   function updateModelInfo(api) {
     const model = api.getModelInfo();
     info.textContent = `Pascal ${api.getVersion()} · model ${model.connected ? "connected" : "offline"} · ${model.parts} parts · ${model.axes} axes · undo ${model.undoCount} · redo ${model.redoCount}`;
@@ -46,6 +98,7 @@ import { PuzzleRenderer } from "./renderer.js";
 
   function loadXmlText(xmlText) {
     const xmlDocument = parseXml(xmlText);
+    resolveExternalFigures(xmlDocument);
     if (!call("loadXML", xmlDocument.documentElement)) return false;
     originalXmlText = xmlText;
     return true;
