@@ -2832,7 +2832,7 @@ begin
   {$IFDEF PAS2JS}
   if not TryStrToFloat(Trim(JS.toString(Vars[0].Value)), x) then Exit;
   {$ELSE}
-  Val(Trim(Vars[0].Value), x, i);
+  Val(Trim(String(Vars[0].Value)), x, i);
   if i <> 0 then Exit;
   {$ENDIF}
   Res.value := x;
@@ -2898,7 +2898,7 @@ begin
   if Vars.Count <> 3 then
     Exit;
 
-  Res.Value := copy(Vars[0].Value,
+  Res.Value := copy(String(Vars[0].Value),
     Round(extended(Vars[1].Value)),
     Round(extended(Vars[2].Value)));
 
@@ -2910,7 +2910,7 @@ begin
   Result := False;
   if Vars.Count <> 2 then
     Exit;
-  Res.Value := Pos(Vars[0].Value, Vars[1].Value);
+  Res.Value := Pos(String(Vars[0].Value), String(Vars[1].Value));
   Result := True;
 end; // fPos
 
@@ -2919,7 +2919,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Length(Vars[0].Value);
+  Res.Value := Length(String(Vars[0].Value));
   Result := True;
 end; // fLength
 
@@ -2934,7 +2934,7 @@ begin
     or (Vars[1].Name <> 'VAR') then
     Exit;
 
-  s := Vars[1].Value;
+  s := String(Vars[1].Value);
   Insert(String(Vars[0].Value), s, Round(extended(Vars[2].Value)));
   VTemp := Vars[1];
   VTemp.Value := s;
@@ -2955,7 +2955,7 @@ begin
     Exit;
 
 
-  s := Vars[0].Value;
+  s := String(Vars[0].Value);
   Delete(s, Round(extended(Vars[1].Value)), Round(extended(Vars[2].Value)));
   VTemp := Vars[0];
   VTemp.Value := s;
@@ -2970,7 +2970,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := Trim(Vars[0].Value);
+  Res.Value := Trim(String(Vars[0].Value));
   Result := True;
 end; // fTrim
 
@@ -2979,7 +2979,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := TrimLeft(Vars[0].Value);
+  Res.Value := TrimLeft(String(Vars[0].Value));
   Result := True;
 end; // fTrimLeft
 
@@ -2988,7 +2988,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := TrimRight(Vars[0].Value);
+  Res.Value := TrimRight(String(Vars[0].Value));
   Result := True;
 end; // fTrimRight
 
@@ -2997,7 +2997,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := UpperCase(Vars[0].Value);
+  Res.Value := UpperCase(String(Vars[0].Value));
   Result := True;
 end; // fUpperCase
 
@@ -3006,7 +3006,7 @@ begin
   Result := False;
   if Vars.Count <> 1 then
     Exit;
-  Res.Value := LowerCase(Vars[0].Value);
+  Res.Value := LowerCase(String(Vars[0].Value));
   Result := True;
 end; // fLowerCase
 
@@ -3023,7 +3023,7 @@ begin
   fmt := '';
   ff := False;
   n := 0;
-  fs := Vars[0].Value;
+  fs := String(Vars[0].Value);
   for i := 1 to Length(fs) do begin
     if fs[i] = '%' then
       ff := True;
@@ -3582,7 +3582,7 @@ begin
   Result := False;
   if Vars.Count <> 2 then
     Exit;
-  s := UpperCase(Vars[0].Value);
+  s := UpperCase(String(Vars[0].Value));
   Result := SetValue(s, Vars[1].Value);
 end; // fSetVar
 
@@ -3591,7 +3591,7 @@ begin
   // Get variable value
   if (Vars.Count <> 1) then
     Exit(False);
-  Result := VarByName(UpperCase(Vars[0].Value), Res);
+  Result := VarByName(UpperCase(String(Vars[0].Value)), Res);
 end; // fGetVar
 
 function TScript.FuncVarExists(Vars: TList<TVar>; var Res: TVar): Boolean;
@@ -3601,8 +3601,8 @@ begin
 
 //  ShowMEssage(Vars[0].Value);
 
-//  Res.Value := VarByName(UpperCase(Vars[0].Value), Res);
-  Res.Value := VarExists(UpperCase(Vars[0].Value));
+//  Res.Value := VarByName(UpperCase(String(Vars[0].Value)), Res);
+  Res.Value := VarExists(UpperCase(String(Vars[0].Value)));
   Result := True;
 end; // fSin
 
@@ -3711,7 +3711,7 @@ begin
     Exit(False);
   if not Assigned(CallGlobalProc) then
     Exit(False);
-  s := UpperCase(Vars[0].Value);
+  s := UpperCase(String(Vars[0].Value));
   Result := CallGlobalProc(Vars, Res);
 end; // fSetGlobal
 
