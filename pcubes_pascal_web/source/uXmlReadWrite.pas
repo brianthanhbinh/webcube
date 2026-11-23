@@ -597,8 +597,8 @@ begin // FillAxis
   end;
 
   S := AvailableAngles;
-  while TUtils.Trim(S) <> '' do
-    AddAvailableAngle(CalcExpression(TUtils.Trim(TUtils.Parse(S, ';'))));
+  while XmlTrim(S) <> '' do
+    AddAvailableAngle(CalcExpression(XmlTrim(TUtils.Parse(S, ';'))));
 
   D := CalcExpression(JumbleAngle);
   if D <> 0 then
