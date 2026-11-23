@@ -3856,10 +3856,12 @@ begin
   Exit;
   {$ENDIF}
 
+  {$IFNDEF PAS2JS}
   ExecuteScript('Result := ' + Text);
 
   if Calc.VarByName('Result', V) then
     Result := V.Value;
+  {$ENDIF}
 end; // CalcExpression
 
 initialization
