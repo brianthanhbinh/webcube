@@ -1092,33 +1092,24 @@ begin
 end; // PuzzleLoadHeaderFromXml
 
 class function TXmlReadWrite.PuzzleLoadHeaderFromXmlFile(Puzzle: TPuzzle; const FileName: String): Boolean;
-{$IFDEF PAS2JS}
-begin
-  Result := False;
-end;
-{$ELSE}
 var
   XmlDoc: TXmlDocument;
 begin
+  {$IFDEF PAS2JS}
+  Result := False;
+  {$ELSE}
   Result := False;
   if not FileExists(FileName) then
     exit;
 
-//  XmlDoc := TXmlDocument.Create;
   try
     ReadXMLFile(XmlDoc, FileName);
     Result := PuzzleLoadHeaderFromXml(Puzzle, XmlDoc.DocumentElement);
   finally
-    {$IFNDEF PAS2JS}
-
-      XmlDoc.Free;
-
-    {$ENDIF}
+    XmlDoc.Free;
   end;
-
-//  Clear;
+  {$ENDIF}
 end; // PuzzleLoadHeaderFromXmlFile
-{$ENDIF}
 
 class procedure TXmlReadWrite.PuzzleSaveHeaderToXml(Puzzle: TPuzzle; XmlDoc: TXmlDocument; XmlNode: TDomNode);
 var S: String;
