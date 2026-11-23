@@ -62,7 +62,7 @@ type
   end;
 
   TDomElement = class(TDomNode)
-  private
+  public
     function GetAttribute(const AName: String): String;
     procedure SetAttribute(const AName, AValue: String);
   public
