@@ -216,10 +216,14 @@ begin // ReadColorExpressionFromXml
     exit;
 
   if not StrIsColor(Text) then begin
+    {$IFNDEF PAS2JS}
     ExecuteScript('Result := ' + Text);
 
     if Calc.VarByName('Result', V) then
       Text := JS.toString(V.Value);
+    {$ELSE}
+    Text := '';
+    {$ENDIF}
   end;
 
   Result := TUtils.StrToColor(Text);
