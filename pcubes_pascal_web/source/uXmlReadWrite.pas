@@ -581,9 +581,9 @@ class function TXmlReadWrite.AxesLoadFromXml(Axes: TList<TAxis>; XmlNode: TDomNo
     Result := True;
 
     if Calc.VarByName(Name, V) and ((VarType(V.Value) = varDouble)) then
-      D := V.Value
+      D := CalcExpression(Name)
     else if Calc.VarByName(Name + '[' + IntToStr(idx) + ']', V) and (VarType(V.Value) in [varDouble, varInteger]) then
-      D := V.Value
+      D := CalcExpression(Name + '[' + IntToStr(idx) + ']')
     else
       Result := False;
   end; // GetValue
