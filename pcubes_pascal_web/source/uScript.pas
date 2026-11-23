@@ -1438,7 +1438,7 @@ end; // CallFunc}
 function TScript.CallProc(ProcName: String; ParamString: String; var V: TVar): Boolean;
 var
   i: integer;
-  PRoc: TProcedure;
+  PRoc: uScript.TProcedure;
   VR: TVar;
   slParamStrings: TStringList;
   slParams: TStringList;
@@ -1552,7 +1552,7 @@ end; // CallProc
 var
   i, j: integer;
   s: String;
-  PRoc: TProcedure;
+  PRoc: uScript.TProcedure;
   VR: TVar;
   VarListTemp: TVarList;
   VarListTemp2: TVarList;
@@ -2015,7 +2015,7 @@ end; // Exec
 function TScript.PreProcess(Txt: String): String;
 var
   T, TT: TToken;
-  Proc{, P}: TProcedure;
+  Proc{, P}: uScript.TProcedure;
   Index, i, j: integer;
   h: THandle;
   sOperator, CmdLine, Op, Lbl: String;
