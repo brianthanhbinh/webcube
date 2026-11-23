@@ -273,6 +273,10 @@ uses
      {$IFDEF PAS2JS}, JS {$ENDIF}
      {$IFNDEF PAS2JS}, Windows, Messages, Dialogs, Controls, Forms {$ENDIF};
 
+{$IFDEF PAS2JS}
+function BrowserEval(const Code: String): JSValue; external name 'eval';
+{$ENDIF}
+
 function ScriptToFloat(const V: Variant): Extended;
 begin
   {$IFDEF PAS2JS}
@@ -3862,7 +3866,7 @@ begin
   if Text = '' then Exit;
   {$IFDEF PAS2JS}
   try
-    Result := JS.toNumber(JS.eval(Text));
+    Result := JS.toNumber(BrowserEval(Text));
   except
     Result := Default;
   end;
