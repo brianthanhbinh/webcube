@@ -198,7 +198,9 @@ function ReadColorExpressionFromXml(XmlNode: TDomNode; const AttrName: String; D
     if Length(S) <> 6 then
       exit;
     for i := 1 to 6 do
-      if not CharInSet(S[i], ['0'..'9', 'a'..'f', 'A'..'F']) then
+      if not (((S[i] >= '0') and (S[i] <= '9')) or
+        ((S[i] >= 'a') and (S[i] <= 'f')) or
+        ((S[i] >= 'A') and (S[i] <= 'F'))) then
         exit;
     Result := True;
   end;
