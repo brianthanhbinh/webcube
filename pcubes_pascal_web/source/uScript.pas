@@ -258,6 +258,8 @@ type
 var
   Calc: TScript;
 
+function CalcExpression(Text: String; Default: extended = 0): extended;
+
 implementation
 
 uses
