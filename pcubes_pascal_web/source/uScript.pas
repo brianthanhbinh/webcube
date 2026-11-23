@@ -259,6 +259,9 @@ type
     ErrLine: String;
   end;
 
+var
+  Calc: TScript;
+
 implementation
 
 {$IFDEF PAS2JS}
