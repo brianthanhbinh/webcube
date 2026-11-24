@@ -1,5 +1,7 @@
 import { PuzzleRenderer } from "./renderer.js";
 import { loadBuiltinLibrary } from "./library-data.js";
+import { generatePuzzle } from "./generator.js";
+import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
 
 (() => {
   "use strict";
@@ -34,6 +36,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
   const controls = ["scramble", "undo", "redo", "reset", "turn-ccw", "turn-cw"];
   let originalXmlText = "";
   let libraryData = null;
+  let remoteLibrary = null;
   let preflightPassed = false;
   let preflightReport = [];
 
@@ -480,6 +483,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     info.textContent = `Pascal ${api.getVersion()} · model ${model.connected ? "connected" : "offline"} · ${model.parts} parts · ${model.axes} axes · undo ${model.undoCount} · redo ${model.redoCount}`;
     for (const id of controls) $(id).disabled = !model.ready || !preflightPassed;
     $("library").disabled = !preflightPassed;
+    $("generator").disabled = !preflightPassed;
     $("load").disabled = false;
     refreshTurnControls(api);
     if (typeof api.getRenderData === "function" && !renderer.deferGeometry) renderer.setGeometry(api.getRenderData());
@@ -569,6 +573,45 @@ import { loadBuiltinLibrary } from "./library-data.js";
 
 
 
+  async function loadPuzzleWithFigures(xmlText, suppliedFigures = {}) {
+    let doc = parseXml(xmlText);
+    pendingPuzzleDoc = doc;
+    const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
+    if (!loads.length) {
+      resolveExternalFigures(doc);
+      doc = parseXml(new XMLSerializer().serializeToString(doc));
+      if (!call("loadXML", doc.documentElement)) throw new Error(status.textContent || "Pascal rejected the puzzle.");
+      originalXmlText = new XMLSerializer().serializeToString(doc);
+      pendingPuzzleDoc = null; setFigurePickerEnabled(false); return true;
+    }
+    const files = [];
+    for (const load of loads) {
+      const ref = String(load.getAttribute("File") || "").replace(/\\/g, "/");
+      const base = ref.split("/").pop();
+      let figureText = Object.entries(suppliedFigures).find(([path]) => path.toLowerCase().split("/").pop() === base.toLowerCase())?.[1];
+      if (!figureText) {
+        const match = (remoteLibrary?.figures || []).find(path => path.split("/").pop().toLowerCase() === base.toLowerCase());
+        if (match) {
+          const response = await fetch("https://raw.githubusercontent.com/brianthanhbinh/webcube-library/main/" + match.split("/").map(encodeURIComponent).join("/"));
+          if (!response.ok) throw new Error("Could not fetch figure " + match);
+          figureText = await response.text();
+        }
+      }
+      if (!figureText) throw new Error('Required figure "' + base + '" was not found.');
+      const f = new File([figureText], base, {type:"application/xml"});
+      Object.defineProperty(f, "webkitRelativePath", {value:"Figures/" + base});
+      files.push(f);
+    }
+    if (!await loadFigureFiles(files)) throw new Error(status.textContent || "Could not attach generated figures.");
+    return true;
+  }
+
+  async function loadRemoteEntry(entry) {
+    status.textContent = "Fetching " + entry.path + "…";
+    const result = await fetchRemotePuzzle(entry, remoteLibrary);
+    await loadPuzzleWithFigures(result.xml, result.figures);
+  }
+
   function supported(entry) {
     // External figures are resolved through Add figure after selecting a
     // library puzzle, so library availability is not tied to known filenames.
@@ -577,37 +620,37 @@ import { loadBuiltinLibrary } from "./library-data.js";
   }
 
   async function showLibrary() {
-    const dialog = $("library-dialog"), list = $("library-list"), search = $("library-search");
-    list.textContent = "Loading library…";
-    dialog.showModal();
+    const dialog=$("library-dialog"), list=$("library-list"), search=$("library-search");
+    list.textContent="Loading library…"; dialog.showModal();
     try {
       libraryData ||= await loadBuiltinLibrary();
-      const draw = () => {
-        const query = search.value.trim().toLowerCase();
-        list.replaceChildren();
-        for (const entry of libraryData.puzzles) {
-          if (!entry.name.toLowerCase().includes(query) && !entry.menu.toLowerCase().includes(query)) continue;
-          const button = document.createElement("button");
-          button.className = "library-item";
-          button.type = "button";
-          const title = document.createElement("strong"); title.textContent = entry.name;
-          const meta = document.createElement("small"); meta.textContent = entry.menu || entry.path;
-          button.append(title, meta);
-          const canLoad = supported(entry);
-          if (!canLoad) { button.disabled = true; button.title = "This puzzle depends on an external macro/figure not included in the browser engine."; }
-          else button.addEventListener("click", () => {
-            try { if (loadXmlText(entry.xml)) dialog.close(); }
-            catch (error) {
-              setFigurePickerEnabled(!!pendingPuzzleDoc);
-              status.textContent = "Library load failed: " + error.message;
-            }
+      remoteLibrary ||= await loadRemoteLibraryIndex();
+      const draw=()=>{
+        const query=search.value.trim().toLowerCase(); list.replaceChildren();
+        const entries=[
+          ...libraryData.puzzles.map(entry=>({...entry,source:"builtin",label:entry.menu||entry.path})),
+          ...remoteLibrary.puzzles.map(entry=>({...entry,source:"remote",label:entry.path}))
+        ];
+        for(const entry of entries){
+          if(!(entry.name+" "+entry.label).toLowerCase().includes(query)) continue;
+          const button=document.createElement("button"); button.className="library-item"; button.type="button";
+          const title=document.createElement("strong"); title.textContent=entry.name;
+          const meta=document.createElement("small"); meta.textContent=(entry.source==="remote"?"webcube-library / ":"Built-in / ")+entry.label;
+          button.append(title,meta);
+          if(entry.source==="builtin"){
+            if(!supported(entry)){button.disabled=true;button.title="Invalid XML entry.";}
+            else button.addEventListener("click",()=>{try{if(loadXmlText(entry.xml))dialog.close();}catch(error){setFigurePickerEnabled(!!pendingPuzzleDoc);status.textContent="Library load failed: "+error.message;}});
+          } else button.addEventListener("click",async()=>{
+            button.disabled=true;
+            try{await loadRemoteEntry(entry);dialog.close();}
+            catch(error){setFigurePickerEnabled(!!pendingPuzzleDoc);status.textContent="Library load failed: "+error.message;button.disabled=false;}
           });
           list.appendChild(button);
         }
-        if (!list.children.length) list.textContent = "No matching puzzles.";
+        if(!list.children.length) list.textContent="No matching puzzles.";
       };
-      search.oninput = draw; draw();
-    } catch (error) { list.textContent = "Library failed to load: " + error.message; }
+      search.oninput=draw; draw();
+    } catch(error){list.textContent="Library failed to load: "+error.message;}
   }
 
   $("turn-axis").addEventListener("change", () => refreshTurnControls(window.pCubes));
@@ -684,6 +727,28 @@ import { loadBuiltinLibrary } from "./library-data.js";
     }
     if (!passed) throw new Error(name + (detail ? ": " + detail : ""));
   }
+
+  $("generator").addEventListener("click",()=>$("generator-dialog").showModal());
+  $("generator-close").addEventListener("click",()=>$("generator-dialog").close());
+  $("generator-type").addEventListener("change",()=>{
+    const kind=$("generator-type").value;
+    const hints={cube:"One number, e.g. 4.",cuboid:"Dimensions, e.g. 2x3x4.",cylinder:"Grid and height, e.g. 3x4 or 3x3x4.",sphere:"Dimensions, e.g. 3x3x4.",mirror:"One number, e.g. 5.",pyraminx:"One number, e.g. 4.",minx:"3 Megaminx, 5 Gigaminx, 7 Teraminx, 9 Petaminx."};
+    $("generator-help").textContent=hints[kind];
+    $("generator-size").value=(kind==="cuboid"||kind==="sphere")?"3x3x3":kind==="cylinder"?"3x3x3":"3";
+  });
+  $("generator-create").addEventListener("click",async()=>{
+    const kind=$("generator-type").value,spec=$("generator-size").value.trim(),out=$("generator-status"),button=$("generator-create");
+    if(!spec){out.textContent="Enter a size first.";return;}
+    button.disabled=true;out.textContent="Starting browser Python runtime…";
+    try{
+      const generated=await generatePuzzle(kind,spec,message=>{out.textContent=message;});
+      out.textContent="Attaching generated geometry and loading into the Pascal game…";
+      if(!remoteLibrary) remoteLibrary=await loadRemoteLibraryIndex();
+      await loadPuzzleWithFigures(generated.xml,generated.figures);
+      $("generator-dialog").close();status.textContent="Generated and loaded: "+generated.name;
+    }catch(error){out.textContent="Generator failed: "+(error?.message||String(error));}
+    finally{button.disabled=false;}
+  });
 
   async function runPreflight(api) {
     preflightReport = [];

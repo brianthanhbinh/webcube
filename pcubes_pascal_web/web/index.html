@@ -14,7 +14,7 @@
       <b>Puzzle controls</b>
       <div class="group">
         <button id="scramble" disabled>Scramble</button><button id="undo" disabled>Undo</button><button id="redo" disabled>Redo</button><button id="reset" disabled>Reset</button>
-        <button id="library" disabled>Open library</button><button id="load">Load puzzle XML</button><button id="add-figure" disabled>Add figure XML files</button><button id="load-figure-folder" disabled>Scan figure folder</button>
+        <button id="library" disabled>Open library</button><button id="generator" disabled>Generate puzzle</button><button id="load">Load puzzle XML</button><button id="add-figure" disabled>Add figure XML files</button><button id="load-figure-folder" disabled>Scan figure folder</button>
         <label for="turn-axis">Turn axis</label><select id="turn-axis" disabled></select><label for="turn-layer">Layer</label><select id="turn-layer" disabled></select><div class="turn-buttons"><button id="turn-ccw" disabled>Turn −90°</button><button id="turn-cw" disabled>Turn +90°</button></div><button id="view-reset" type="button">Reset camera</button>
         <input id="puzzle-file" type="file" accept=".xml,text/xml" hidden><input id="figure-file" type="file" accept=".xml,.inc,text/xml,text/plain" multiple hidden><input id="figure-folder" type="file" accept=".xml,.inc,text/xml,text/plain" webkitdirectory directory multiple hidden>
       </div>
@@ -29,6 +29,16 @@
     <div class="library-heading"><div><h2>Puzzle library</h2><p class="muted">Built-in puzzles from the supplied pCubes library.</p></div><button id="library-close" type="button">Close</button></div>
     <input id="library-search" type="search" placeholder="Search puzzles…" autocomplete="off">
     <div id="library-list"></div>
+  </dialog>
+  <dialog id="generator-dialog">
+    <div class="library-heading"><div><h2>Puzzle generator</h2><p class="muted">Create and load a puzzle directly. No XML file selection needed.</p></div><button id="generator-close" type="button">Close</button></div>
+    <label for="generator-type">Generator</label>
+    <select id="generator-type">
+      <option value="cube">Cube</option><option value="cuboid">Cuboid</option><option value="cylinder">Cylinder</option><option value="sphere">Sphere</option><option value="mirror">Mirror cube</option><option value="pyraminx">Pyraminx</option><option value="minx">Megaminx family</option>
+    </select>
+    <label for="generator-size">Size / layers</label><input id="generator-size" value="3" autocomplete="off" spellcheck="false">
+    <p id="generator-help" class="muted">Enter one number, such as 3.</p>
+    <button id="generator-create" type="button">Generate and load</button><p id="generator-status" role="status" aria-live="polite"></p>
   </dialog>
   <footer>Pascal puzzle model · JavaScript Canvas renderer · browser interface</footer>
   <script src="rtl.js"></script><script src="pcubes_web.js"></script><script type="module" src="app.js"></script>
