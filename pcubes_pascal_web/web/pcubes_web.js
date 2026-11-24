@@ -9233,8 +9233,12 @@ rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine
     };
     this.AxisLoadFromXml = function (Axis, XmlNode) {
       var Result = false;
+      var NormVectorText = "";
       Result = false;
       if (!this.LineLoadFromXml(Axis.Line,XmlNode)) return Result;
+      NormVectorText = XmlNode.GetAttribute("NormVector");
+      if (NormVectorText !== "") Axis.Line.NormVector.$assign(this.GetVectorFromString(NormVectorText));
+      Axis.Line.NormVector.Normalize();
       this.FillAxis(Axis,this.GetAttrOrParent(XmlNode,"PlaneDistances",""),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"TurningAngles"),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"AvailableAngles"),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"JumbleAngle"),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"FixedLayers"),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"MinAngles"),pas.uXmlUtils.ReadStringFromXmlOrParent(XmlNode,"MaxAngles"),pas.uXmlUtils.ReadIntExpressionFromXmlOrParent(XmlNode,"TurnAxesWithLayer",-1),pas.uXmlUtils.ReadIntExpressionFromXmlOrParent(XmlNode,"TurnAxesWithPartNo",-1));
       Result = true;
       return Result;
