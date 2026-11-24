@@ -54,6 +54,17 @@ import { loadBuiltinLibrary } from "./library-data.js";
   }
 
   function resolveExternalFigures(doc) {
+    // The Pascal XML reader can miss inherited Axes attributes in browser DOM
+    // mode. Copy the shared layer definitions onto each Axis before loading.
+    const axesNode = doc.getElementsByTagName("Axes")[0];
+    if (axesNode) {
+      for (const axis of Array.from(axesNode.getElementsByTagName("Axis"))) {
+        for (const name of ["PlaneDistances", "TurningAngles", "AvailableAngles", "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles"]) {
+          if (!axis.hasAttribute(name) && axesNode.hasAttribute(name))
+            axis.setAttribute(name, axesNode.getAttribute(name));
+        }
+      }
+    }
     for (const node of Array.from(doc.getElementsByTagName("LoadFrom"))) addBuiltinCubeFigure(node);
   }
 
