@@ -6672,9 +6672,20 @@ rtl.module("uUtils",["System","Classes","Graphics"],function () {
         return Result;
       };
       var Pos = 0;
-      Pos = indexOfCharsMin(S.get(),Separators);
-      if (Pos <= 0) Pos = S.get().length + 1;
-      Result = S.get();
+      var Source = "";
+      var SafeSeparators = "";
+      Source = S.get();
+      SafeSeparators = Separators;
+      if (pas.JS.isNull(Source) || pas.JS.isUndefined(Source)) Source = "";
+      if (pas.JS.isNull(SafeSeparators) || pas.JS.isUndefined(SafeSeparators)) SafeSeparators = "";
+      if (SafeSeparators === "") {
+        Result = Source;
+        S.set("");
+        return Result;
+      };
+      Pos = indexOfCharsMin(Source,SafeSeparators);
+      if (Pos <= 0) Pos = Source.length + 1;
+      Result = Source;
       S.set(pas.System.Copy(Result,Pos + 1,2147483647));
       Result = pas.System.Copy(Result,1,Pos - 1);
       return Result;
@@ -6715,7 +6726,7 @@ rtl.module("uUtils",["System","Classes","Graphics"],function () {
   });
   $mod.$init = function () {
   };
-},["SysUtils"]);
+},["SysUtils","JS"]);
 rtl.module("uLayer",["System","uMatrix","uPart","Generics.Collections"],function () {
   "use strict";
   var $mod = this;
