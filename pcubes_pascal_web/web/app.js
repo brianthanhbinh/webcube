@@ -332,9 +332,10 @@ import { loadBuiltinLibrary } from "./library-data.js";
 
   function loadFigureFiles(files) {
     if (!pendingPuzzleDoc) throw new Error("Load the main puzzle XML first.");
-    const unresolved = Array.from(pendingPuzzleDoc.getElementsByTagName("LoadFrom"))
-      .filter(node => !((node.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase().endsWith("figures/cube.xml") ||
-        figureFileName(node.getAttribute("File")) === "cube.xml"));
+    // Include Cube.xml too: when the real figure file is selected, use it.
+    // resolveExternalFigures still supplies the small built-in cube fallback
+    // when the folder does not contain that optional legacy file.
+    const unresolved = Array.from(pendingPuzzleDoc.getElementsByTagName("LoadFrom"));
     if (!unresolved.length) throw new Error("This puzzle has no external figure files to add.");
     const selected = Array.from(files || []);
     if (!selected.length) return false;
@@ -355,7 +356,14 @@ import { loadBuiltinLibrary } from "./library-data.js";
           includeFiles.set(path, item.text);
         } else if (/\.xml$/i.test(item.file.name)) {
           item.doc = parseXml(item.text);
-          figureItems.push(item);
+          const root = item.doc.documentElement.nodeName.toLowerCase() === "figure"
+            ? item.doc.documentElement
+            : item.doc.getElementsByTagName("Figure")[0] || item.doc.documentElement;
+          const figureTags = new Set(["Part", "Script", "Macro", "ExecMacro", "Circle", "Cylinder", "LoadFrom"]);
+          const looksLikeFigure = root.nodeName.toLowerCase() === "figure" ||
+            Array.from(root.children || []).some(child => figureTags.has(child.nodeName));
+          const hasFigureContent = Array.from(root.children || []).some(child => child.nodeName !== "LoadFrom");
+          if (looksLikeFigure && hasFigureContent) figureItems.push(item);
         }
       }
       if (!figureItems.length) throw new Error("Select at least one figure .xml file. You can include its .inc script files in the same selection.");
