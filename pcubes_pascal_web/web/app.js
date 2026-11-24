@@ -138,8 +138,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
       axisSelect.append(option);
     }
     if (axes.length) {
-      axisSelect.value = String(Math.min(oldAxis, axes.length - 1));
-      const axis = axes.find(item => item.index === Number(axisSelect.value)) || axes[0];
+      const axis = axes.find(item => item.index === oldAxis) || axes[0];
       axisSelect.value = String(axis.index);
       layerSelect.replaceChildren();
       for (let i=0;i<axis.layers;i++) {
