@@ -342,10 +342,21 @@ export class PuzzleRenderer {
     const span=Math.max(maxX-minX,maxY-minY,1e-6),scale=Math.min(w,h)*.68*this.zoom/span;
     const centerX=(minX+maxX)/2,centerY=(minY+maxY)/2;
     const project=v=>[w/2+(v[0]-centerX)*scale,h/2-(v[1]-centerY)*scale];
-    const ordered=faces.map((face,index)=>{
-      const vertices=face.vertices||[],viewVertices=vertices.map(transform);
-      return{face,vertices,viewVertices,screen:viewVertices.map(project),depth:viewVertices.reduce((s,v)=>s+v[2],0)/Math.max(1,viewVertices.length),index};
-    }).sort((a,b)=>a.depth-b.depth);
+    // Back-face culling: only submit polygons whose outward normal points
+    // toward the camera. This is especially important for high-order puzzles
+    // (e.g. 20x20x20), where drawing every hidden interior-facing polygon
+    // wastes fill and stroke work and makes overlaps look muddy.
+    const ordered=[];
+    for(let index=0;index<faces.length;index++){
+      const face=faces[index],vertices=face.vertices||[];
+      if(vertices.length<3)continue;
+      const viewVertices=vertices.map(transform);
+      const normal=this.faceNormal(viewVertices);
+      if(!normal||normal[2]<=1e-8)continue;
+      ordered.push({face,vertices,viewVertices,screen:viewVertices.map(project),
+        depth:viewVertices.reduce((sum,v)=>sum+v[2],0)/viewVertices.length,index});
+    }
+    ordered.sort((a,b)=>a.depth-b.depth);
     this.projectedFaces=ordered;
     for(const item of ordered){
       if(item.screen.length<3)continue;
