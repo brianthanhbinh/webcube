@@ -1806,6 +1806,13 @@ rtl.module("JS",["System","Types"],function () {
   this.isUndefined = function (v) {
     return v == undefined;
   };
+  this.ToString = function (Value) {
+    var Result = "";
+    if (rtl.isString(Value)) {
+      Result = "" + Value}
+     else Result = "";
+    return Result;
+  };
 });
 rtl.module("weborworker",["System","JS","Types"],function () {
   "use strict";
@@ -8985,7 +8992,11 @@ rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM"],function 
   $mod.$implcode = function () {
     $impl.XmlTextToString = function (S) {
       var Result = "";
-      Result = S;
+      if (pas.Variants.VarType(S) in rtl.createSet(1,0)) {
+        Result = "";
+        return Result;
+      };
+      Result = pas.JS.ToString(S);
       return Result;
     };
     $impl.ReadStringFromXmlOrParent$1 = function (XmlNode, AttrName, Str) {
@@ -8998,7 +9009,7 @@ rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM"],function 
   };
   $mod.$init = function () {
   };
-},["uScript","uUtils","JS","SysUtils"]);
+},["uScript","uUtils","JS","SysUtils","Variants"]);
 rtl.module("strutils",["System","SysUtils","Types"],function () {
   "use strict";
   var $mod = this;
