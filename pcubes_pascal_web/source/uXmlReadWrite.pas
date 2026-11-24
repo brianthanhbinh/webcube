@@ -1861,7 +1861,7 @@ begin // PuzzleLoadFromXml
       XmlSubNode := XmlNode.ChildNodes[i];
       S := XmlSubNode.NodeName;
       if S = 'Script' then
-        ExecuteScript(XmlSubNode.TextContent)
+        ExecuteScript(DomValueToString(XmlSubNode.TextContent))
       else if S = 'Axes' then
         AxesLoadFromXml(Puzzle.Axes, XmlSubNode)
       else if S = 'Figure' then
