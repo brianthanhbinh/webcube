@@ -53,8 +53,8 @@ try{
  }
  const centers=await page.evaluate(()=>window.pCubes.getPartCenters());
  const centerKeys=centers.map(c=>c.map(v=>Math.round(v*100000)).join(","));
- assert.equal(centers.length,27,"A cubie disappeared after repeated turns");
- assert.equal(new Set(centerKeys).size,27,"Cubies overlapped after repeated turns");
+ assert.equal(centers.length,26,"A visible cubie disappeared after repeated turns");
+ assert.equal(new Set(centerKeys).size,26,"Visible cubies overlapped after repeated turns");
  const allowed=[-1/3,0,1/3];
  for(const center of centers)for(const value of center)
    assert.ok(allowed.some(expected=>Math.abs(value-expected)<1e-5),"Cubie drifted off the 3x3 grid: "+center.join(","));
@@ -63,7 +63,7 @@ try{
  assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0));
  // A custom puzzle using an external Figure XML must keep its own figure,
  // rather than being silently replaced with the built-in 2x2 template.
- const customXml=xml.replace(/Rubik's cube 2x2x2/g,"Custom cube with external figure");
+ const customXml=xml.replaceAll("Rubik's cube 2x2x2","Custom cube with external figure").replaceAll("Figures\\Cube.xml","Figures\\CustomFigure.xml");
  await page.locator("#puzzle-file").setInputFiles({name:"custom-puzzle.xml",mimeType:"application/xml",buffer:Buffer.from(customXml)});
  await page.waitForFunction(()=>/Missing external figure/.test(document.querySelector("#engine-status")?.textContent||""));
  assert.equal(await page.locator("#add-figure").isEnabled(),true,"Add figure did not unlock for a missing external figure");
