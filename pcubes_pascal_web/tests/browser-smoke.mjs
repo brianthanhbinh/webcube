@@ -99,9 +99,7 @@ try {
   assert.equal(await page.evaluate(() => window.pCubes.isPuzzleReady()), true);
   assert.ok(await page.evaluate(() => window.pCubes.getRenderData().faces.length > 0));
 
-  assert.deepEqual(pageErrors, [], "Browser runtime errors:
-" + pageErrors.join("
-"));
+  assert.deepEqual(pageErrors, [], "Browser runtime errors: " + pageErrors.join(" | "));
   console.log("PASS: startup preflight, 4-item library, canvas rendering, scramble/undo/redo/reset, XML file upload, and no browser exceptions.");
 } finally {
   await browser.close();
