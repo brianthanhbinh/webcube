@@ -116,13 +116,13 @@ import { loadBuiltinLibrary } from "./library-data.js";
   }
 
   function normalizeNumericExpression(expression) {
-    const value = String(expression).trim().replace(/\\s+/g, "");
+    const value = String(expression).trim().replace(/\s+/g, "");
     if (!value) return value;
-    const fraction = value.match(/^([+-]?\\d+(?:\\.\\d+)?)\\/([+-]?\\d+(?:\\.\\d+)?)$/);
+    const fraction = value.match(/^([+-]?\d+(?:\.\d+)?)\/([+-]?\d+(?:\.\d+)?)$/);
     if (fraction) return String(Number(fraction[1]) / Number(fraction[2]));
     const number = Number(value);
     if (Number.isFinite(number)) return String(number);
-    const pi = value.match(/^([+-]?)(?:(\\d+(?:\\.\\d+)?)\\*?)?Pi(?:\\/(\\d+(?:\\.\\d+)?))?$/i);
+    const pi = value.match(/^([+-]?)(?:(\d+(?:\.\d+)?)\*?)?Pi(?:\/(\d+(?:\.\d+)?))?$/i);
     if (pi) {
       const coefficient = (pi[1] === "-" ? -1 : 1) * (pi[2] ? Number(pi[2]) : 1);
       return String(coefficient * Math.PI / (pi[3] ? Number(pi[3]) : 1));
