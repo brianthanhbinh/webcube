@@ -7,7 +7,14 @@ import { loadBuiltinLibrary } from "./library-data.js";
   const status = $("engine-status");
   const info = $("model-info");
   const file = $("puzzle-file");
-  const renderer = new PuzzleRenderer($("puzzle-canvas"));\n  renderer.onTurnDrag = (dx, dy) => {\n    const axis = Number($("turn-axis").value), layer = Number($("turn-layer").value);\n    if (!Number.isInteger(axis) || !Number.isInteger(layer)) return;\n    const delta = Math.abs(dx) >= Math.abs(dy) ? dx : -dy;\n    if (Math.abs(delta) < 18) return;\n    call("turnLayer", axis, layer, delta >= 0 ? 1 : -1);\n  };
+  const renderer = new PuzzleRenderer($("puzzle-canvas"));
+  renderer.onTurnDrag = (dx, dy) => {
+    const axis = Number($("turn-axis").value), layer = Number($("turn-layer").value);
+    if (!Number.isInteger(axis) || !Number.isInteger(layer)) return;
+    const delta = Math.abs(dx) >= Math.abs(dy) ? dx : -dy;
+    if (Math.abs(delta) < 18) return;
+    call("turnLayer", axis, layer, delta >= 0 ? 1 : -1);
+  };
   const controls = ["scramble", "undo", "redo", "reset", "turn-ccw", "turn-cw"];
   let originalXmlText = "";
   let libraryData = null;
@@ -172,7 +179,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
     preflightReport.push({ name, passed, detail });
     const report = $("preflight-results");
     if (report) {
-      report.textContent = preflightReport.map(t => `${t.passed ? "PASS" : "FAIL"} · ${t.name}${t.detail ? " — " + t.detail : ""}`).join("\n");
+      report.textContent = preflightReport.map(t => `${t.passed ? "PASS" : "FAIL"} · ${t.name}${t.detail ? " — " + t.detail : ""}`).join("
+");
       report.dataset.result = preflightReport.every(t => t.passed) ? "pass" : "fail";
     }
     if (!passed) throw new Error(name + (detail ? ": " + detail : ""));
@@ -206,7 +214,10 @@ import { loadBuiltinLibrary } from "./library-data.js";
     recordTest("Canvas renderer", !!renderer.geometry && renderer.geometry.faces.length > 0);
 
     api.scramble();
-    const beforeScramble = JSON.stringify(api.getRenderData());\n    const scrambled = api.scramble();\n    const afterScramble = JSON.stringify(api.getRenderData());\n    recordTest("Scramble", scrambled === true && afterScramble !== beforeScramble, "must change exported geometry");
+    const beforeScramble = JSON.stringify(api.getRenderData());
+    const scrambled = api.scramble();
+    const afterScramble = JSON.stringify(api.getRenderData());
+    recordTest("Scramble", scrambled === true && afterScramble !== beforeScramble, "must change exported geometry");
     api.undo();
     recordTest("Undo", api.isPuzzleReady());
     api.redo();
