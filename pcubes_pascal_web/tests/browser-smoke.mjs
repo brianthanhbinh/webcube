@@ -81,6 +81,26 @@ try{
  assert.equal(customModel.name,"Custom cube with external figure");
  assert.ok(customModel.parts>0,"Custom figure XML loaded no parts");
  assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0),"Attached custom figure did not render");
+ // Official pCubes scripted Cube and Cuboid figures must be expanded to plain geometry.
+ const scriptedPuzzle=customXml.replace("Custom cube with external figure","Scripted cube");
+ const scriptedCubeXml=`<xml><Script>include 'Figures\\Scripts\\Cube_Coordinates.inc';</Script><Part>
+ <Vertices Vectors="Vx; Vy; Vz"/><Faces>
+ <Face Color="Colors[0]" VertexIndexes="0;1;3;2"/><Face Color="Colors[1]" VertexIndexes="5;4;6;7"/>
+ <Face Color="Colors[2]" VertexIndexes="1;0;4;5"/><Face Color="Colors[3]" VertexIndexes="2;3;7;6"/>
+ <Face Color="Colors[4]" VertexIndexes="0;2;6;4"/><Face Color="Colors[5]" VertexIndexes="3;1;5;7"/>
+ </Faces></Part></xml>`;
+ await page.locator("#puzzle-file").setInputFiles({name:"scripted-cube-puzzle.xml",mimeType:"application/xml",buffer:Buffer.from(scriptedPuzzle)});
+ await page.waitForFunction(()=>/Missing external figure/.test(document.querySelector("#engine-status")?.textContent||""));
+ await page.locator("#figure-file").setInputFiles({name:"Cube.xml",mimeType:"application/xml",buffer:Buffer.from(scriptedCubeXml)});
+ await page.waitForFunction(()=>/Figure added/.test(document.querySelector("#engine-status")?.textContent||""));
+ assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0),"Scripted Cube conversion did not render");
+ const scriptedCuboidPuzzle=scriptedPuzzle.replace("Scripted cube","Scripted cuboid").replace('File="Figures\\CustomFigure.xml"','File="Figures\\CustomFigure.xml" Wx="0.5" Wy="0.25" Wz="0.75"');
+ const scriptedCuboidXml=scriptedCubeXml.replace("Cube_Coordinates.inc","Cuboid_Coordinates.inc");
+ await page.locator("#puzzle-file").setInputFiles({name:"scripted-cuboid-puzzle.xml",mimeType:"application/xml",buffer:Buffer.from(scriptedCuboidPuzzle)});
+ await page.waitForFunction(()=>/Missing external figure/.test(document.querySelector("#engine-status")?.textContent||""));
+ await page.locator("#figure-file").setInputFiles({name:"Cuboid.xml",mimeType:"application/xml",buffer:Buffer.from(scriptedCuboidXml)});
+ await page.waitForFunction(()=>/Figure added/.test(document.querySelector("#engine-status")?.textContent||""));
+ assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0),"Scripted Cuboid conversion did not render");
  const custom4=customXml
    .replace("Custom cube with external figure","Custom 4x4x4")
    .replace('PlaneDistances="-1/6;1/6"','PlaneDistances="-0.25;0;0.25"')
