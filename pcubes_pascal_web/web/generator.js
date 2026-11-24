@@ -1,4 +1,5 @@
 const REPO="https://raw.githubusercontent.com/brianthanhbinh/webcube-library/main/generators/";
+const FIGURE_REPO="https://raw.githubusercontent.com/brianthanhbinh/webcube-library/main/figures/";
 const PYODIDE_BASE="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/";
 let runtimePromise;
 async function getRuntime(onStatus){
@@ -16,11 +17,17 @@ async function fetchScript(py,name){
  const base="/home/pyodide/webcube_generators";try{py.FS.mkdirTree(base);}catch(_){}
  py.FS.writeFile(base+"/"+name,await r.text());
 }
+async function fetchFigure(py,name){
+ const r=await fetch(FIGURE_REPO+encodeURIComponent(name));if(!r.ok)throw new Error("Reference figure not found: "+name);
+ const base="/home/pyodide/webcube_generators/Figures";try{py.FS.mkdirTree(base);}catch(_){}
+ py.FS.writeFile(base+"/"+name,await r.text());
+}
 export async function generatePuzzle(kind,spec,onStatus){
  const scripts={cube:["cubes.py"],cuboid:["cuboid.py"],cylinder:["cylinder.py"],sphere:["sphere.py"],mirror:["mirror.py"],pyraminx:["pyraminx.py"],minx:["minx.py","gen_megaminx_figure.py"]};
  if(!scripts[kind])throw new Error("Unknown generator.");
  const py=await getRuntime(onStatus);onStatus?.("Downloading official "+kind+" generator…");
  for(const s of scripts[kind])await fetchScript(py,s);
+ if(kind==="minx")await fetchFigure(py,"megaminx_figure.xml");
  const base="/home/pyodide/webcube_generators";
  py.runPython("import os,sys,importlib.util\nos.chdir("+JSON.stringify(base)+")\nsys.path.insert(0,"+JSON.stringify(base)+")");
  py.globals.set("webcube_kind",kind);py.globals.set("webcube_spec",spec);
@@ -62,10 +69,11 @@ elif kind=="minx":
  m=load_module("minx.py","webcube_minx");n=int(spec)
  if n<2 or n>15:raise ValueError("Dodecahedral layers must be from 2 to 15.")
  name,xml,_=m["make_xml"](n)
- p=os.path.join(base,"gen_megaminx_figure.py")
- so=importlib.util.spec_from_file_location("gen_megaminx_figure",p);fig=importlib.util.module_from_spec(so);sys.modules["gen_megaminx_figure"]=fig;so.loader.exec_module(fig)
- fp=os.path.join(base,"Figures","Dodecahedron.xml");os.makedirs(os.path.dirname(fp),exist_ok=True);fig.write(fp)
- figures["Figures/Dodecahedron.xml"]=open(fp,encoding="utf-8").read()
+ # Use the exact reference figure from the library repository. The
+ # puzzle XML produced by minx.py points to this filename.
+ fp=os.path.join(base,"Figures","megaminx_figure.xml")
+ if not os.path.isfile(fp):raise FileNotFoundError("Missing Figures/megaminx_figure.xml")
+ figures["Figures/megaminx_figure.xml"]=open(fp,encoding="utf-8").read()
 json.dumps({"name":name,"xml":xml,"figures":figures})
 `;
  return JSON.parse(await py.runPythonAsync(code));
