@@ -8,6 +8,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
   const info = $("model-info");
   const file = $("puzzle-file");
   const figureFile = $("figure-file");
+  const figureFolder = $("figure-folder");
   let pendingPuzzleDoc = null;
   const renderer = new PuzzleRenderer($("puzzle-canvas"));
   renderer.onTurnCommit = (pick, turns, before, axis, previewAngle) => {
@@ -35,6 +36,11 @@ import { loadBuiltinLibrary } from "./library-data.js";
   let libraryData = null;
   let preflightPassed = false;
   let preflightReport = [];
+
+  function setFigurePickerEnabled(enabled) {
+    $("add-figure").disabled = !enabled;
+    $("load-figure-folder").disabled = !enabled;
+  }
 
   function extractXmlDocument(input) {
     let source = String(input ?? "").replace(/^\uFEFF/, "");
@@ -198,12 +204,12 @@ import { loadBuiltinLibrary } from "./library-data.js";
     }
   }
 
-  function expandKnownFigureScript(puzzleDoc, figureDoc, root) {
+  function expandKnownFigureScript(puzzleDoc, figureDoc, root, loadOverride = null) {
     const scriptNode = root.getElementsByTagName("Script")[0];
     if (!scriptNode) return;
     const script = scriptNode.textContent || "";
     const loads = Array.from(puzzleDoc.getElementsByTagName("LoadFrom"));
-    const load = loads[0];
+    const load = loadOverride || loads[0];
     if (!load) throw new Error("Puzzle XML has no LoadFrom placeholder inside Figure.");
     const number = (name, fallback) => {
       const raw = load.getAttribute(name);
@@ -278,7 +284,27 @@ import { loadBuiltinLibrary } from "./library-data.js";
   }
 
   function normalizeFigurePath(path) {
-    return String(path || "").replace(/\\/g, "/").replace(/^\.\//, "").toLowerCase();
+    return String(path || "").replace(/\\/g, "/").replace(/\/+/g, "/").replace(/^\.\//, "").replace(/^\/+|\/+$/g, "").toLowerCase();
+  }
+
+  function figurePathMatches(referencePath, selectedPath) {
+    const reference = normalizeFigurePath(referencePath);
+    const selected = normalizeFigurePath(selectedPath);
+    return !!reference && !!selected && (reference === selected ||
+      selected.endsWith("/" + reference) || reference.endsWith("/" + selected));
+  }
+
+  function matchFigureLoads(unresolved, used, file) {
+    const selectedPath = file.webkitRelativePath || file.name;
+    const pathMatches = unresolved.filter(load => !used.has(load) &&
+      figurePathMatches(load.getAttribute("File"), selectedPath));
+    if (pathMatches.length) return pathMatches;
+    // A basename is safe only when it identifies exactly one remaining
+    // reference. This avoids attaching the wrong XML when different folders
+    // contain files with the same name.
+    const sameName = unresolved.filter(load => !used.has(load) &&
+      figureFileName(load.getAttribute("File")) === figureFileName(file.name));
+    return sameName.length === 1 ? sameName : [];
   }
 
   function inlineFigureIncludes(figureDoc, includeFiles) {
@@ -331,16 +357,17 @@ import { loadBuiltinLibrary } from "./library-data.js";
         const root = item.doc.documentElement.nodeName.toLowerCase() === "figure"
           ? item.doc.documentElement
           : item.doc.getElementsByTagName("Figure")[0] || item.doc.documentElement;
-        // Convert the legacy built-in include scripts first; all other
-        // includes are resolved from the .inc files selected by the user.
-        expandKnownFigureScript(pendingPuzzleDoc, item.doc, root);
+        // Match by the complete relative path first, then use a basename only
+        // when it is unambiguous. Each figure gets its own LoadFrom parameters.
+        const matching = matchFigureLoads(unresolved, new Set(), item.file);
+        const scriptLoad = matching[0] || (unresolved.length === 1 ? unresolved[0] : null);
+        expandKnownFigureScript(pendingPuzzleDoc, item.doc, root, scriptLoad);
         inlineFigureIncludes(item.doc, includeFiles);
       }
       let attached = 0;
       const used = new Set();
       for (const item of figureItems) {
-        const matching = unresolved.filter(load => !used.has(load) &&
-          figureFileName(load.getAttribute("File")) === item.file.name.toLowerCase());
+        const matching = matchFigureLoads(unresolved, used, item.file);
         if (matching.length) {
           attached += attachFigureDocument(pendingPuzzleDoc, item.doc, matching);
           matching.forEach(load => used.add(load));
@@ -366,7 +393,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
       if (!call("loadXML", pendingPuzzleDoc.documentElement)) return false;
       originalXmlText = new XMLSerializer().serializeToString(pendingPuzzleDoc);
       pendingPuzzleDoc = null;
-      $("add-figure").disabled = true;
+      setFigurePickerEnabled(false);
       status.textContent = "Figure added: " + attached + " external reference(s) from " + figureItems.length + " XML file(s).";
       return true;
     });
@@ -522,7 +549,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     if (!call("loadXML", doc.documentElement)) return false;
     originalXmlText = new XMLSerializer().serializeToString(doc);
     pendingPuzzleDoc = null;
-    $("add-figure").disabled = true;
+    setFigurePickerEnabled(false);
     return true;
   }
 
@@ -557,7 +584,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
           else button.addEventListener("click", () => {
             try { if (loadXmlText(entry.xml)) dialog.close(); }
             catch (error) {
-              $("add-figure").disabled = !pendingPuzzleDoc;
+              setFigurePickerEnabled(!!pendingPuzzleDoc);
               status.textContent = "Library load failed: " + error.message;
             }
           });
@@ -604,13 +631,18 @@ import { loadBuiltinLibrary } from "./library-data.js";
   $("library-close").addEventListener("click", () => $("library-dialog").close());
   $("load").addEventListener("click", () => file.click());
   $("add-figure").addEventListener("click", () => figureFile.click());
-  figureFile.addEventListener("change", async () => {
-    const selected = figureFile.files; if (!selected || !selected.length) return;
+  $("load-figure-folder").addEventListener("click", () => figureFolder.click());
+  async function handleFigureSelection(input, label) {
+    const selected = input.files; if (!selected || !selected.length) return;
     try {
       await loadFigureFiles(selected);
-    } catch (error) { status.textContent = "Add figure failed: " + error.message; }
-    finally { figureFile.value = ""; }
-  });
+    } catch (error) {
+      setFigurePickerEnabled(!!pendingPuzzleDoc);
+      status.textContent = label + " failed: " + error.message;
+    } finally { input.value = ""; }
+  }
+  figureFile.addEventListener("change", () => handleFigureSelection(figureFile, "Add figure"));
+  figureFolder.addEventListener("change", () => handleFigureSelection(figureFolder, "Figure folder scan"));
   file.addEventListener("change", async () => {
     const selected = file.files && file.files[0]; if (!selected) return;
     try {
@@ -622,7 +654,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
       xml = xml.replace(/(<\?xml[^>]*?)\s+encoding\s*=\s*(["'])[^"']+\2/i, "$1");
       try { loadXmlText(xml); }
       catch (error) {
-        $("add-figure").disabled = !pendingPuzzleDoc;
+        setFigurePickerEnabled(!!pendingPuzzleDoc);
         status.textContent = "XML needs a figure: " + error.message;
       }
     } catch (error) { status.textContent = "XML load failed: " + error.message; }
