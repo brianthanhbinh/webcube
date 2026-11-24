@@ -231,7 +231,10 @@ import { loadBuiltinLibrary } from "./library-data.js";
       vertices = [[w,w,w],[-w,-w,w],[-w,w,-w],[w,-w,-w]];
       colors = ["C80000", "0000C8", "009600", "FFFF00"];
     } else {
-      throw new Error("This scripted figure uses unsupported pCubes commands. Supported automatic conversion: Cube, Cuboid and Tetrahedron figures.");
+      // Unknown scripts are preserved and executed by the Pascal pCubes
+      // runtime. Only the legacy bundled include-based primitives need
+      // conversion because their .inc files are not available in the browser.
+      return;
     }
     for (const part of Array.from(root.getElementsByTagName("Part"))) {
       const vertexNode = part.getElementsByTagName("Vertices")[0];
@@ -255,6 +258,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const root = figureDoc.documentElement.nodeName.toLowerCase() === "figure"
       ? figureDoc.documentElement
       : figureDoc.getElementsByTagName("Figure")[0] || figureDoc.documentElement;
+    expandKnownFigureScript(doc, figureDoc, root);
     // Keep the original pCubes figure structure intact. In particular, Script,
     // Macro, ExecMacro, Circle and Cylinder nodes are meaningful to the Pascal
     // loader and must not be flattened into a small list of hard-coded solids.
@@ -323,7 +327,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
       originalXmlText = new XMLSerializer().serializeToString(pendingPuzzleDoc);
       pendingPuzzleDoc = null;
       $("add-figure").disabled = true;
-      status.textContent = "Added " + attached + " external figure reference(s) from " + parsed.length + " file(s).";
+      status.textContent = "Figure added: " + attached + " external reference(s) from " + parsed.length + " file(s).";
       return true;
     });
   }
