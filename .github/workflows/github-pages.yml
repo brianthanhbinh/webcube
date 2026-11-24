@@ -1,6 +1,11 @@
 name: Deploy WebCube to GitHub Pages
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/github-pages.yml"
   workflow_run:
     workflows:
       - Build Pascal browser app
