@@ -124,10 +124,10 @@ import { loadBuiltinLibrary } from "./library-data.js";
     try {
       const bytes = new Uint8Array(await selected.arrayBuffer());
       const header = new TextDecoder("windows-1252").decode(bytes.slice(0,256));
-      const declared = header.match(/<\\?xml[^>]*encoding\\s*=\\s*["']([^"']+)["']/i);
+      const declared = header.match(/<\?xml[^>]*encoding\s*=\s*["']([^"']+)["']/i);
       const encoding = declared ? declared[1] : "utf-8";
       let xml = new TextDecoder(encoding).decode(bytes);
-      xml = xml.replace(/(<\\?xml[^>]*?)\\s+encoding\\s*=\\s*(["'])[^"']+\\2/i, "$1");
+      xml = xml.replace(/(<\?xml[^>]*?)\s+encoding\s*=\s*(["'])[^"']+\2/i, "$1");
       loadXmlText(xml);
     } catch (error) { status.textContent = "XML load failed: " + error.message; }
     finally { file.value = ""; }
