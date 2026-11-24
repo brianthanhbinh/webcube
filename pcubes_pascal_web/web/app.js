@@ -251,21 +251,81 @@ import { loadBuiltinLibrary } from "./library-data.js";
     scriptNode.remove();
   }
 
-  function attachFigureDocument(doc, figureDoc) {
-    const root = figureDoc.documentElement.nodeName.toLowerCase() === "figure" ? figureDoc.documentElement : figureDoc.getElementsByTagName("Figure")[0] || figureDoc.documentElement;
-    expandKnownFigureScript(doc, figureDoc, root);
+  function attachFigureDocument(doc, figureDoc, targetLoads) {
+    const root = figureDoc.documentElement.nodeName.toLowerCase() === "figure"
+      ? figureDoc.documentElement
+      : figureDoc.getElementsByTagName("Figure")[0] || figureDoc.documentElement;
+    // Keep the original pCubes figure structure intact. In particular, Script,
+    // Macro, ExecMacro, Circle and Cylinder nodes are meaningful to the Pascal
+    // loader and must not be flattened into a small list of hard-coded solids.
     const nodes = Array.from(root.childNodes).filter(n => n.nodeType === 1 && n.nodeName !== "LoadFrom");
     if (!nodes.length) throw new Error("Selected figure XML contains no figure elements.");
-    if (nodes.some(n => n.nodeName === "Script" || n.getElementsByTagName("Script").length > 0))
-      throw new Error("This scripted figure uses unsupported pCubes commands. Supported automatic conversion: Cube, Cuboid and Tetrahedron.");
-    const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
-    if (!loads.length) throw new Error("Puzzle XML has no LoadFrom placeholder inside Figure.");
-    for (const load of loads) {
+    if (!targetLoads || !targetLoads.length) throw new Error("No matching external figure reference was found.");
+    for (const load of targetLoads) {
       const parent = load.parentNode;
       for (const node of nodes) parent.insertBefore(doc.importNode(node, true), load);
       parent.removeChild(load);
     }
-    return loads.length;
+    return targetLoads.length;
+  }
+
+  function figureFileName(path) {
+    return String(path || "").replace(/\\/g, "/").split("/").pop().trim().toLowerCase();
+  }
+
+  function loadFigureFiles(files) {
+    if (!pendingPuzzleDoc) throw new Error("Load the main puzzle XML first.");
+    const unresolved = Array.from(pendingPuzzleDoc.getElementsByTagName("LoadFrom"))
+      .filter(node => !((node.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase().endsWith("figures/cube.xml") ||
+        figureFileName(node.getAttribute("File")) === "cube.xml"));
+    if (!unresolved.length) throw new Error("This puzzle has no external figure files to add.");
+    const selected = Array.from(files || []);
+    if (!selected.length) return false;
+    const parsed = selected.map(file => ({ file, doc: null }));
+    for (const item of parsed) {
+      const bytesPromise = item.file.arrayBuffer();
+      item.promise = bytesPromise.then(bytes => {
+        const header = new TextDecoder("windows-1252").decode(bytes.slice(0,256));
+        const declared = header.match(/<\\?xml[^>]*encoding\\s*=\\s*["']([^"']+)["']/i);
+        const encoding = declared ? declared[1] : "utf-8";
+        item.doc = parseXml(new TextDecoder(encoding).decode(bytes));
+      });
+    }
+    return Promise.all(parsed.map(item => item.promise)).then(() => {
+      let attached = 0;
+      const used = new Set();
+      for (const item of parsed) {
+        const matching = unresolved.filter(load => !used.has(load) &&
+          figureFileName(load.getAttribute("File")) === item.file.name.toLowerCase());
+        if (matching.length) {
+          attached += attachFigureDocument(pendingPuzzleDoc, item.doc, matching);
+          matching.forEach(load => used.add(load));
+        }
+      }
+      if (parsed.length === 1 && used.size === 0) {
+        const distinctNames = new Set(unresolved.map(load => figureFileName(load.getAttribute("File"))));
+        if (distinctNames.size === 1) {
+          attached += attachFigureDocument(pendingPuzzleDoc, parsed[0].doc, unresolved);
+          unresolved.forEach(load => used.add(load));
+        }
+      }
+      if (used.size !== unresolved.length) {
+        const missing = unresolved.filter(load => !used.has(load))
+          .map(load => load.getAttribute("File") || "(unnamed figure)");
+        throw new Error("Could not match selected figure files to: " + missing.join(", ") +
+          ". Select the corresponding XML files together; their filenames should match the LoadFrom File names.");
+      }
+      resolveExternalFigures(pendingPuzzleDoc);
+      const remaining = Array.from(pendingPuzzleDoc.getElementsByTagName("LoadFrom"));
+      if (remaining.length) throw new Error("Some external figure references are still unresolved.");
+      pendingPuzzleDoc = parseXml(new XMLSerializer().serializeToString(pendingPuzzleDoc));
+      if (!call("loadXML", pendingPuzzleDoc.documentElement)) return false;
+      originalXmlText = new XMLSerializer().serializeToString(pendingPuzzleDoc);
+      pendingPuzzleDoc = null;
+      $("add-figure").disabled = true;
+      status.textContent = "Added " + attached + " external figure reference(s) from " + parsed.length + " file(s).";
+      return true;
+    });
   }
 
   function normalizeNumericExpression(expression) {
@@ -320,11 +380,12 @@ import { loadBuiltinLibrary } from "./library-data.js";
     // directly so custom 2x2, 4x4, and non-cubic layer layouts are preserved.
     for (const node of loads) {
       const path = (node.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
-      if (path.endsWith("figures/cube.xml") || path === "cube.xml") {
-        addBuiltinFigure(node);
-      } else {
-        throw new Error('Missing external figure "' + node.getAttribute("File") + '". Select that figure XML with Add figure.');
-      }
+      if (path.endsWith("figures/cube.xml") || path === "cube.xml") addBuiltinFigure(node);
+    }
+    const missing = Array.from(doc.getElementsByTagName("LoadFrom"));
+    if (missing.length) {
+      const names = [...new Set(missing.map(node => node.getAttribute("File") || "(unnamed figure)"))];
+      throw new Error('Missing external figure' + (names.length > 1 ? 's' : '') + ': ' + names.join(", ") + '. Select the matching XML file(s) with Add figure.');
     }
     // AxisLoadFromXml already inherits settings from its parent <Axes>.
   }
@@ -421,26 +482,13 @@ import { loadBuiltinLibrary } from "./library-data.js";
     return true;
   }
 
-  function loadFigureText(xmlText) {
-    if (!pendingPuzzleDoc) throw new Error("Load the main puzzle XML first.");
-    const count = attachFigureDocument(pendingPuzzleDoc, parseXml(xmlText));
-    resolveExternalFigures(pendingPuzzleDoc);
-    pendingPuzzleDoc = parseXml(new XMLSerializer().serializeToString(pendingPuzzleDoc));
-    if (!call("loadXML", pendingPuzzleDoc.documentElement)) return false;
-    originalXmlText = new XMLSerializer().serializeToString(pendingPuzzleDoc);
-    pendingPuzzleDoc = null;
-    $("add-figure").disabled = true;
-    status.textContent = "Figure added (" + count + " external figure reference(s)).";
-    return true;
-  }
+
 
   function supported(entry) {
-    const doc = parseXml(entry.xml);
-    return Array.from(doc.getElementsByTagName("LoadFrom")).every(n => {
-      const path = (n.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
-      const fileName = path.split("/").pop();
-      return ["cube.xml", "cuboid.xml", "tetrahedron.xml"].includes(fileName);
-    });
+    // External figures are resolved through Add figure after selecting a
+    // library puzzle, so library availability is not tied to known filenames.
+    parseXml(entry.xml);
+    return true;
   }
 
   async function showLibrary() {
@@ -510,13 +558,9 @@ import { loadBuiltinLibrary } from "./library-data.js";
   $("load").addEventListener("click", () => file.click());
   $("add-figure").addEventListener("click", () => figureFile.click());
   figureFile.addEventListener("change", async () => {
-    const selected = figureFile.files && figureFile.files[0]; if (!selected) return;
+    const selected = figureFile.files; if (!selected || !selected.length) return;
     try {
-      const bytes = new Uint8Array(await selected.arrayBuffer());
-      const header = new TextDecoder("windows-1252").decode(bytes.slice(0,256));
-      const declared = header.match(/<\\?xml[^>]*encoding\\s*=\\s*["']([^"']+)["']/i);
-      const encoding = declared ? declared[1] : "utf-8";
-      loadFigureText(new TextDecoder(encoding).decode(bytes));
+      await loadFigureFiles(selected);
     } catch (error) { status.textContent = "Add figure failed: " + error.message; }
     finally { figureFile.value = ""; }
   });
