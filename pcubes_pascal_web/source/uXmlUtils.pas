@@ -48,7 +48,7 @@ implementation
 uses
   uScript, uUtils,
   {$IFDEF PAS2JS} JS, {$ENDIF}
-  SysUtils, Variants; // for Lazarus-xml and null-safe DOM values
+  SysUtils; // Variants is already exposed by the interface uses clause
 
 function DomValueToString(const S: Variant): String;
 begin
