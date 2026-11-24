@@ -88,12 +88,11 @@ begin
 end; // GetAttrIndex
 
 function GetAttrFromXml(XmlNode: TDomNode; const AttrName: String; const Default: String = ''): string;
-var i: integer;
 begin
   Result := Default;
-  i := GetAttrIndex(XmlNode, AttrName);
-  if i >= 0 then
-    Result := TDomElement(XmlNode).GetAttribute(AttrName);
+  if XmlNode = nil then Exit;
+  Result := TDomElement(XmlNode).GetAttribute(AttrName);
+  if Result = '' then Result := Default;
 end; // GetAttrFromXml
 
 function ReadStringFromXml(XmlNode: TDomNode; const AttrName: String; var Str: String): Boolean; overload;
@@ -108,11 +107,9 @@ begin
     Exit(Str <> '');
   end;
 
-  i := GetAttrIndex(XmlNode, AttrName);
-  if i >= 0 then begin
-    Str := TDomElement(XmlNode).GetAttribute(AttrName);
-    Exit(Str <> ''); // ?? Exit(True)
-  end;
+  Str := TDomElement(XmlNode).GetAttribute(AttrName);
+  if Str <> '' then
+    Exit(True);
 
   XmlNode := XmlNode.FindNode(AttrName);
   if XmlNode = nil then
