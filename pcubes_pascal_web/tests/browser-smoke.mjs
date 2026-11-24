@@ -61,6 +61,26 @@ try{
  const xml=await page.evaluate(async()=>{const {loadBuiltinLibrary}=await import("./library-data.js");const l=await loadBuiltinLibrary();return l.puzzles.find(p=>/2x2x2/i.test(p.name)).xml;});
  await page.locator("#puzzle-file").setInputFiles({name:"cube.xml",mimeType:"application/xml",buffer:Buffer.from(xml)});await page.waitForFunction(()=>/Loaded /.test(document.querySelector("#engine-status")?.textContent||""));
  assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0));
+ // A custom puzzle using an external Figure XML must keep its own figure,
+ // rather than being silently replaced with the built-in 2x2 template.
+ const customXml=xml.replace(/Rubik's cube 2x2x2/g,"Custom cube with external figure");
+ await page.locator("#puzzle-file").setInputFiles({name:"custom-puzzle.xml",mimeType:"application/xml",buffer:Buffer.from(customXml)});
+ await page.waitForFunction(()=>/Missing external figure/.test(document.querySelector("#engine-status")?.textContent||""));
+ assert.equal(await page.locator("#add-figure").isEnabled(),true,"Add figure did not unlock for a missing external figure");
+ const figureXml=`<?xml version="1.0"?><Figure><Part><Vertices>
+ <Add Vector="-1; -1; -1"/><Add Vector="-1; -1; 1"/><Add Vector="-1; 1; -1"/><Add Vector="-1; 1; 1"/>
+ <Add Vector="1; -1; -1"/><Add Vector="1; -1; 1"/><Add Vector="1; 1; -1"/><Add Vector="1; 1; 1"/>
+ </Vertices><Faces>
+ <Face Color="C80000" VertexIndexes="0;1;3;2"/><Face Color="FF800A" VertexIndexes="5;4;6;7"/>
+ <Face Color="0000C8" VertexIndexes="1;0;4;5"/><Face Color="009600" VertexIndexes="2;3;7;6"/>
+ <Face Color="FFFF00" VertexIndexes="0;2;6;4"/><Face Color="FFFFFF" VertexIndexes="3;1;5;7"/>
+ </Faces></Part></Figure>`;
+ await page.locator("#figure-file").setInputFiles({name:"cube.xml",mimeType:"application/xml",buffer:Buffer.from(figureXml)});
+ await page.waitForFunction(()=>/Figure added/.test(document.querySelector("#engine-status")?.textContent||""));
+ const customModel=await page.evaluate(()=>window.pCubes.getModelInfo());
+ assert.equal(customModel.name,"Custom cube with external figure");
+ assert.equal(customModel.parts,1,"Custom figure was replaced by the default 2x2 cubies");
+ assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0),"Attached custom figure did not render");
  assert.deepEqual(errors,[],"Browser errors: "+errors.join(" | "));
  console.log("PASS: preflight, render, compact viewport, left-drag layer turn, right-drag camera rotation, scramble geometry, undo/redo/reset, exact 2x2/3x3 selection, XML upload.");
 }finally{await browser.close();}
