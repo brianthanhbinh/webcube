@@ -181,7 +181,17 @@ import { loadBuiltinLibrary } from "./library-data.js";
       if (typeof result === "string") status.textContent = result;
       else if (result === false) status.textContent = "Pascal could not complete this request.";
       updateModelInfo(api); return result !== false;
-    } catch (error) { status.textContent = "Pascal error: " + error.message; return false; }
+    } catch (error) {
+      let detail;
+      try {
+        detail = error && (error.message || error.reason) ? (error.message || error.reason) :
+          typeof error === "string" ? error : JSON.stringify(error);
+      } catch (_) { detail = ""; }
+      if (!detail || detail === "{}") detail = String(error);
+      status.textContent = "Pascal error: " + (detail && detail !== "[object Object]" ? detail : "Unknown exception (the engine did not provide an error message).");
+      console.error("pCubes API exception:", error);
+      return false;
+    }
   }
 
   function loadXmlText(xmlText) {
