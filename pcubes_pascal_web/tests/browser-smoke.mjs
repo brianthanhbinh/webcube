@@ -149,7 +149,6 @@ try{
  const catalog=await page.evaluate(async()=>{const m=await import("./remote-library.js");return await m.loadRemoteLibraryIndex();});
  const remoteFailures=[];
  for(const entry of catalog.puzzles){
-   if(!document){} // Keep the loop's browser-side actions entirely in Playwright.
    if(!await page.locator("#library-dialog").evaluate(d=>d.open)){
      await page.locator("#library").click();
      await page.waitForFunction(()=>document.querySelector("#library-dialog")?.open);
