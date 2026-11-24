@@ -261,17 +261,23 @@ end;
 
 class function TXmlReadWrite.LoadArrayFromString(const Names: String): TArray<extended>;
 var
-  i: integer;
+  i, Separator: integer;
   EList: TList<Extended>;
-  Values: TStringDynArray;
   V, V1: TVar;
   S, PS: String;
 begin
   EList := TList<Extended>.Create;
   try
     S := Names;
-    while XmlTrim(S) <> '' do begin
-      PS := XmlTrim(TUtils.Parse(S, ';'));
+    while S <> '' do begin
+      Separator := Pos(';', S);
+      if Separator > 0 then begin
+        PS := XmlTrim(Copy(S, 1, Separator - 1));
+        Delete(S, 1, Separator);
+      end else begin
+        PS := XmlTrim(S);
+        S := '';
+      end;
       if PS = '' then
         Continue;
       // check if it's an array
@@ -279,13 +285,11 @@ begin
         i := 0;
         repeat
           EList.Add(CalcExpression(PS + '[' + XmlIntToStr(i) + ']'));
-          //Axis.AddPlane(V.Value);
           Inc(i);
         until not (Calc.VarByName(PS + '[' + XmlIntToStr(i) + ']', V) and (VarType(V.Value) = varDouble));
       end else
         EList.Add(CalcExpression(PS));
     end;
-
     Result := EList.ToArray;
   finally
     EList.Free;
