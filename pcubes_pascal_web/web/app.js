@@ -27,16 +27,77 @@ import { loadBuiltinLibrary } from "./library-data.js";
   let preflightPassed = false;
   let preflightReport = [];
 
+  function extractXmlDocument(input) {
+    let source = String(input ?? "").replace(/^\uFEFF/, "");
+    const scanEnd = (start, terminator) => {
+      let quote = "";
+      for (let i = start; i < source.length; i++) {
+        const ch = source[i];
+        if (quote) { if (ch === quote) quote = ""; continue; }
+        if (ch === "'" || ch === '"') { quote = ch; continue; }
+        if (source.startsWith(terminator, i)) return i + terminator.length;
+      }
+      return -1;
+    };
+    let i = 0, rootStart = -1, rootEnd = -1, depth = 0;
+    while (i < source.length) {
+      const open = source.indexOf("<", i);
+      if (open < 0) break;
+      if (source.startsWith("<!--", open)) {
+        const end = source.indexOf("-->", open + 4); if (end < 0) break;
+        i = end + 3; continue;
+      }
+      if (source.startsWith("<![CDATA[", open)) {
+        const end = source.indexOf("]]>", open + 9); if (end < 0) break;
+        i = end + 3; continue;
+      }
+      if (source.startsWith("<?", open)) {
+        const end = scanEnd(open + 2, "?>"); if (end < 0) break;
+        i = end; continue;
+      }
+      if (/^<!DOCTYPE\b/i.test(source.slice(open, open + 10))) {
+        let end = open + 9, quote = "", subset = 0;
+        for (; end < source.length; end++) {
+          const ch = source[end];
+          if (quote) { if (ch === quote) quote = ""; continue; }
+          if (ch === "'" || ch === '"') { quote = ch; continue; }
+          if (ch === "[") subset++;
+          else if (ch === "]") subset = Math.max(0, subset - 1);
+          else if (ch === ">" && subset === 0) { end++; break; }
+        }
+        i = end; continue;
+      }
+      const end = scanEnd(open + 1, ">");
+      if (end < 0) break;
+      const token = source.slice(open, end);
+      const match = token.match(/^<\s*(\/?)([A-Za-z_][\w.:-]*)[\s\S]*?>$/);
+      if (!match) { i = end; continue; }
+      const closing = match[1] === "/";
+      const selfClosing = !closing && /\/\s*>$/.test(token);
+      if (rootStart < 0) {
+        if (closing) { i = end; continue; }
+        rootStart = open;
+        if (selfClosing) { rootEnd = end; break; }
+        depth = 1;
+      } else if (closing) {
+        depth--;
+        if (depth === 0) { rootEnd = end; break; }
+      } else if (!selfClosing) depth++;
+      i = end;
+    }
+    if (rootStart < 0 || rootEnd < 0)
+      throw new Error("No complete XML document root was found.");
+    let prefixStart = source.lastIndexOf("<?xml", rootStart);
+    if (prefixStart < 0) prefixStart = rootStart;
+    else if (!/^\s*<\?xml[\s\S]*?\?>\s*(?:<!DOCTYPE[\s\S]*?>\s*)?$/i.test(source.slice(prefixStart, rootStart)))
+      prefixStart = rootStart;
+    return source.slice(prefixStart, rootEnd);
+  }
+
   function parseXml(text) {
-    // Uploaded library files sometimes contain Markdown wrappers/citation
-    // debris after the closing XML root. Remove only that non-XML suffix.
-    let source = String(text).replace(/^\uFEFF/, "").trimStart();
-    source = source.replace(/\s+```(?:xml)?\s*\[[^\]]*\]\s*$/i, "");
-    source = source.replace(/\s+```\s*$/i, "");
-    source = source.replace(/\s+\[cite:\s*\d+\]\s*$/i, "");
-    // DOMParser receives a JavaScript Unicode string, not raw file bytes; remove
-    // the original byte-encoding declaration before parsing that string.
-    source = source.replace(/(<\?xml[^>]*?)\s+encoding\s*=\s*"[^"]+"/i, "$1");
+    let source = extractXmlDocument(text).trim();
+    // DOMParser receives Unicode text, not the original encoded byte stream.
+    source = source.replace(/(<\?xml\b[^>]*?)\s+encoding\s*=\s*(['"])[^'"]*\2/i, "$1");
     const doc = new DOMParser().parseFromString(source, "application/xml");
     const error = doc.getElementsByTagName("parsererror")[0];
     if (error) throw new Error(error.textContent || "Invalid XML.");
