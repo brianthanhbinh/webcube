@@ -115,11 +115,18 @@ import { loadBuiltinLibrary } from "./library-data.js";
 
   function resolveExternalFigures(doc) {
     const name = doc.getElementsByTagName("Name")[0]?.textContent || "";
-    if (/Rubik's cube 2x2x2/i.test(name)) {
+    const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
+    const isCubeFigure = node => {
+      const path = (node.getAttribute("File") || "").replace(/\\\\/g, "/").toLowerCase();
+      return path.endsWith("figures/cube.xml") || path === "cube.xml";
+    };
+    // Generate cubies only for the two known library templates. An uploaded
+    // custom XML with inline Figure/Part data must never be replaced by a 2x2.
+    if (loads.some(isCubeFigure) && /Rubik's cube 2x2x2/i.test(name)) {
       buildCubeCubies(doc, 2);
       return;
     }
-    if (/Rubik's cube 3x3x3/i.test(name)) {
+    if (loads.some(isCubeFigure) && /Rubik's cube 3x3x3/i.test(name)) {
       buildCubeCubies(doc, 3);
       return;
     }
@@ -129,11 +136,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
       for (const attr of ["PlaneDistances", "TurningAngles", "AvailableAngles", "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles"])
         if (!axis.hasAttribute(attr) && axesNode.hasAttribute(attr)) axis.setAttribute(attr, axesNode.getAttribute(attr));
     }
-    for (const node of Array.from(doc.getElementsByTagName("LoadFrom"))) {
-      const name = (node.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
-      if (name.endsWith("figures/cube.xml") || name === "cube.xml") addBuiltinCubeFigure(node);
-      else throw new Error('Missing external figure "' + node.getAttribute("File") + '". Click Add figure and select its figure XML.');
-    }
+    if (loads.length) throw new Error('Missing external figure "' + loads[0].getAttribute("File") + '". Click Add figure and select its figure XML.');
   }
 
   function updateModelInfo(api) {
