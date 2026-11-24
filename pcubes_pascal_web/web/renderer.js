@@ -18,6 +18,9 @@ export class PuzzleRenderer {
     canvas.addEventListener("contextmenu",e=>e.preventDefault());
     canvas.addEventListener("pointerdown",e=>{
       if(e.button!==0&&e.button!==1&&e.button!==2)return;
+      // Never start another layer drag while the previous move is still
+      // animating. The Pascal model has already committed that move.
+      if(e.button===0&&this.isTurning)return;
       const rect=canvas.getBoundingClientRect();
       const axes=window.pCubes?.getAxesInfo?.()||[];
       const pick=e.button===0?this.pickLayer(e.clientX-rect.left,e.clientY-rect.top,axes):null;
@@ -180,11 +183,12 @@ export class PuzzleRenderer {
     if (!before?.faces || !after?.faces || !axis || !Number.isFinite(angle)) {
       this.setGeometry(after); return;
     }
-    if (this.turnFrame) cancelAnimationFrame(this.turnFrame);
+    if (this.isTurning) return;
+    this.isTurning = true;
     const mask = this.layerFaceMask(before, axis, layer, normalSign);
     const vector = [Number(axis.x), Number(axis.y), Number(axis.z)];
     const length = Math.hypot(...vector);
-    if (!length || !mask.some(Boolean)) { this.setGeometry(after); return; }
+    if (!length || !mask.some(Boolean)) { this.isTurning = false; this.setGeometry(after); return; }
     const n = vector.map(v => v / length);
     const start = performance.now();
     const smooth = t => t < .5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
@@ -203,7 +207,7 @@ export class PuzzleRenderer {
       })};
       this.setGeometry(geometry);
       if (t < 1) this.turnFrame = requestAnimationFrame(frame);
-      else { this.turnFrame = 0; this.setGeometry(after); }
+      else { this.turnFrame = 0; this.isTurning = false; this.setGeometry(after); }
     };
     this.turnFrame = requestAnimationFrame(frame);
   }
