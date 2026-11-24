@@ -1,5 +1,5 @@
 /* Direct-manipulation puzzle renderer:
-   left-drag turns the selected layer; right-drag rotates the camera;
+   left-drag turns the layer under the pointer; right-drag rotates the camera;
    wheel zooms. */
 export class PuzzleRenderer {
   constructor(canvas) {
@@ -10,12 +10,16 @@ export class PuzzleRenderer {
     this.rotationX=0.35;
     this.zoom=1;
     this.pointer=null;
+    this.projectedFaces=[];
     this.onTurnDrag=null;
     canvas.style.touchAction="none";
     canvas.addEventListener("contextmenu",e=>e.preventDefault());
     canvas.addEventListener("pointerdown",e=>{
       if(e.button!==0&&e.button!==1&&e.button!==2)return;
-      this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,downX:e.clientX,downY:e.clientY,button:e.button,moved:false};
+      const rect=canvas.getBoundingClientRect();
+      const axes=window.pCubes?.getAxesInfo?.()||[];
+      this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,downX:e.clientX,downY:e.clientY,button:e.button,moved:false,
+        pick:e.button===0?this.pickLayer(e.clientX-rect.left,e.clientY-rect.top,axes):null};
       canvas.setPointerCapture(e.pointerId);
     });
     canvas.addEventListener("pointermove",e=>{
@@ -34,7 +38,7 @@ export class PuzzleRenderer {
       const p=this.pointer;
       if(!p||p.id!==e.pointerId)return;
       if(p.button===0&&p.moved&&this.onTurnDrag){
-        this.onTurnDrag(e.clientX-p.downX,e.clientY-p.downY);
+        this.onTurnDrag(e.clientX-p.downX,e.clientY-p.downY,p.pick);
       }
       this.pointer=null;
     });
@@ -66,12 +70,64 @@ export class PuzzleRenderer {
     const r=n&255,g=(n>>>8)&255,b=(n>>>16)&255;
     return "#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
   }
+  dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+  faceNormal(vertices){
+    if(!vertices||vertices.length<3)return null;
+    const a=vertices[1].map((v,i)=>v-vertices[0][i]),b=vertices[2].map((v,i)=>v-vertices[0][i]);
+    const n=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+    const length=Math.hypot(...n);
+    return length>1e-8?n.map(v=>v/length):null;
+  }
+  pointInPolygon(x,y,points){
+    let inside=false;
+    for(let i=0,j=points.length-1;i<points.length;j=i++){
+      const a=points[i],b=points[j];
+      if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))inside=!inside;
+    }
+    return inside;
+  }
+  pickLayer(x,y,axes){
+    // Test frontmost polygons first so overlapping cubies select the visible face.
+    for(let i=this.projectedFaces.length-1;i>=0;i--){
+      const item=this.projectedFaces[i];
+      if(item.screen.length<3||!this.pointInPolygon(x,y,item.screen))continue;
+      const normal=this.faceNormal(item.vertices);
+      if(!normal)continue;
+      let chosen=null,best=.72;
+      for(const axis of axes){
+        const vector=[Number(axis.x),Number(axis.y),Number(axis.z)],length=Math.hypot(...vector);
+        if(!length)continue;
+        const score=Math.abs(this.dot(normal,vector.map(v=>v/length)));
+        if(score>best){best=score;chosen={axis:axis.index,vector:vector.map(v=>v/length),layers:axis.layers,sign:this.dot(normal,vector.map(v=>v/length))>=0?1:-1};}
+      }
+      if(!chosen||!chosen.layers)continue;
+      const cent=item.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/item.vertices.length),[0,0,0]);
+      const coordinate=this.dot(cent,chosen.vector);
+      const values=[];
+      for(const face of this.projectedFaces){
+        const n=this.faceNormal(face.vertices);
+        if(!n||this.dot(n,chosen.vector)*chosen.sign<.82)continue;
+        const c=face.vertices.reduce((sum,v)=>sum.map((z,k)=>z+v[k]/face.vertices.length),[0,0,0]);
+        const value=this.dot(c,chosen.vector);
+        if(!values.some(old=>Math.abs(old-value)<1e-4))values.push(value);
+      }
+      values.sort((a,b)=>a-b);
+      let layer=0,bestDistance=Infinity;
+      values.forEach((v,index)=>{const d=Math.abs(v-coordinate);if(d<bestDistance){bestDistance=d;layer=index;}});
+      if(values.length!==chosen.layers&&values.length>1)
+        layer=Math.round(layer*(chosen.layers-1)/(values.length-1));
+      layer=Math.max(0,Math.min(chosen.layers-1,layer));
+      return {axis:chosen.axis,layer,normalSign:chosen.sign,faceNormal:normal};
+    }
+    return null;
+  }
   draw(){
     const ctx=this.ctx,w=this.canvas.clientWidth,h=this.canvas.clientHeight;
     if(!w||!h)return;
     ctx.clearRect(0,0,w,h);ctx.fillStyle="#111923";ctx.fillRect(0,0,w,h);
     const faces=this.geometry?.faces||[],points=faces.flatMap(f=>f.vertices||[]);
     if(!points.length){
+      this.projectedFaces=[];
       ctx.textAlign="center";ctx.fillStyle="#e8edf5";ctx.font="600 18px system-ui";
       ctx.fillText("Load a pCubes puzzle XML",w/2,h/2-10);
       ctx.fillStyle="#9eacc0";ctx.font="13px system-ui";
@@ -84,10 +140,14 @@ export class PuzzleRenderer {
     const span=Math.max(maxX-minX,maxY-minY,1e-6),scale=Math.min(w,h)*.68*this.zoom/span;
     const centerX=(minX+maxX)/2,centerY=(minY+maxY)/2;
     const project=v=>[w/2+(v[0]-centerX)*scale,h/2-(v[1]-centerY)*scale];
-    const ordered=faces.map((face,index)=>{const vertices=(face.vertices||[]).map(transform);return{face,vertices,depth:vertices.reduce((s,v)=>s+v[2],0)/Math.max(1,vertices.length),index};}).sort((a,b)=>a.depth-b.depth);
+    const ordered=faces.map((face,index)=>{
+      const vertices=face.vertices||[],viewVertices=vertices.map(transform);
+      return{face,vertices,viewVertices,screen:viewVertices.map(project),depth:viewVertices.reduce((s,v)=>s+v[2],0)/Math.max(1,viewVertices.length),index};
+    }).sort((a,b)=>a.depth-b.depth);
+    this.projectedFaces=ordered;
     for(const item of ordered){
-      if(item.vertices.length<3)continue;
-      ctx.beginPath();item.vertices.forEach((v,i)=>{const[x,y]=project(v);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+      if(item.screen.length<3)continue;
+      ctx.beginPath();item.screen.forEach(([x,y],i)=>{if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
       ctx.closePath();ctx.fillStyle=this.color(item.face.color);ctx.fill();ctx.strokeStyle="#101820";ctx.lineWidth=1.25;ctx.stroke();
     }
   }
