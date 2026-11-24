@@ -10794,7 +10794,7 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
     } catch ($e) {
       if (pas.SysUtils.Exception.isPrototypeOf($e)) {
         var E = $e;
-        $mod.SetStatus("XML load failed: " + E.fMessage);
+        $mod.SetStatus("XML load failed (" + E.$classname + "): " + E.fMessage);
       } else throw $e
     };
     if (NewPuzzle !== null) NewPuzzle = rtl.freeLoc(NewPuzzle);
