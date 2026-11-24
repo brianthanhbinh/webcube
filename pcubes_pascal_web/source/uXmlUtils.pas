@@ -53,14 +53,14 @@ function XmlTextToString(const S: Variant): String;
 begin
   // Some browser DOM implementations expose an absent NodeValue as null.
   // Keep that from reaching Pascal Pos/TUtils.Parse, which calls JS indexOf.
-  if VarIsNull(S) or VarIsEmpty(S) then begin
+  if VarType(S) in [varNull, varEmpty] then begin
     Result := '';
     Exit;
   end;
   {$IFDEF PAS2JS}
-  Result := VarToStr(S);
+  Result := JS.toString(S);
   {$ELSE}
-  Result := UTF8ToString(VarToStr(S));
+  Result := UTF8ToString(string(S));
   {$ENDIF}
 end;
 
