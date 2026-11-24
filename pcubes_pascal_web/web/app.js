@@ -126,10 +126,12 @@ import { loadBuiltinLibrary } from "./library-data.js";
       const inherited = ["PlaneDistances", "TurningAngles", "AvailableAngles",
         "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles",
         "TurnAxesWithLayer", "TurnAxesWithPartNo"];
-      for (const axis of Array.from(axesParent.children).filter(n => n.nodeName === "Axis")) {
+      for (const axis of Array.from(doc.getElementsByTagName("Axis"))) {
+        if (axis.parentNode !== axesParent) continue;
         for (const name of inherited) {
-          if (!axis.hasAttribute(name) && axesParent.hasAttribute(name))
-            axis.setAttribute(name, axesParent.getAttribute(name));
+          const parentValue = axesParent.getAttribute(name);
+          if (!axis.hasAttribute(name) && parentValue !== null)
+            axis.setAttribute(name, parentValue);
         }
       }
     }
