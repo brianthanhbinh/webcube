@@ -6,6 +6,7 @@ var
   StatusNode: TJSElement;
   API: TJSObject;
   CurrentPuzzle: TPuzzle;
+  OriginalXmlRoot: TJSObject;
 
 procedure SetStatus(const S: String);
 begin
@@ -100,10 +101,16 @@ begin
   else SetStatus('Nothing to redo.');
 end;
 
+function APILoadXML(XmlRoot: TJSObject): Boolean; forward;
+
 procedure APIReset;
 begin
-  if not APIIsPuzzleReady then SetStatus('Reset unavailable: no puzzle is loaded.')
-  else SetStatus('Reset requires the original puzzle XML; use the Reset control to reload it.');
+  if OriginalXmlRoot = nil then begin
+    SetStatus('Reset unavailable: no original puzzle XML has been loaded.');
+    Exit;
+  end;
+  if APILoadXML(OriginalXmlRoot) then
+    SetStatus('Puzzle reset to its original XML state.');
 end;
 
 procedure APIOpenLibrary;
@@ -134,6 +141,7 @@ begin
 
     if CurrentPuzzle <> nil then CurrentPuzzle.Free;
     CurrentPuzzle := NewPuzzle;
+    OriginalXmlRoot := XmlRoot;
     NewPuzzle := nil;
     SetStatus('Loaded "' + CurrentPuzzle.Header.Name + '" from XML (' +
       IntToStr(CurrentPuzzle.Parts.Count) + ' parts, ' +
@@ -166,6 +174,7 @@ end;
 
 begin
   CurrentPuzzle := TPuzzle.Create;
+  OriginalXmlRoot := nil;
   CurrentPuzzle.DisableAnimation;
   InstallBrowserAPI;
   SetStatus('Pascal TPuzzle model instantiated. Load a puzzle definition to begin.');
