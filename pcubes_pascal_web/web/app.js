@@ -179,8 +179,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     preflightReport.push({ name, passed, detail });
     const report = $("preflight-results");
     if (report) {
-      report.textContent = preflightReport.map(t => `${t.passed ? "PASS" : "FAIL"} · ${t.name}${t.detail ? " — " + t.detail : ""}`).join("
-");
+      report.textContent = preflightReport.map(t => `${t.passed ? "PASS" : "FAIL"} · ${t.name}${t.detail ? " — " + t.detail : ""}`).join(" | ");
       report.dataset.result = preflightReport.every(t => t.passed) ? "pass" : "fail";
     }
     if (!passed) throw new Error(name + (detail ? ": " + detail : ""));
