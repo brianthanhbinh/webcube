@@ -15,7 +15,10 @@ import { loadBuiltinLibrary } from "./library-data.js";
   let preflightReport = [];
 
   function parseXml(text) {
-    const doc = new DOMParser().parseFromString(text, "application/xml");
+    // DOMParser receives a JavaScript Unicode string, not raw file bytes; remove
+    // the original byte-encoding declaration before parsing that string.
+    const source = String(text).replace(/(<\?xml[^>]*?)\s+encoding\s*=\s*(["'])[^"']+\2/i, "$1");
+    const doc = new DOMParser().parseFromString(source, "application/xml");
     const error = doc.getElementsByTagName("parsererror")[0];
     if (error) throw new Error(error.textContent || "Invalid XML.");
     if (!doc.documentElement) throw new Error("XML has no root element.");
