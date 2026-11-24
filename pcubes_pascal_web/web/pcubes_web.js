@@ -10511,7 +10511,7 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
   };
   this.APIGetVersion = function () {
     var Result = "";
-    Result = "0.3.0";
+    Result = "0.3.1";
     return Result;
   };
   this.APIIsPuzzleReady = function () {
@@ -10587,30 +10587,49 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
     var Direction = 0;
     var Turns = 0;
     var BeforeCount = 0;
+    var PreviousAxis = 0;
+    var PreviousLayer = 0;
+    var PreviousDirection = 0;
     var Angle = 0.0;
+    var Attempts = 0;
     Result = false;
     if (!$mod.APIIsPuzzleReady()) {
       $mod.SetStatus("Scramble unavailable: load a valid puzzle XML first.");
       return Result;
     };
     Turns = 0;
+    PreviousAxis = -1;
+    PreviousLayer = -1;
+    PreviousDirection = 0;
     for (I = 1; I <= 30; I++) {
-      AxisNo = pas.System.Random($mod.CurrentPuzzle.FAxes.FLength);
+      Attempts = 0;
+      do {
+        Attempts += 1;
+        AxisNo = pas.System.Random($mod.CurrentPuzzle.FAxes.FLength);
+        if ($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.FLength === 0) continue;
+        LayerNo = pas.System.Random($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.FLength);
+        Direction = (pas.System.Random(2) * 2) - 1;
+        if ((AxisNo === PreviousAxis) && (LayerNo === PreviousLayer) && (Direction === -PreviousDirection)) continue;
+        break;
+      } while (!(Attempts >= 100));
+      if (Attempts >= 100) continue;
       if ((Math.abs($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).GetNormVector().x) + Math.abs($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).GetNormVector().y) + Math.abs($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).GetNormVector().z)) < 0.0001) continue;
       if (!$mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Enabled) continue;
-      if ($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.FLength === 0) continue;
-      LayerNo = pas.System.Random($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.FLength);
       if ($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.GetItem(LayerNo).Fixed) continue;
       Angle = $mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.GetItem(LayerNo).FTurningAngle;
       if (Math.abs(Angle) < 0.000001) continue;
-      Direction = (pas.System.Random(2) * 2) - 1;
       BeforeCount = $mod.CurrentPuzzle.GetUndoCount();
       $mod.CurrentPuzzle.RotateLayer(AxisNo,LayerNo,Angle * Direction,true);
-      if ($mod.CurrentPuzzle.GetUndoCount() > BeforeCount) Turns += 1;
+      if ($mod.CurrentPuzzle.GetUndoCount() > BeforeCount) {
+        Turns += 1;
+        PreviousAxis = AxisNo;
+        PreviousLayer = LayerNo;
+        PreviousDirection = Direction;
+      };
     };
     Result = Turns > 0;
     if (Result) {
-      $mod.SetStatus("Scrambled with " + pas.SysUtils.IntToStr(Turns) + " valid layer turns.")}
+      $mod.SetStatus("Scrambled: " + pas.SysUtils.IntToStr(Turns) + " layer moves.")}
      else $mod.SetStatus("Scramble failed: this puzzle has no movable layers.");
     return Result;
   };
@@ -10747,7 +10766,7 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
   };
   this.InstallBrowserAPI = function () {
     $mod.API = pas.JS.New([]);
-    $mod.API["version"] = "0.3.0";
+    $mod.API["version"] = "0.3.1";
     $mod.API["getStatus"] = $mod.APIGetStatus;
     $mod.API["getVersion"] = $mod.APIGetVersion;
     $mod.API["isPuzzleReady"] = $mod.APIIsPuzzleReady;
