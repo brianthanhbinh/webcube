@@ -237,6 +237,9 @@ import { loadBuiltinLibrary } from "./library-data.js";
 
   function loadXmlText(xmlText) {
     let doc = parseXml(xmlText);
+    // Retain the parsed puzzle even when an external figure is missing, so
+    // the Add figure workflow can attach the selected XML and retry loading.
+    pendingPuzzleDoc = doc;
     resolveExternalFigures(doc);
     // Reparse the serialized document so the Pascal DOM bridge receives the
     // normalized per-axis attributes as part of the original XML tree, not as
