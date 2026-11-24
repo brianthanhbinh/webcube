@@ -8823,16 +8823,27 @@ rtl.module("uScript",["System","Classes","Generics.Collections","Variants","JS"]
     $mod.Calc = $mod.TScript.$create("Create$1");
   };
 },["uUtils","SysUtils","Types","Math","Dialogs"]);
-rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM"],function () {
+rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM","Variants"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  this.DomValueToString = function (S) {
+    var Result = "";
+    if (pas.Variants.VarType(S) in rtl.createSet(1,0)) {
+      Result = "";
+      return Result;
+    };
+    Result = pas.JS.ToString(S);
+    return Result;
+  };
   this.GetNodeText = function (XmlNode) {
     var Result = "";
     var TextNode = null;
+    Result = "";
+    if (XmlNode === null) return Result;
     TextNode = XmlNode.FindNode("#text");
     if (TextNode != null) {
-      Result = pas.SysUtils.Trim(TextNode.GetNodeValue())}
+      Result = pas.SysUtils.Trim($mod.DomValueToString(TextNode.GetNodeValue()))}
      else Result = "";
     return Result;
   };
@@ -8845,17 +8856,17 @@ rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM"],function 
     Str.set("");
     if (XmlNode === null) return false;
     if (AttrName === "") {
-      Str.set($impl.XmlTextToString($mod.GetNodeText(XmlNode)));
+      Str.set($mod.DomValueToString($mod.GetNodeText(XmlNode)));
       return Str.get() !== "";
     };
     i = $mod.GetAttrIndex(XmlNode,AttrName);
     if (i >= 0) {
-      Str.set($impl.XmlTextToString(XmlNode.GetAttributes().GetItem(i).GetNodeValue()));
+      Str.set($mod.DomValueToString(XmlNode.GetAttributes().GetItem(i).GetNodeValue()));
       return Str.get() !== "";
     };
     XmlNode = XmlNode.FindNode(AttrName);
     if (XmlNode === null) return false;
-    Str.set($impl.XmlTextToString(XmlNode.GetTextContent()));
+    Str.set($mod.DomValueToString(XmlNode.GetTextContent()));
     Result = Str.get() !== "";
     return Result;
   };
@@ -8919,7 +8930,7 @@ rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM"],function 
     var i = 0;
     Result = Default;
     i = $mod.GetAttrIndex(XmlNode,AttrName);
-    if (i >= 0) Result = XmlNode.GetAttributes().GetItem(i).GetNodeValue();
+    if (i >= 0) Result = $mod.DomValueToString(XmlNode.GetAttributes().GetItem(i).GetNodeValue());
     return Result;
   };
   this.ReadIntExpressionFromXml = function (XmlNode, AttrName, Default) {
@@ -9001,15 +9012,6 @@ rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM"],function 
     return Result;
   };
   $mod.$implcode = function () {
-    $impl.XmlTextToString = function (S) {
-      var Result = "";
-      if (pas.Variants.VarType(S) in rtl.createSet(1,0)) {
-        Result = "";
-        return Result;
-      };
-      Result = pas.JS.ToString(S);
-      return Result;
-    };
     $impl.ReadStringFromXmlOrParent$1 = function (XmlNode, AttrName, Str) {
       var Result = false;
       if (XmlNode === null) return false;
@@ -9020,7 +9022,7 @@ rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM"],function 
   };
   $mod.$init = function () {
   };
-},["uScript","uUtils","JS","SysUtils","Variants"]);
+},["uScript","uUtils","JS","SysUtils"]);
 rtl.module("strutils",["System","SysUtils","Types"],function () {
   "use strict";
   var $mod = this;
@@ -9356,11 +9358,11 @@ rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine
       var i = 0;
       Result = aDefault;
       i = pas.uXmlUtils.GetAttrIndex(XmlNode,aName);
-      if (i >= 0) return XmlNode.GetAttributes().GetItem(i).GetNodeValue();
+      if (i >= 0) return pas.uXmlUtils.DomValueToString(XmlNode.GetAttributes().GetItem(i).GetNodeValue());
       XmlNode = XmlNode.GetParentNode();
       if (XmlNode === null) return Result;
       i = pas.uXmlUtils.GetAttrIndex(XmlNode,aName);
-      if (i >= 0) return XmlNode.GetAttributes().GetItem(i).GetNodeValue();
+      if (i >= 0) return pas.uXmlUtils.DomValueToString(XmlNode.GetAttributes().GetItem(i).GetNodeValue());
       return Result;
     };
     this.GetVectorFromString = function (S) {
@@ -9759,7 +9761,7 @@ rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine
           Faces.Add(Face);
         } else if (S === "ExecMacro") {
           if (!ExecMacro(XmlSubNode)) return Result;
-        } else if (S === "Script") pas.uScript.ExecuteScript(XmlSubNode.GetTextContent());
+        } else if (S === "Script") pas.uScript.ExecuteScript(pas.uXmlUtils.DomValueToString(XmlSubNode.GetTextContent()));
       };
       Result = true;
       return Result;
@@ -9775,7 +9777,7 @@ rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine
         XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
         S = XmlSubNode.GetNodeName();
         if (S === "Script") {
-          pas.uScript.ExecuteScript(XmlSubNode.GetTextContent())}
+          pas.uScript.ExecuteScript(pas.uXmlUtils.DomValueToString(XmlSubNode.GetTextContent()))}
          else if (S === "Vertices") {
           this.VectorsLoadFromXml(Part.FVertices,XmlSubNode)}
          else if (S === "Faces") this.FacesLoadFromXml(Part.FFaces,XmlSubNode,Part.FVertices);
@@ -10175,7 +10177,7 @@ rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine
         var Face = null;
         var Part = null;
         sl = pas.Classes.TStringList.$create("Create$1");
-        S = XmlNode.GetTextContent();
+        S = pas.uXmlUtils.DomValueToString(XmlNode.GetTextContent());
         sl.SetTextStr(S);
         Result = false;
         if (sl.GetCount() !== 0) {
@@ -10420,7 +10422,7 @@ rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine
           XmlSubNode = XmlNode.GetChildNodes().GetItem(i);
           S = XmlSubNode.GetNodeName();
           if (S === "Script") {
-            pas.uScript.ExecuteScript(XmlSubNode.GetTextContent())}
+            pas.uScript.ExecuteScript(pas.uXmlUtils.DomValueToString(XmlSubNode.GetTextContent()))}
            else if (S === "Axes") {
             this.AxesLoadFromXml(Puzzle.FAxes,XmlSubNode)}
            else if (S === "Figure") {
@@ -10617,6 +10619,7 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
   this.StatusNode = null;
   this.API = null;
   this.CurrentPuzzle = null;
+  this.OriginalXmlRoot = null;
   this.SetStatus = function (S) {
     $mod.StatusNode = document.getElementById("engine-status");
     if ($mod.StatusNode !== null) $mod.StatusNode.textContent = S;
@@ -10731,9 +10734,11 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
      else $mod.SetStatus("Nothing to redo.");
   };
   this.APIReset = function () {
-    if (!$mod.APIIsPuzzleReady()) {
-      $mod.SetStatus("Reset unavailable: no puzzle is loaded.")}
-     else $mod.SetStatus("Reset requires the original puzzle XML; use the Reset control to reload it.");
+    if ($mod.OriginalXmlRoot === null) {
+      $mod.SetStatus("Reset unavailable: no original puzzle XML has been loaded.");
+      return;
+    };
+    if ($mod.APILoadXML($mod.OriginalXmlRoot)) $mod.SetStatus("Puzzle reset to its original XML state.");
   };
   this.APIOpenLibrary = function () {
     $mod.SetStatus("Choose a puzzle XML file to load a puzzle.");
@@ -10759,6 +10764,7 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
       };
       if ($mod.CurrentPuzzle !== null) rtl.free($mod,"CurrentPuzzle");
       $mod.CurrentPuzzle = NewPuzzle;
+      $mod.OriginalXmlRoot = XmlRoot;
       NewPuzzle = null;
       $mod.SetStatus('Loaded "' + $mod.CurrentPuzzle.Header.Name + '" from XML (' + pas.SysUtils.IntToStr($mod.CurrentPuzzle.FParts.FLength) + " parts, " + pas.SysUtils.IntToStr($mod.CurrentPuzzle.FAxes.FLength) + " axes).");
       Result = true;
@@ -10789,6 +10795,7 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
   };
   $mod.$main = function () {
     $mod.CurrentPuzzle = pas.uPuzzle.TPuzzle.$create("Create$1");
+    $mod.OriginalXmlRoot = null;
     $mod.CurrentPuzzle.DisableAnimation();
     $mod.InstallBrowserAPI();
     $mod.SetStatus("Pascal TPuzzle model instantiated. Load a puzzle definition to begin.");
