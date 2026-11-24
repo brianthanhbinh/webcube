@@ -33,7 +33,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   renderer.onTurnDrag = () => {
     status.textContent = "Drag from a visible puzzle face to turn its layer.";
   };
-  const controls = ["scramble", "undo", "redo", "reset", "turn-ccw", "turn-cw"];
+  const controls = ["scramble", "undo", "redo", "reset", "turn-ccw", "turn-cw", "turn-half-ccw", "turn-half-cw"];
   let originalXmlText = "";
   let libraryData = null;
   let remoteLibrary = null;
