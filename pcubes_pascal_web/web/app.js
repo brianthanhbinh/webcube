@@ -115,6 +115,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     } catch (error) { list.textContent = "Library failed to load: " + error.message; }
   }
 
+  $("view-reset").addEventListener("click", () => renderer.resetView());
   $("scramble").addEventListener("click", () => call("scramble"));
   $("undo").addEventListener("click", () => call("undo"));
   $("redo").addEventListener("click", () => call("redo"));
