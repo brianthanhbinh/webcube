@@ -62,19 +62,55 @@ begin
     AxisInfo['y'] := CurrentPuzzle.Axes[I].NormVector.Y;
     AxisInfo['z'] := CurrentPuzzle.Axes[I].NormVector.Z;
     AxisInfo['enabled'] := CurrentPuzzle.Axes[I].Enabled;
+    AxisInfo['turningAngle'] := CurrentPuzzle.Axes[I].Layers.Count > 0;
+    if CurrentPuzzle.Axes[I].Layers.Count > 0 then AxisInfo['angle'] := CurrentPuzzle.Axes[I].Layers[0].TurningAngle;
     Result.push(AxisInfo);
   end;
 end;
 
 function APITurnLayer(AxisNo, LayerNo, Direction: Integer): Boolean;
+var BeforeCount: Integer; Angle: Extended;
 begin
   Result := False;
   if not APIIsPuzzleReady then Exit;
   if (AxisNo < 0) or (AxisNo >= CurrentPuzzle.Axes.Count) then Exit;
   if (LayerNo < 0) or (LayerNo >= CurrentPuzzle.Axes[AxisNo].Layers.Count) then Exit;
   if (Direction <> -1) and (Direction <> 1) then Exit;
-  CurrentPuzzle.RotateLayer(AxisNo, LayerNo, Direction * 1.5707963267948966, True);
-  Result := True;
+  if not CurrentPuzzle.Axes[AxisNo].Enabled then Exit;
+  if CurrentPuzzle.Axes[AxisNo].Layers[LayerNo].Fixed then Exit;
+  Angle := CurrentPuzzle.Axes[AxisNo].Layers[LayerNo].TurningAngle;
+  if Abs(Angle) < 0.000001 then Exit;
+  BeforeCount := CurrentPuzzle.UndoCount;
+  CurrentPuzzle.RotateLayer(AxisNo, LayerNo, Angle * Direction, True);
+  Result := CurrentPuzzle.UndoCount > BeforeCount;
+end;
+
+function APIScramble: Boolean;
+var I, AxisNo, LayerNo, Direction, Turns, BeforeCount: Integer;
+    Angle: Extended;
+begin
+  Result := False;
+  if not APIIsPuzzleReady then begin
+    SetStatus('Scramble unavailable: load a valid puzzle XML first.');
+    Exit;
+  end;
+  Turns := 0;
+  for I := 1 to 30 do begin
+    AxisNo := Random(CurrentPuzzle.Axes.Count);
+    if not CurrentPuzzle.Axes[AxisNo].Enabled then Continue;
+    if CurrentPuzzle.Axes[AxisNo].Layers.Count = 0 then Continue;
+    LayerNo := Random(CurrentPuzzle.Axes[AxisNo].Layers.Count);
+    if CurrentPuzzle.Axes[AxisNo].Layers[LayerNo].Fixed then Continue;
+    Angle := CurrentPuzzle.Axes[AxisNo].Layers[LayerNo].TurningAngle;
+    if Abs(Angle) < 0.000001 then Continue;
+    Direction := Random(2) * 2 - 1;
+    BeforeCount := CurrentPuzzle.UndoCount;
+    CurrentPuzzle.RotateLayer(AxisNo, LayerNo, Angle * Direction, True);
+    if CurrentPuzzle.UndoCount > BeforeCount then Inc(Turns);
+  end;
+  Result := Turns > 0;
+  if Result then SetStatus('Scrambled with ' + IntToStr(Turns) + ' valid layer turns.')
+  else SetStatus('Scramble failed: this puzzle has no movable layers.');
 end;
 
 function APIGetRenderData: TJSObject;
@@ -203,6 +239,7 @@ begin
 end;
 
 begin
+  Randomize;
   CurrentPuzzle := TPuzzle.Create;
   OriginalXmlRoot := nil;
   CurrentPuzzle.DisableAnimation;
