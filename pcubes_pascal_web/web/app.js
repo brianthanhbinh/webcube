@@ -19,7 +19,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     refreshTurnControls(window.pCubes);
     layerSelect.value = String(pick.layer);
     const direction = (delta >= 0 ? 1 : -1) * (pick.normalSign || 1);
-    call("turnLayer", pick.axis, pick.layer, direction);
+    turnLayerAnimated(pick.axis, pick.layer, direction);
   };
   const controls = ["scramble", "undo", "redo", "reset", "turn-ccw", "turn-cw"];
   let originalXmlText = "";
@@ -306,6 +306,18 @@ import { loadBuiltinLibrary } from "./library-data.js";
     if (typeof api.getRenderData === "function") renderer.setGeometry(api.getRenderData());
   }
 
+  function turnLayerAnimated(axisNo, layerNo, direction) {
+    const api = window.pCubes;
+    if (!api?.getRenderData || !api?.getAxesInfo) return call("turnLayer", axisNo, layerNo, direction);
+    const before = api.getRenderData();
+    const axis = (api.getAxesInfo() || []).find(item => item.index === axisNo);
+    if (!axis) return false;
+    const angle = Number(axis.angle) * direction;
+    const result = call("turnLayer", axisNo, layerNo, direction);
+    if (result) renderer.animateTurn(before, api.getRenderData(), axis, angle);
+    return result;
+  }
+
   function refreshTurnControls(api) {
     const axes = api.getAxesInfo?.() || [];
     const axisSelect = $("turn-axis"), layerSelect = $("turn-layer");
@@ -426,8 +438,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
   }
 
   $("turn-axis").addEventListener("change", () => refreshTurnControls(window.pCubes));
-  $("turn-ccw").addEventListener("click", () => call("turnLayer", Number($("turn-axis").value), Number($("turn-layer").value), -1));
-  $("turn-cw").addEventListener("click", () => call("turnLayer", Number($("turn-axis").value), Number($("turn-layer").value), 1));
+  $("turn-ccw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), -1));
+  $("turn-cw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), 1));
   $("view-reset").addEventListener("click", () => renderer.resetView());
   $("scramble").addEventListener("click", () => {
     const api = window.pCubes;
