@@ -56,6 +56,45 @@ export class PuzzleRenderer {
     this.resizeObserver.observe(canvas);
     this.resize();
   }
+  animateTurn(before, after, axis, angle, duration = 220) {
+    if (!before?.faces || !after?.faces || !axis || !Number.isFinite(angle)) {
+      this.setGeometry(after); return;
+    }
+    if (this.turnFrame) cancelAnimationFrame(this.turnFrame);
+    const start = performance.now();
+    const count = Math.min(before.faces.length, after.faces.length);
+    const vector = [Number(axis.x), Number(axis.y), Number(axis.z)];
+    const length = Math.hypot(...vector);
+    if (!length) { this.setGeometry(after); return; }
+    const n = vector.map(v => v / length);
+    const changed = new Array(count).fill(false);
+    for (let i = 0; i < count; i++) {
+      const a = before.faces[i]?.vertices || [], b = after.faces[i]?.vertices || [];
+      changed[i] = a.length === b.length && a.some((v,j) =>
+        v.some((x,k) => Math.abs(x - Number(b[j][k])) > 1e-7));
+    }
+    const smooth = t => t < .5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+    const frame = now => {
+      const t = Math.min(1, Math.max(0, (now - start) / duration));
+      const theta = angle * smooth(t), c = Math.cos(theta), s = Math.sin(theta);
+      const geometry = {faces: before.faces.map((face,i) => {
+        if (!changed[i]) return face;
+        return {...face, vertices: face.vertices.map(v => {
+          const d = v.map(Number), cross = [
+            n[1]*d[2]-n[2]*d[1],
+            n[2]*d[0]-n[0]*d[2],
+            n[0]*d[1]-n[1]*d[0]
+          ];
+          const dot = n[0]*d[0]+n[1]*d[1]+n[2]*d[2];
+          return d.map((x,k) => x*c + cross[k]*s + n[k]*dot*(1-c));
+        })};
+      })};
+      this.setGeometry(geometry);
+      if (t < 1) this.turnFrame = requestAnimationFrame(frame);
+      else { this.turnFrame = 0; this.setGeometry(after); }
+    };
+    this.turnFrame = requestAnimationFrame(frame);
+  }
   resetView(){this.rotationY=-.55;this.rotationX=.35;this.zoom=1;this.draw();}
   resize(){
     const rect=this.canvas.getBoundingClientRect(),ratio=Math.max(1,window.devicePixelRatio||1);
