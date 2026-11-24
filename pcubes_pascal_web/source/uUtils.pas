@@ -80,6 +80,7 @@ implementation
 uses
 //  uLog,
   SysUtils
+  {$IFDEF PAS2JS}, JS{$ENDIF}
   {$IFNDEF PCUBES_WEB}, Windows, Unzip, ZipUtils{$ENDIF};
 
 class procedure TUtils.LogFileOutput(const filepath, str: String);
@@ -330,12 +331,27 @@ class function TUtils.Parse(var S: String; const Separators: String): String;
     end;
   end; // indexOfCharsMin
 
-var Pos: Integer;
+var
+  Pos: Integer;
+  Source, SafeSeparators: String;
 begin
-  Pos := indexOfCharsMin(S, Separators);
+  // DOM NodeValue/TextContent can be null in browsers. Pas2JS maps Pos to
+  // JavaScript indexOf, which throws when its source argument is null.
+  Source := S;
+  SafeSeparators := Separators;
+  {$IFDEF PAS2JS}
+  if JS.isNull(Source) or JS.isUndefined(Source) then Source := '';
+  if JS.isNull(SafeSeparators) or JS.isUndefined(SafeSeparators) then SafeSeparators := '';
+  {$ENDIF}
+  if SafeSeparators = '' then begin
+    Result := Source;
+    S := '';
+    Exit;
+  end;
+  Pos := indexOfCharsMin(Source, SafeSeparators);
   if Pos <= 0 then
-     Pos := Length(S) + 1;
-  Result := S;
+     Pos := Length(Source) + 1;
+  Result := Source;
   S := copy(Result, Pos + 1, MaxInt);
   Result := copy(Result, 1, Pos - 1);
 end; // Parse
