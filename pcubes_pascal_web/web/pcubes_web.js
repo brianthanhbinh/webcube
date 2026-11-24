@@ -3029,7 +3029,9 @@ rtl.module("DOM",["System","JS","Web","SysUtils"],function () {
   rtl.createClass(this,"TDomElement",this.TDomNode,function () {
     this.GetAttribute = function (AName) {
       var Result = "";
-      Result = this.FNode.getAttribute(AName);
+      if (!this.FNode.hasAttribute(AName)) {
+        Result = ""}
+       else Result = this.FNode.getAttribute(AName);
       return Result;
     };
     this.Create$2 = function (ANode) {
@@ -5382,146 +5384,6 @@ rtl.module("Generics.Collections",["System","Classes","SysUtils","RTLConsts","Ty
       };
     };
   },"TList<DOM.TDomNode>");
-  rtl.createClass(this,"TEnumerator$G36",pas.System.TObject,function () {
-    this.MoveNext = function () {
-      var Result = false;
-      Result = this.DoMoveNext();
-      return Result;
-    };
-  },"TEnumerator<System.Double>");
-  rtl.createClass(this,"TEnumerable$G35",pas.System.TObject,function () {
-    this.GetEnumerator = function () {
-      var Result = null;
-      Result = this.DoGetEnumerator();
-      return Result;
-    };
-    this.ToArray = function () {
-      var Result = [];
-      var LEnumerator = null;
-      Result = [];
-      LEnumerator = this.GetEnumerator();
-      try {
-        while (LEnumerator.MoveNext()) Result.push(LEnumerator.DoGetCurrent());
-      } finally {
-        LEnumerator = rtl.freeLoc(LEnumerator);
-      };
-      return Result;
-    };
-  },"TEnumerable<System.Double>");
-  rtl.createClass(this,"TCustomList$G28",this.TEnumerable$G35,function () {
-    this.$init = function () {
-      $mod.TEnumerable$G35.$init.call(this);
-      this.FOnNotify = null;
-      this.FLength = 0;
-      this.FItems = [];
-    };
-    this.$final = function () {
-      this.FOnNotify = undefined;
-      this.FItems = undefined;
-      $mod.TEnumerable$G35.$final.call(this);
-    };
-    this.GetCapacity = function () {
-      var Result = 0;
-      Result = rtl.length(this.FItems);
-      return Result;
-    };
-    this.PrepareAddingItem = function () {
-      var Result = 0;
-      if (this.FLength === rtl.length(this.FItems)) this.FItems.push(0.0);
-      Result = this.FLength;
-      this.FLength += 1;
-      return Result;
-    };
-    this.Notify = function (AValue, ACollectionNotification) {
-      if (this.FOnNotify != null) this.FOnNotify(this,AValue,ACollectionNotification);
-    };
-  },"TCustomList<System.Double>");
-  rtl.createClass(this,"TCustomListEnumerator$G26",this.TEnumerator$G36,function () {
-    this.$init = function () {
-      $mod.TEnumerator$G36.$init.call(this);
-      this.FList = null;
-      this.FIndex = 0;
-    };
-    this.$final = function () {
-      this.FList = undefined;
-      $mod.TEnumerator$G36.$final.call(this);
-    };
-    this.DoMoveNext = function () {
-      var Result = false;
-      this.FIndex += 1;
-      Result = (this.FList.FLength > 0) && (this.FIndex < this.FList.FLength);
-      return Result;
-    };
-    this.DoGetCurrent = function () {
-      var Result = 0.0;
-      Result = this.GetCurrent();
-      return Result;
-    };
-    this.GetCurrent = function () {
-      var Result = 0.0;
-      Result = this.FList.FItems[this.FIndex];
-      return Result;
-    };
-    this.Create$1 = function (AList) {
-      pas.System.TObject.Create.call(this);
-      this.FIndex = -1;
-      this.FList = AList;
-      return this;
-    };
-  },"TCustomListEnumerator<System.Double>");
-  rtl.createClass(this,"TList$G21",this.TCustomList$G28,function () {
-    rtl.createClass(this,"TEnumerator",$mod.TCustomListEnumerator$G26,function () {
-    },"TList<System.Double>.TEnumerator");
-    this.SetCapacity = function (AValue) {
-      if (AValue < this.FLength) this.SetCount(AValue);
-      this.FItems = rtl.arraySetLength(this.FItems,0.0,AValue);
-    };
-    this.SetCount = function (AValue) {
-      if (AValue < 0) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      if (AValue > this.GetCapacity()) {
-        this.SetCapacity(AValue)}
-       else if (AValue < this.FLength) this.DeleteRange(AValue,this.FLength - AValue);
-      this.FLength = AValue;
-    };
-    this.InitializeList = function () {
-    };
-    this.DoGetEnumerator = function () {
-      var Result = null;
-      Result = this.GetEnumerator$1();
-      return Result;
-    };
-    this.GetEnumerator$1 = function () {
-      var Result = null;
-      Result = this.TEnumerator.$create("Create$1",[this]);
-      return Result;
-    };
-    this.Create$1 = function () {
-      this.InitializeList();
-      return this;
-    };
-    this.Destroy = function () {
-      this.SetCapacity(0);
-    };
-    this.Add = function (AValue) {
-      var Result = 0;
-      Result = this.PrepareAddingItem();
-      this.FItems[Result] = AValue;
-      this.Notify(AValue,$mod.TCollectionNotification.cnAdded);
-      return Result;
-    };
-    this.DeleteRange = function (AIndex, ACount) {
-      var LDeleted = [];
-      var i = 0;
-      if (ACount === 0) return;
-      if ((ACount < 0) || (AIndex < 0) || ((AIndex + ACount) > this.FLength)) throw pas.SysUtils.EArgumentOutOfRangeException.$create("Create$1",[rtl.getResStr(pas["Generics.Strings"],"SArgumentOutOfRange")]);
-      LDeleted = this.FItems.splice(AIndex,this.FLength);
-      this.FLength -= ACount;
-      for (var $l = 0, $end = rtl.length(LDeleted) - 1; $l <= $end; $l++) {
-        i = $l;
-        this.Notify(LDeleted[i],$mod.TCollectionNotification.cnRemoved);
-      };
-    };
-  },"TList<System.Double>");
 });
 rtl.module("uVector",["System","Classes","Generics.Collections"],function () {
   "use strict";
@@ -8646,12 +8508,10 @@ rtl.module("uScript",["System","Classes","Generics.Collections","Variants","JS"]
   "use strict";
   var $mod = this;
   rtl.recNewT(this,"TVar",function () {
-    this.Value = undefined;
     this.$eq = function (b) {
-      return this.Value === b.Value;
+      return true;
     };
     this.$assign = function (s) {
-      this.Value = s.Value;
       return this;
     };
   });
@@ -8728,18 +8588,14 @@ rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM","Variants"
   };
   this.ReadStringFromXml$1 = function (XmlNode, AttrName, Str) {
     var Result = false;
-    var i = 0;
     Str.set("");
     if (XmlNode === null) return false;
     if (AttrName === "") {
       Str.set($mod.DomValueToString($mod.GetNodeText(XmlNode)));
       return Str.get() !== "";
     };
-    i = $mod.GetAttrIndex(XmlNode,AttrName);
-    if (i >= 0) {
-      Str.set($mod.DomValueToString(XmlNode.GetAttributes().GetItem(i).GetNodeValue()));
-      return Str.get() !== "";
-    };
+    Str.set(XmlNode.GetAttribute(AttrName));
+    if (Str.get() !== "") return true;
     XmlNode = XmlNode.FindNode(AttrName);
     if (XmlNode === null) return false;
     Str.set($mod.DomValueToString(XmlNode.GetTextContent()));
@@ -8791,22 +8647,12 @@ rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM","Variants"
     };
     return Result;
   };
-  this.GetAttrIndex = function (XmlNode, AttrName) {
-    var Result = 0;
-    var i = 0;
-    Result = -1;
-    for (var $l = 0, $end = XmlNode.GetAttributes().Length() - 1; $l <= $end; $l++) {
-      i = $l;
-      if (pas.SysUtils.SameText(XmlNode.GetAttributes().GetItem(i).GetNodeName(),AttrName)) return i;
-    };
-    return Result;
-  };
   this.GetAttrFromXml = function (XmlNode, AttrName, Default) {
     var Result = "";
-    var i = 0;
     Result = Default;
-    i = $mod.GetAttrIndex(XmlNode,AttrName);
-    if (i >= 0) Result = $mod.DomValueToString(XmlNode.GetAttributes().GetItem(i).GetNodeValue());
+    if (XmlNode === null) return Result;
+    Result = XmlNode.GetAttribute(AttrName);
+    if (Result === "") Result = Default;
     return Result;
   };
   this.ReadIntExpressionFromXml = function (XmlNode, AttrName, Default) {
@@ -9203,42 +9049,35 @@ rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine
     this.LoadArrayFromString = function (Names) {
       var Result = [];
       var i = 0;
-      var EList = null;
-      var Values = [];
-      var V = pas.uScript.TVar.$new();
-      var V1 = pas.uScript.TVar.$new();
-      var S = "";
-      var PS = "";
-      EList = pas["Generics.Collections"].TList$G21.$create("Create$1");
-      try {
-        Values = pas.strutils.SplitString(Names,";");
-        for (var $in = Values, $l = 0, $end = rtl.length($in) - 1; $l <= $end; $l++) {
-          S = $in[$l];
-          PS = $impl.XmlTrim(S);
-          if (pas.uScript.Calc.VarByName(PS + "[0]",V) && !pas.uScript.Calc.VarByName(PS,V1) && (pas.Variants.VarType(V.Value) === 5)) {
-            i = 0;
-            do {
-              EList.Add(pas.uScript.CalcExpression(PS + "[" + $impl.XmlIntToStr(i) + "]",0));
-              i += 1;
-            } while (pas.uScript.Calc.VarByName(PS + "[" + $impl.XmlIntToStr(i) + "]",V) && (pas.Variants.VarType(V.Value) === 5));
-          } else EList.Add(pas.uScript.CalcExpression(PS,0));
-        };
-        Result = EList.ToArray();
-      } finally {
-        EList = rtl.freeLoc(EList);
+      var Count = 0;
+      var Token = "";
+      Result = rtl.arraySetLength(Result,0.0,0);
+      Token = "";
+      Count = 0;
+      for (var $l = 1, $end = Names.length + 1; $l <= $end; $l++) {
+        i = $l;
+        if ((i > Names.length) || (Names.charAt(i - 1) === ";")) {
+          Token = $impl.XmlTrim(Token);
+          if (Token !== "") {
+            Result = rtl.arraySetLength(Result,0.0,Count + 1);
+            Result[Count] = pas.uScript.CalcExpression(Token,0);
+            Count += 1;
+          };
+          Token = "";
+        } else Token = Token + Names.charAt(i - 1);
       };
       return Result;
     };
     this.GetAttrOrParent = function (XmlNode, aName, aDefault) {
       var Result = "";
-      var i = 0;
       Result = aDefault;
-      i = pas.uXmlUtils.GetAttrIndex(XmlNode,aName);
-      if (i >= 0) return pas.uXmlUtils.DomValueToString(XmlNode.GetAttributes().GetItem(i).GetNodeValue());
+      if (XmlNode === null) return Result;
+      Result = XmlNode.GetAttribute(aName);
+      if (Result !== "") return Result;
       XmlNode = XmlNode.GetParentNode();
       if (XmlNode === null) return Result;
-      i = pas.uXmlUtils.GetAttrIndex(XmlNode,aName);
-      if (i >= 0) return pas.uXmlUtils.DomValueToString(XmlNode.GetAttributes().GetItem(i).GetNodeValue());
+      Result = XmlNode.GetAttribute(aName);
+      if (Result === "") Result = aDefault;
       return Result;
     };
     this.GetVectorFromString = function (S) {
@@ -10740,31 +10579,6 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
   this.APIOpenLibrary = function () {
     $mod.SetStatus("Choose a puzzle XML file to load a puzzle.");
   };
-  this.ConfigureStandardCube = function (Puzzle) {
-    var I = 0;
-    var J = 0;
-    var Distances = [];
-    var PuzzleName = "";
-    PuzzleName = Puzzle.Header.Name;
-    if (pas.System.Pos("3x3x3",PuzzleName) > 0) {
-      Distances = rtl.arraySetLength(Distances,0.0,2);
-      Distances[0] = -1 / 6;
-      Distances[1] = 1 / 6;
-    } else if (pas.System.Pos("2x2x2",PuzzleName) > 0) {
-      Distances = rtl.arraySetLength(Distances,0.0,1);
-      Distances[0] = 0;
-    } else return;
-    for (var $l = 0, $end = Puzzle.FAxes.FLength - 1; $l <= $end; $l++) {
-      I = $l;
-      if ((Math.abs(Puzzle.FAxes.GetItem(I).GetNormVector().x) + Math.abs(Puzzle.FAxes.GetItem(I).GetNormVector().y) + Math.abs(Puzzle.FAxes.GetItem(I).GetNormVector().z)) < 0.0001) continue;
-      Puzzle.FAxes.GetItem(I).CreateLayers(Distances);
-      for (var $l1 = 0, $end1 = Puzzle.FAxes.GetItem(I).Layers.FLength - 1; $l1 <= $end1; $l1++) {
-        J = $l1;
-        Puzzle.FAxes.GetItem(I).Layers.GetItem(J).SetTurningAngle(Math.PI / 2);
-      };
-    };
-    Puzzle.PositionsInvalidate();
-  };
   this.APILoadXML = function (XmlRoot) {
     var Result = false;
     var NewPuzzle = null;
@@ -10780,7 +10594,6 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
         $mod.SetStatus("XML load failed: pCubes rejected the puzzle definition.");
         return Result;
       };
-      $mod.ConfigureStandardCube(NewPuzzle);
       if ((NewPuzzle.FParts.FLength === 0) || (NewPuzzle.FAxes.FLength === 0)) {
         $mod.SetStatus("XML load failed: the file contains no usable puzzle parts or axes.");
         return Result;
