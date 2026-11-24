@@ -327,7 +327,15 @@ import { loadBuiltinLibrary } from "./library-data.js";
         }
       }
       if (!figureItems.length) throw new Error("Select at least one figure .xml file. You can include its .inc script files in the same selection.");
-      for (const item of figureItems) inlineFigureIncludes(item.doc, includeFiles);
+      for (const item of figureItems) {
+        const root = item.doc.documentElement.nodeName.toLowerCase() === "figure"
+          ? item.doc.documentElement
+          : item.doc.getElementsByTagName("Figure")[0] || item.doc.documentElement;
+        // Convert the legacy built-in include scripts first; all other
+        // includes are resolved from the .inc files selected by the user.
+        expandKnownFigureScript(pendingPuzzleDoc, item.doc, root);
+        inlineFigureIncludes(item.doc, includeFiles);
+      }
       let attached = 0;
       const used = new Set();
       for (const item of figureItems) {
