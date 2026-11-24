@@ -6,10 +6,19 @@ export class PuzzleRenderer {
     this.geometry = null;
     this.rotationY = -0.55;
     this.rotationX = 0.35;
+    this.zoom = 1;
+    this.drag = null;
+    canvas.addEventListener('pointerdown', e => { this.drag={x:e.clientX,y:e.clientY}; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener('pointermove', e => { if(!this.drag)return; const dx=e.clientX-this.drag.x,dy=e.clientY-this.drag.y; this.drag={x:e.clientX,y:e.clientY}; this.rotationY+=dx*.009; this.rotationX=Math.max(-1.52,Math.min(1.52,this.rotationX+dy*.009)); this.draw(); });
+    const stop=()=>{this.drag=null;}; canvas.addEventListener('pointerup',stop); canvas.addEventListener('pointercancel',stop);
+    canvas.addEventListener('wheel',e=>{e.preventDefault();this.zoom=Math.max(.35,Math.min(3.5,this.zoom*Math.exp(-e.deltaY*.001)));this.draw();},{passive:false});
+    canvas.addEventListener('dblclick',()=>this.resetView());
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas);
     this.resize();
   }
+
+  resetView() { this.rotationY=-.55; this.rotationX=.35; this.zoom=1; this.draw(); }
 
   resize() {
     const rect = this.canvas.getBoundingClientRect();
@@ -75,7 +84,7 @@ export class PuzzleRenderer {
     const minX = Math.min(...xs), maxX = Math.max(...xs);
     const minY = Math.min(...ys), maxY = Math.max(...ys);
     const span = Math.max(maxX - minX, maxY - minY, 1e-6);
-    const scale = Math.min(width, height) * 0.72 / span;
+    const scale = Math.min(width, height) * 0.72 * this.zoom / span;
     const centerX = (minX + maxX) / 2, centerY = (minY + maxY) / 2;
     const project = v => [width / 2 + (v[0] - centerX) * scale,
                           height / 2 - (v[1] - centerY) * scale];
