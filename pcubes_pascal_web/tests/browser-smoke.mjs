@@ -69,7 +69,7 @@ try {
   assert.equal(await page.evaluate(() => window.pCubes.isPuzzleReady()), true);
   await page.locator("#library").click();
   await page.waitForFunction(() => document.querySelector("#library-dialog")?.open === true);
-  const three = page.locator("#library-list button").filter({hasText:"3x3x3"});
+  const three = page.locator("#library-list button").filter({hasText:/^Rubik's cube 3x3x3/});
   assert.equal(await three.count(),1,"3x3x3 entry missing");
   assert.equal(await three.isEnabled(),true,"3x3x3 entry is disabled");
   await three.click();
