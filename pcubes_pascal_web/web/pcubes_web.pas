@@ -246,7 +246,7 @@ begin
       IntToStr(CurrentPuzzle.Parts.Count) + ' parts, ' + IntToStr(CurrentPuzzle.Axes.Count) + ' axes).');
     Result := True;
   except
-    on E: Exception do SetStatus('XML load failed: ' + E.Message);
+    on E: Exception do SetStatus('XML load failed (' + E.ClassName + '): ' + E.Message);
   end;
   if NewPuzzle <> nil then NewPuzzle.Free;
 end;
