@@ -371,7 +371,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
     recordTest("Axis XML inherited settings", axesXml.length >= 3 &&
       inheritedPlanes.every(value => value.includes("-1/6") && value.includes("1/6")),
       JSON.stringify(inheritedPlanes));
-    recordTest("Pascal loadXML", loadXmlText(cube.xml));
+    const cubeLoaded = loadXmlText(cube.xml);
+    recordTest("Pascal loadXML", cubeLoaded, api.getStatus());
     const model = api.getModelInfo();
     recordTest("Cube model ready", api.isPuzzleReady() && model.ready, model.parts + " parts, " + model.axes + " axes; " + JSON.stringify(api.getAxesInfo()));
     if (/3x3x3/i.test(cube.name)) recordTest("3x3 cubie split", model.parts >= 20, model.parts + " cubies");
