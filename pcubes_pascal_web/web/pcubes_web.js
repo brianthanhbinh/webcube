@@ -8666,6 +8666,17 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       Result = true;
       return Result;
     };
+    this.RotateLayer = function (AxisNo, LayerNo, Al, AllowWhole) {
+      var Layers = [];
+      var i = 0;
+      Layers = rtl.arraySetLength(Layers,false,this.FAxes.GetItem(AxisNo).Layers.FLength);
+      for (var $l = 0, $end = this.FAxes.GetItem(AxisNo).Layers.FLength - 1; $l <= $end; $l++) {
+        i = $l;
+        Layers[i] = false;
+      };
+      Layers[LayerNo] = true;
+      this.RotateLayers(AxisNo,Layers,Al,AllowWhole);
+    };
     this.RotateLayers = function (AxisNo, Layers, Al, AllowWhole) {
       if (this.FCheckSliceEnabled) if (!this.GetMovingParts(AxisNo,Layers)) if (!AllowWhole) return;
       if (this.FCheckFixedLayersEnabled) if (this.FAxes.GetItem(AxisNo).IsLayerFixed(Layers)) return;
@@ -10663,6 +10674,36 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
     };
     return Result;
   };
+  this.APIGetAxesInfo = function () {
+    var Result = null;
+    var I = 0;
+    var AxisInfo = null;
+    Result = new Array();
+    if ($mod.CurrentPuzzle === null) return Result;
+    for (var $l = 0, $end = $mod.CurrentPuzzle.FAxes.FLength - 1; $l <= $end; $l++) {
+      I = $l;
+      AxisInfo = new Object();
+      AxisInfo["index"] = I;
+      AxisInfo["layers"] = $mod.CurrentPuzzle.FAxes.GetItem(I).Layers.FLength;
+      AxisInfo["x"] = $mod.CurrentPuzzle.FAxes.GetItem(I).GetNormVector().x;
+      AxisInfo["y"] = $mod.CurrentPuzzle.FAxes.GetItem(I).GetNormVector().y;
+      AxisInfo["z"] = $mod.CurrentPuzzle.FAxes.GetItem(I).GetNormVector().z;
+      AxisInfo["enabled"] = $mod.CurrentPuzzle.FAxes.GetItem(I).Enabled;
+      Result.push(AxisInfo);
+    };
+    return Result;
+  };
+  this.APITurnLayer = function (AxisNo, LayerNo, Direction) {
+    var Result = false;
+    Result = false;
+    if (!$mod.APIIsPuzzleReady()) return Result;
+    if ((AxisNo < 0) || (AxisNo >= $mod.CurrentPuzzle.FAxes.FLength)) return Result;
+    if ((LayerNo < 0) || (LayerNo >= $mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.FLength)) return Result;
+    if ((Direction !== -1) && (Direction !== 1)) return Result;
+    $mod.CurrentPuzzle.RotateLayer(AxisNo,LayerNo,Direction * 1.5707963267948966,true);
+    Result = true;
+    return Result;
+  };
   this.APIGetRenderData = function () {
     var Result = null;
     var FacesArray = null;
@@ -10785,6 +10826,8 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
     $mod.API["isPuzzleReady"] = $mod.APIIsPuzzleReady;
     $mod.API["getModelInfo"] = $mod.APIGetModelInfo;
     $mod.API["getRenderData"] = $mod.APIGetRenderData;
+    $mod.API["getAxesInfo"] = $mod.APIGetAxesInfo;
+    $mod.API["turnLayer"] = $mod.APITurnLayer;
     $mod.API["scramble"] = $mod.APIScramble;
     $mod.API["undo"] = $mod.APIUndo;
     $mod.API["redo"] = $mod.APIRedo;
