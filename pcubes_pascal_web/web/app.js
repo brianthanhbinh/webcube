@@ -11,6 +11,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
   const controls = ["scramble", "undo", "redo", "reset"];
   let originalXmlText = "";
   let libraryData = null;
+  let preflightPassed = false;
+  let preflightReport = [];
 
   function parseXml(text) {
     const doc = new DOMParser().parseFromString(text, "application/xml");
@@ -48,8 +50,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
   function updateModelInfo(api) {
     const model = api.getModelInfo();
     info.textContent = `Pascal ${api.getVersion()} · model ${model.connected ? "connected" : "offline"} · ${model.parts} parts · ${model.axes} axes · undo ${model.undoCount} · redo ${model.redoCount}`;
-    for (const id of controls) $(id).disabled = !model.ready;
-    $("library").disabled = false;
+    for (const id of controls) $(id).disabled = !model.ready || !preflightPassed;
+    $("library").disabled = !preflightPassed;
     $("load").disabled = false;
     if (typeof api.getRenderData === "function") renderer.setGeometry(api.getRenderData());
   }
@@ -134,13 +136,82 @@ import { loadBuiltinLibrary } from "./library-data.js";
     finally { file.value = ""; }
   });
 
-  function start() {
+  function recordTest(name, passed, detail = "") {
+    preflightReport.push({ name, passed, detail });
+    const report = $("preflight-results");
+    if (report) {
+      report.textContent = preflightReport.map(t => `${t.passed ? "PASS" : "FAIL"} · ${t.name}${t.detail ? " — " + t.detail : ""}`).join("\\n");
+      report.dataset.result = preflightReport.every(t => t.passed) ? "pass" : "fail";
+    }
+    if (!passed) throw new Error(name + (detail ? ": " + detail : ""));
+  }
+
+  async function runPreflight(api) {
+    preflightReport = [];
+    const required = ["getStatus", "getVersion", "isPuzzleReady", "getModelInfo", "getRenderData", "scramble", "undo", "redo", "reset", "openLibrary", "loadXML"];
+    for (const name of required) recordTest("API " + name, typeof api[name] === "function");
+    recordTest("Pascal version", typeof api.getVersion() === "string" && api.getVersion().length > 0);
+    recordTest("Initial status", typeof api.getStatus() === "string");
+    recordTest("Initial model info", !!api.getModelInfo() && typeof api.getModelInfo().connected === "boolean");
+
+    const library = await loadBuiltinLibrary();
+    recordTest("Library data", Array.isArray(library.puzzles) && library.puzzles.length > 0, library.puzzles.length + " entries");
+    const cube = library.puzzles.find(entry => /2x2x2/i.test(entry.name)) ||
+                 library.puzzles.find(entry => /3x3x3/i.test(entry.name) && supported(entry));
+    recordTest("Built-in cube entry", !!cube, cube ? cube.name : "No supported cube found");
+    const cubeDoc = parseXml(cube.xml);
+    recordTest("XML parser", !!cubeDoc.documentElement && cubeDoc.getElementsByTagName("parsererror").length === 0);
+    resolveExternalFigures(cubeDoc);
+    recordTest("Pascal loadXML", api.loadXML(cubeDoc.documentElement) === true);
+    const model = api.getModelInfo();
+    recordTest("Cube model ready", api.isPuzzleReady() && model.ready, model.parts + " parts, " + model.axes + " axes");
+    let geometry = api.getRenderData();
+    recordTest("3D geometry export", !!geometry && Array.isArray(geometry.faces) && geometry.faces.length > 0,
+      geometry && geometry.faces ? geometry.faces.length + " faces" : "No faces");
+    renderer.setGeometry(geometry);
+    recordTest("Canvas renderer", !!renderer.geometry && renderer.geometry.faces.length > 0);
+
+    api.scramble();
+    recordTest("Scramble", api.isPuzzleReady());
+    api.undo();
+    recordTest("Undo", api.isPuzzleReady());
+    api.redo();
+    recordTest("Redo", api.isPuzzleReady());
+    api.reset();
+    recordTest("Reset API", api.isPuzzleReady());
+
+    // The UI reset operation reloads the original XML. Verify that path restores
+    // a ready model and fresh render data before enabling the app.
+    recordTest("Reset/reload", api.loadXML(cubeDoc.documentElement) === true && api.isPuzzleReady());
+    geometry = api.getRenderData();
+    recordTest("Post-reset rendering", Array.isArray(geometry.faces) && geometry.faces.length > 0);
+    renderer.setGeometry(geometry);
+    api.openLibrary();
+    recordTest("Open library API", typeof api.getStatus() === "string");
+    recordTest("File loader prerequisites", typeof TextDecoder === "function" && typeof FileReader !== "undefined");
+    return cube.name;
+  }
+
+  async function start() {
     try {
       if (!window.rtl || typeof window.rtl.run !== "function") throw new Error("Pas2JS RTL missing. Compile with -Jirtl.js.");
       window.rtl.run();
       const api = window.pCubes; if (!api) throw new Error("Pascal program did not install window.pCubes.");
-      status.textContent = api.getStatus(); updateModelInfo(api);
-    } catch (error) { status.textContent = error.message; info.textContent = "Check the browser console for details."; }
+      status.textContent = "Running startup tests…";
+      const cubeName = await runPreflight(api);
+      preflightPassed = true;
+      updateModelInfo(api);
+      status.textContent = "All " + preflightReport.length + " startup tests passed. Loaded " + cubeName + ".";
+      document.documentElement.dataset.preflight = "passed";
+    } catch (error) {
+      preflightPassed = false;
+      for (const id of [...controls, "library", "scramble", "undo", "redo", "reset"]) if ($(id)) $(id).disabled = true;
+      status.textContent = "STARTUP TEST FAILED — app locked: " + error.message;
+      info.textContent = "Fix the failing preflight test before using the puzzle app.";
+      document.documentElement.dataset.preflight = "failed";
+      const report = $("preflight-results");
+      if (report) report.dataset.result = "fail";
+    }
   }
   if (document.readyState === "complete") start(); else window.addEventListener("load", start, { once: true });
 })();
