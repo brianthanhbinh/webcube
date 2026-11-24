@@ -116,6 +116,23 @@ import { loadBuiltinLibrary } from "./library-data.js";
   }
 
   function resolveExternalFigures(doc) {
+    // The desktop XML loader inherits these attributes from <Axes> when
+    // reading each <Axis>. The browser DOM bridge can lose that inheritance
+    // in the Pascal DOM adapter, so materialize the same inherited values
+    // on each axis before handing the document to Pascal. Explicit per-axis
+    // values always win, preserving custom puzzle definitions.
+    const axesParent = doc.getElementsByTagName("Axes")[0];
+    if (axesParent) {
+      const inherited = ["PlaneDistances", "TurningAngles", "AvailableAngles",
+        "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles",
+        "TurnAxesWithLayer", "TurnAxesWithPartNo"];
+      for (const axis of Array.from(axesParent.children).filter(n => n.nodeName === "Axis")) {
+        for (const name of inherited) {
+          if (!axis.hasAttribute(name) && axesParent.hasAttribute(name))
+            axis.setAttribute(name, axesParent.getAttribute(name));
+        }
+      }
+    }
     const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
     // The official Figures/Cube.xml is a single solid. pCubes then applies
     // SplitByAxes using the puzzle's own PlaneDistances. Build that solid
