@@ -93,7 +93,7 @@ begin
   Result := Default;
   i := GetAttrIndex(XmlNode, AttrName);
   if i >= 0 then
-    Result := DomValueToString(XmlNode.Attributes[i].NodeValue);
+    Result := TDomElement(XmlNode).GetAttribute(AttrName);
 end; // GetAttrFromXml
 
 function ReadStringFromXml(XmlNode: TDomNode; const AttrName: String; var Str: String): Boolean; overload;
@@ -110,7 +110,7 @@ begin
 
   i := GetAttrIndex(XmlNode, AttrName);
   if i >= 0 then begin
-    Str := DomValueToString(XmlNode.Attributes[i].NodeValue);
+    Str := TDomElement(XmlNode).GetAttribute(AttrName);
     Exit(Str <> ''); // ?? Exit(True)
   end;
 
