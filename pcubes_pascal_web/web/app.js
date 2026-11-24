@@ -115,6 +115,25 @@ import { loadBuiltinLibrary } from "./library-data.js";
     return loads.length;
   }
 
+  function normalizeNumericExpression(expression) {
+    const value = String(expression).trim().replace(/\\s+/g, "");
+    if (!value) return value;
+    const fraction = value.match(/^([+-]?\\d+(?:\\.\\d+)?)\\/([+-]?\\d+(?:\\.\\d+)?)$/);
+    if (fraction) return String(Number(fraction[1]) / Number(fraction[2]));
+    const number = Number(value);
+    if (Number.isFinite(number)) return String(number);
+    const pi = value.match(/^([+-]?)(?:(\\d+(?:\\.\\d+)?)\\*?)?Pi(?:\\/(\\d+(?:\\.\\d+)?))?$/i);
+    if (pi) {
+      const coefficient = (pi[1] === "-" ? -1 : 1) * (pi[2] ? Number(pi[2]) : 1);
+      return String(coefficient * Math.PI / (pi[3] ? Number(pi[3]) : 1));
+    }
+    throw new Error('Unsupported numeric expression in browser XML: "' + expression + '". Use decimal numbers or simple fractions.');
+  }
+
+  function normalizeNumericList(value) {
+    return String(value).split(";").map(normalizeNumericExpression).join(";");
+  }
+
   function resolveExternalFigures(doc) {
     // The desktop XML loader inherits these attributes from <Axes> when
     // reading each <Axis>. The browser DOM bridge can lose that inheritance
@@ -123,6 +142,12 @@ import { loadBuiltinLibrary } from "./library-data.js";
     // values always win, preserving custom puzzle definitions.
     const axesParent = doc.getElementsByTagName("Axes")[0];
     if (axesParent) {
+      const numericAttributes = ["PlaneDistances", "TurningAngles", "AvailableAngles",
+        "JumbleAngle", "MinAngles", "MaxAngles"];
+      for (const name of numericAttributes) {
+        if (axesParent.hasAttribute(name) && axesParent.getAttribute(name) !== "")
+          axesParent.setAttribute(name, normalizeNumericList(axesParent.getAttribute(name)));
+      }
       const inherited = ["PlaneDistances", "TurningAngles", "AvailableAngles",
         "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles",
         "TurnAxesWithLayer", "TurnAxesWithPartNo"];
@@ -131,6 +156,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
           const parentValue = axesParent.getAttribute(name);
           if (!axis.hasAttribute(name) && parentValue !== null)
             axis.setAttribute(name, parentValue);
+          if (numericAttributes.includes(name) && axis.hasAttribute(name) && axis.getAttribute(name) !== "")
+            axis.setAttribute(name, normalizeNumericList(axis.getAttribute(name)));
         }
       }
     }
