@@ -29,11 +29,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Cache Free Pascal packages
-        uses: awalsh128/cache-apt-pkgs-action@v1.5.3
-        with:
-          packages: fp-compiler-3.2.2 fp-utils-3.2.2 fp-units-fcl-3.2.2 make
-          version: 1.0
+      - name: Install Free Pascal build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fp-compiler-3.2.2 fp-utils-3.2.2 fp-units-fcl-3.2.2 make
 
       - name: Cache Pas2JS compiler and RTL
         id: pas2js-cache
@@ -50,12 +49,13 @@ jobs:
           PAS2JS_RTL_COMMIT: 8cd10d88cc81868bce6f03f481b0bc83946d6ace
         run: |
           git clone --depth 1 https://github.com/fpc/pas2js.git /tmp/pas2js-rtl
-          # Ubuntu's fp-utils package already supplies the Pas2JS compiler.
-          # Use it directly instead of rebuilding the compiler from a full
-          # FPCSource checkout on every cold cache.
+          git clone --filter=blob:none https://github.com/fpc/FPCSource.git /tmp/pas2js-rtl/compiler
+          git -C /tmp/pas2js-rtl/compiler fetch --depth 1 origin "$PAS2JS_RTL_COMMIT"
+          git -C /tmp/pas2js-rtl/compiler checkout --detach "$PAS2JS_RTL_COMMIT"
           PAS2JS_BOOTSTRAP="$(command -v pas2js-3.2.2)"
-          test -x "$PAS2JS_BOOTSTRAP"
           sudo ln -sf "$PAS2JS_BOOTSTRAP" /usr/local/bin/pas2js
+          make -C /tmp/pas2js-rtl all
+          sudo ln -sf /tmp/pas2js-rtl/bin/x86_64-linux/pas2js /usr/local/bin/pas2js
           pas2js -iV
           test -f /tmp/pas2js-rtl/packages/rtl/system.pas
           mkdir -p /tmp/pas2js-rtl/packages/rtl
@@ -96,9 +96,8 @@ jobs:
       - name: Configure cached Pas2JS compiler
         run: |
           test -f /tmp/pas2js-rtl/packages/rtl/system.pas
-          PAS2JS_BOOTSTRAP="$(command -v pas2js-3.2.2)"
-          test -x "$PAS2JS_BOOTSTRAP"
-          sudo ln -sf "$PAS2JS_BOOTSTRAP" /usr/local/bin/pas2js
+          test -x /tmp/pas2js-rtl/bin/x86_64-linux/pas2js
+          sudo ln -sf /tmp/pas2js-rtl/bin/x86_64-linux/pas2js /usr/local/bin/pas2js
           pas2js -iV
 
       - name: Compile Pascal to browser JavaScript
