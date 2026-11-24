@@ -19,7 +19,10 @@ try{
  before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
  await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down();await page.mouse.move(bounds.x+bounds.width/2+65,bounds.y+bounds.height/2,{steps:5});await page.mouse.up();
  assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Left-drag did not turn the layer under the pointer");
- assert.ok(Number.isInteger(Number(await page.locator("#turn-axis").inputValue()))&&Number.isInteger(Number(await page.locator("#turn-layer").inputValue())),"Pointer hit-test did not select a real axis/layer");
+ const picked=await canvas.evaluate(c=>({axis:c.dataset.pickedAxis,layer:c.dataset.pickedLayer}));
+ assert.ok(picked.axis!==undefined&&picked.layer!==undefined,"Pointer did not hit a visible cubie face");
+ assert.equal(await page.locator("#turn-axis").inputValue(),picked.axis,"Drag did not use the axis under the pointer");
+ assert.equal(await page.locator("#turn-layer").inputValue(),picked.layer,"Drag did not use the layer under the pointer");
  // Right-drag rotates the camera without changing puzzle geometry.
  before=await canvas.evaluate(c=>c.getContext("2d").getImageData(0,0,c.width,c.height).data.join(","));
  const geometryBeforeCamera=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
