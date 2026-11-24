@@ -53,6 +53,8 @@ export class PuzzleRenderer {
         const turns=Math.round(p.previewAngle/step);
         if(turns&&this.onTurnCommit)this.onTurnCommit(p.pick,turns,p.before,p.axis,p.previewAngle);
         else this.animateSnapBack(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
+      } else if(p.button===2||p.button===1){
+        this.snapCameraTo45();
       } else if(p.button===0&&p.moved&&this.onTurnDrag){
         this.onTurnDrag(e.clientX-p.downX,e.clientY-p.downY,p.pick);
       }
@@ -191,6 +193,25 @@ export class PuzzleRenderer {
       })};
     });
     this.setGeometry({faces});
+  }
+  snapCameraTo45(duration = 180){
+    if(this.cameraSnapFrame)cancelAnimationFrame(this.cameraSnapFrame);
+    const step=Math.PI/4;
+    const startX=this.rotationX,startY=this.rotationY;
+    const targetX=Math.max(-Math.PI/2,Math.min(Math.PI/2,Math.round(startX/step)*step));
+    const targetY=Math.round(startY/step)*step;
+    const start=performance.now();
+    const smooth=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    const frame=now=>{
+      const t=Math.min(1,Math.max(0,(now-start)/Math.max(1,duration)));
+      const eased=smooth(t);
+      this.rotationX=startX+(targetX-startX)*eased;
+      this.rotationY=startY+(targetY-startY)*eased;
+      this.draw();
+      if(t<1)this.cameraSnapFrame=requestAnimationFrame(frame);
+      else{this.cameraSnapFrame=0;this.rotationX=targetX;this.rotationY=targetY;this.draw();}
+    };
+    this.cameraSnapFrame=requestAnimationFrame(frame);
   }
   resetView(){this.rotationY=-.55;this.rotationX=.35;this.zoom=1;this.draw();}
   resize(){
