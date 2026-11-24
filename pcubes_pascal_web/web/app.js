@@ -10,16 +10,16 @@ import { loadBuiltinLibrary } from "./library-data.js";
   const figureFile = $("figure-file");
   let pendingPuzzleDoc = null;
   const renderer = new PuzzleRenderer($("puzzle-canvas"));
-  renderer.onTurnDrag = (dx, dy, pick) => {
-    if (!pick) { status.textContent = "Drag from a visible puzzle face to turn its layer."; return; }
-    const delta = Math.abs(dx) >= Math.abs(dy) ? dx : -dy;
-    if (Math.abs(delta) < 18) return;
+  renderer.onTurnCommit = (pick, turns) => {
     const axisSelect = $("turn-axis"), layerSelect = $("turn-layer");
     axisSelect.value = String(pick.axis);
     refreshTurnControls(window.pCubes);
     layerSelect.value = String(pick.layer);
-    const direction = (delta >= 0 ? 1 : -1) * (pick.normalSign || 1);
-    turnLayerAnimated(pick.axis, pick.layer, direction);
+    const direction = Math.sign(turns);
+    for (let i=0;i<Math.abs(turns);i++) call("turnLayer", pick.axis, pick.layer, direction);
+  };
+  renderer.onTurnDrag = () => {
+    status.textContent = "Drag from a visible puzzle face to turn its layer.";
   };
   const controls = ["scramble", "undo", "redo", "reset", "turn-ccw", "turn-cw"];
   let originalXmlText = "";
