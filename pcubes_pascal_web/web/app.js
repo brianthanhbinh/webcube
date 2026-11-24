@@ -53,17 +53,61 @@ import { loadBuiltinLibrary } from "./library-data.js";
     part.append(vertices, faces); loadNode.parentNode.insertBefore(part, loadNode); loadNode.remove();
   }
 
-  function resolveExternalFigures(doc) {
-    // The Pascal XML reader can miss inherited Axes attributes in browser DOM
-    // mode. Copy the shared layer definitions onto each Axis before loading.
+  function buildCubeCubies(doc, size) {
+    const figure = doc.getElementsByTagName("Figure")[0];
     const axesNode = doc.getElementsByTagName("Axes")[0];
-    if (axesNode) {
-      for (const axis of Array.from(axesNode.getElementsByTagName("Axis"))) {
-        for (const name of ["PlaneDistances", "TurningAngles", "AvailableAngles", "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles"]) {
-          if (!axis.hasAttribute(name) && axesNode.hasAttribute(name))
-            axis.setAttribute(name, axesNode.getAttribute(name));
-        }
+    if (!figure || !axesNode) throw new Error("Cube XML is missing Figure or Axes.");
+    const planes = size === 3 ? "-1/6;1/6" : "0";
+    axesNode.setAttribute("PlaneDistances", planes);
+    axesNode.setAttribute("TurningAngles", "Pi/2");
+    for (const axis of Array.from(axesNode.getElementsByTagName("Axis"))) {
+      axis.setAttribute("PlaneDistances", planes);
+      axis.setAttribute("TurningAngles", "Pi/2");
+    }
+    figure.replaceChildren();
+    const centers = size === 3 ? [-1/3, 0, 1/3] : [-0.25, 0.25];
+    const half = size === 3 ? 0.158 : 0.24;
+    const faces = [
+      ["C80000", "252525", 0, "0;1;3;2"],
+      ["FF800A", "252525", 1, "5;4;6;7"],
+      ["0000C8", "252525", 2, "1;0;4;5"],
+      ["009600", "252525", 3, "2;3;7;6"],
+      ["FFFF00", "252525", 4, "0;2;6;4"],
+      ["FFFFFF", "252525", 5, "3;1;5;7"]
+    ];
+    for (let ix=0; ix<size; ix++) for (let iy=0; iy<size; iy++) for (let iz=0; iz<size; iz++) {
+      const cx=centers[ix], cy=centers[iy], cz=centers[iz];
+      const points=[
+        [cx-half,cy-half,cz-half],[cx-half,cy-half,cz+half],
+        [cx-half,cy+half,cz-half],[cx-half,cy+half,cz+half],
+        [cx+half,cy-half,cz-half],[cx+half,cy-half,cz+half],
+        [cx+half,cy+half,cz-half],[cx+half,cy+half,cz+half]
+      ];
+      const part=doc.createElement("Part"), vertices=doc.createElement("Vertices"), faceList=doc.createElement("Faces");
+      for(const point of points){const add=doc.createElement("Add");add.setAttribute("Vector",point.join("; "));vertices.appendChild(add);}
+      for(const [outer,inner,side,indexes] of faces){
+        const visible = side===0 ? ix===0 : side===1 ? ix===size-1 : side===2 ? iy===0 : side===3 ? iy===size-1 : side===4 ? iz===0 : iz===size-1;
+        const face=doc.createElement("Face");face.setAttribute("Color",visible?outer:inner);face.setAttribute("VertexIndexes",indexes);faceList.appendChild(face);
       }
+      part.append(vertices,faceList);figure.appendChild(part);
+    }
+  }
+
+  function resolveExternalFigures(doc) {
+    const name = doc.getElementsByTagName("Name")[0]?.textContent || "";
+    if (/Rubik's cube 2x2x2/i.test(name)) {
+      buildCubeCubies(doc, 2);
+      return;
+    }
+    if (/Rubik's cube 3x3x3/i.test(name)) {
+      buildCubeCubies(doc, 3);
+      return;
+    }
+    // Copy shared axis attributes to each Axis for other browser-loadable XMLs.
+    const axesNode = doc.getElementsByTagName("Axes")[0];
+    if (axesNode) for (const axis of Array.from(axesNode.getElementsByTagName("Axis"))) {
+      for (const attr of ["PlaneDistances", "TurningAngles", "AvailableAngles", "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles"])
+        if (!axis.hasAttribute(attr) && axesNode.hasAttribute(attr)) axis.setAttribute(attr, axesNode.getAttribute(attr));
     }
     for (const node of Array.from(doc.getElementsByTagName("LoadFrom"))) addBuiltinCubeFigure(node);
   }
