@@ -277,6 +277,26 @@ import { loadBuiltinLibrary } from "./library-data.js";
     return String(path || "").replace(/\\/g, "/").split("/").pop().trim().toLowerCase();
   }
 
+  function normalizeFigurePath(path) {
+    return String(path || "").replace(/\\/g, "/").replace(/^\.\//, "").toLowerCase();
+  }
+
+  function inlineFigureIncludes(figureDoc, includeFiles) {
+    const scripts = Array.from(figureDoc.getElementsByTagName("Script"));
+    const expand = (source, stack, depth) => {
+      if (depth > 20) throw new Error("Figure script includes are nested too deeply.");
+      return String(source).replace(/\binclude\s+(['"])([^'"]+)\1\s*;?/gi, (_all, _quote, requested) => {
+        const key = normalizeFigurePath(requested);
+        const base = figureFileName(requested);
+        const content = includeFiles.get(key) ?? includeFiles.get(base);
+        if (content === undefined) throw new Error('Missing figure script include "' + requested + '". Select that .inc file together with the figure XML.');
+        if (stack.includes(base)) throw new Error("Circular figure script include: " + [...stack, base].join(" -> "));
+        return expand(content, [...stack, base], depth + 1);
+      });
+    };
+    for (const script of scripts) script.textContent = expand(script.textContent || "", [], 0);
+  }
+
   function loadFigureFiles(files) {
     if (!pendingPuzzleDoc) throw new Error("Load the main puzzle XML first.");
     const unresolved = Array.from(pendingPuzzleDoc.getElementsByTagName("LoadFrom"))
@@ -285,20 +305,32 @@ import { loadBuiltinLibrary } from "./library-data.js";
     if (!unresolved.length) throw new Error("This puzzle has no external figure files to add.");
     const selected = Array.from(files || []);
     if (!selected.length) return false;
-    const parsed = selected.map(file => ({ file, doc: null }));
-    for (const item of parsed) {
-      const bytesPromise = item.file.arrayBuffer();
-      item.promise = bytesPromise.then(bytes => {
-        const header = new TextDecoder("windows-1252").decode(bytes.slice(0,256));
-        const declared = header.match(/<\?xml[^>]*encoding\s*=\s*["']([^"']+)["']/i);
-        const encoding = declared ? declared[1] : "utf-8";
-        item.doc = parseXml(new TextDecoder(encoding).decode(bytes));
-      });
-    }
-    return Promise.all(parsed.map(item => item.promise)).then(() => {
+    const read = selected.map(async file => {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const header = new TextDecoder("windows-1252").decode(bytes.slice(0,256));
+      const declared = header.match(/<\?xml[^>]*encoding\s*=\s*["']([^"']+)["']/i);
+      const encoding = declared ? declared[1] : "utf-8";
+      return { file, text: new TextDecoder(encoding).decode(bytes) };
+    });
+    return Promise.all(read).then(items => {
+      const includeFiles = new Map();
+      const figureItems = [];
+      for (const item of items) {
+        const path = normalizeFigurePath(item.file.webkitRelativePath || item.file.name);
+        const base = figureFileName(item.file.name);
+        if (/\.inc$/i.test(item.file.name)) {
+          includeFiles.set(path, item.text);
+          includeFiles.set(base, item.text);
+        } else if (/\.xml$/i.test(item.file.name)) {
+          item.doc = parseXml(item.text);
+          figureItems.push(item);
+        }
+      }
+      if (!figureItems.length) throw new Error("Select at least one figure .xml file. You can include its .inc script files in the same selection.");
+      for (const item of figureItems) inlineFigureIncludes(item.doc, includeFiles);
       let attached = 0;
       const used = new Set();
-      for (const item of parsed) {
+      for (const item of figureItems) {
         const matching = unresolved.filter(load => !used.has(load) &&
           figureFileName(load.getAttribute("File")) === item.file.name.toLowerCase());
         if (matching.length) {
@@ -306,10 +338,10 @@ import { loadBuiltinLibrary } from "./library-data.js";
           matching.forEach(load => used.add(load));
         }
       }
-      if (parsed.length === 1 && used.size === 0) {
+      if (figureItems.length === 1 && used.size === 0) {
         const distinctNames = new Set(unresolved.map(load => figureFileName(load.getAttribute("File"))));
         if (distinctNames.size === 1) {
-          attached += attachFigureDocument(pendingPuzzleDoc, parsed[0].doc, unresolved);
+          attached += attachFigureDocument(pendingPuzzleDoc, figureItems[0].doc, unresolved);
           unresolved.forEach(load => used.add(load));
         }
       }
@@ -327,7 +359,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
       originalXmlText = new XMLSerializer().serializeToString(pendingPuzzleDoc);
       pendingPuzzleDoc = null;
       $("add-figure").disabled = true;
-      status.textContent = "Figure added: " + attached + " external reference(s) from " + parsed.length + " file(s).";
+      status.textContent = "Figure added: " + attached + " external reference(s) from " + figureItems.length + " XML file(s).";
       return true;
     });
   }
