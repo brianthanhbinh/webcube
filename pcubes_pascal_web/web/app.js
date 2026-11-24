@@ -314,8 +314,15 @@ import { loadBuiltinLibrary } from "./library-data.js";
       return String(source).replace(/\binclude\s+(['"])([^'"]+)\1\s*;?/gi, (_all, _quote, requested) => {
         const key = normalizeFigurePath(requested);
         const base = figureFileName(requested);
-        const content = includeFiles.get(key) ?? includeFiles.get(base);
-        if (content === undefined) throw new Error('Missing figure script include "' + requested + '". Select that .inc file together with the figure XML.');
+        let content = includeFiles.get(key);
+        if (content === undefined) {
+          const matches = [...includeFiles.entries()].filter(([candidate]) =>
+            candidate === base || candidate.endsWith("/" + key));
+          if (matches.length > 1)
+            throw new Error('Ambiguous figure script include "' + requested + '". The selected folder contains multiple matching files.');
+          if (matches.length === 1) content = matches[0][1];
+        }
+        if (content === undefined) throw new Error('Missing figure script include "' + requested + '". Select the complete figure folder, including its .inc files.');
         if (stack.includes(base)) throw new Error("Circular figure script include: " + [...stack, base].join(" -> "));
         return expand(content, [...stack, base], depth + 1);
       });
@@ -346,7 +353,6 @@ import { loadBuiltinLibrary } from "./library-data.js";
         const base = figureFileName(item.file.name);
         if (/\.inc$/i.test(item.file.name)) {
           includeFiles.set(path, item.text);
-          includeFiles.set(base, item.text);
         } else if (/\.xml$/i.test(item.file.name)) {
           item.doc = parseXml(item.text);
           figureItems.push(item);
