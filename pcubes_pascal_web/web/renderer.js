@@ -52,7 +52,7 @@ export class PuzzleRenderer {
         const step=Math.abs(Number(p.axis.angle)||Math.PI/2);
         const turns=Math.round(p.previewAngle/step);
         if(turns&&this.onTurnCommit)this.onTurnCommit(p.pick,turns,p.before,p.axis,p.previewAngle);
-        else this.setGeometry(p.before);
+        else this.animateSnapBack(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
       } else if(p.button===0&&p.moved&&this.onTurnDrag){
         this.onTurnDrag(e.clientX-p.downX,e.clientY-p.downY,p.pick);
       }
@@ -70,37 +70,57 @@ export class PuzzleRenderer {
     this.resizeObserver.observe(canvas);
     this.resize();
   }
-  animateTurn(before, after, axis, angle, duration = 220, startAngle = 0) {
+  layerFaceMask(geometry, axis, layer, normalSign = 1) {
+    const faces = geometry?.faces || [];
+    const vector = [Number(axis?.x), Number(axis?.y), Number(axis?.z)];
+    const length = Math.hypot(...vector);
+    if (!length || !faces.length) return [];
+    const n = vector.map(v => v / length), values = [];
+    for (const face of faces) {
+      const vertices = face.vertices || [], normal = this.faceNormal(vertices);
+      if (!normal || this.dot(normal, n) * normalSign < .82) continue;
+      const center = vertices.reduce((sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length), [0, 0, 0]);
+      const value = this.dot(center, n);
+      if (!values.some(old => Math.abs(old - value) < 1e-4)) values.push(value);
+    }
+    values.sort((a, b) => a - b);
+    if (!values.length) return [];
+    const selected = values[Math.max(0, Math.min(values.length - 1,
+      Math.round(layer * (values.length - 1) / Math.max(1, (axis.layers || values.length) - 1))))];
+    return faces.map(face => {
+      const vertices = face.vertices || [];
+      if (!vertices.length) return false;
+      const center = vertices.reduce((sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length), [0, 0, 0]);
+      const coordinate = this.dot(center, n);
+      let nearest = values[0];
+      for (const value of values)
+        if (Math.abs(value - coordinate) < Math.abs(nearest - coordinate)) nearest = value;
+      return Math.abs(nearest - selected) < 1e-4;
+    });
+  }
+  animateTurn(before, after, axis, angle, duration = 220, startAngle = 0, layer = 0, normalSign = 1) {
     if (!before?.faces || !after?.faces || !axis || !Number.isFinite(angle)) {
       this.setGeometry(after); return;
     }
     if (this.turnFrame) cancelAnimationFrame(this.turnFrame);
-    const start = performance.now();
-    const count = Math.min(before.faces.length, after.faces.length);
+    const mask = this.layerFaceMask(before, axis, layer, normalSign);
     const vector = [Number(axis.x), Number(axis.y), Number(axis.z)];
     const length = Math.hypot(...vector);
-    if (!length) { this.setGeometry(after); return; }
+    if (!length || !mask.some(Boolean)) { this.setGeometry(after); return; }
     const n = vector.map(v => v / length);
-    const changed = new Array(count).fill(false);
-    for (let i = 0; i < count; i++) {
-      const a = before.faces[i]?.vertices || [], b = after.faces[i]?.vertices || [];
-      changed[i] = a.length === b.length && a.some((v,j) =>
-        v.some((x,k) => Math.abs(x - Number(b[j][k])) > 1e-7));
-    }
+    const start = performance.now();
     const smooth = t => t < .5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
     const frame = now => {
-      const t = Math.min(1, Math.max(0, (now - start) / duration));
+      const t = Math.min(1, Math.max(0, (now - start) / Math.max(1, duration)));
       const theta = startAngle + (angle - startAngle) * smooth(t), c = Math.cos(theta), s = Math.sin(theta);
-      const geometry = {faces: before.faces.map((face,i) => {
-        if (!changed[i]) return face;
+      const geometry = {faces: before.faces.map((face, i) => {
+        if (!mask[i]) return face;
         return {...face, vertices: face.vertices.map(v => {
           const d = v.map(Number), cross = [
-            n[1]*d[2]-n[2]*d[1],
-            n[2]*d[0]-n[0]*d[2],
-            n[0]*d[1]-n[1]*d[0]
+            n[1]*d[2]-n[2]*d[1], n[2]*d[0]-n[0]*d[2], n[0]*d[1]-n[1]*d[0]
           ];
-          const dot = n[0]*d[0]+n[1]*d[1]+n[2]*d[2];
-          return d.map((x,k) => x*c + cross[k]*s + n[k]*dot*(1-c));
+          const dot = this.dot(n, d);
+          return d.map((x, k) => x*c + cross[k]*s + n[k]*dot*(1-c));
         })};
       })};
       this.setGeometry(geometry);
@@ -109,36 +129,23 @@ export class PuzzleRenderer {
     };
     this.turnFrame = requestAnimationFrame(frame);
   }
-  previewTurn(before,axis,layer,normalSign,angle){
-    const vector=[Number(axis.x),Number(axis.y),Number(axis.z)];
-    const length=Math.hypot(...vector);
-    if(!length){this.setGeometry(before);return;}
-    const n=vector.map(v=>v/length), values=[];
-    for(const face of before.faces||[]){
-      const vertices=face.vertices||[],normal=this.faceNormal(vertices);
-      if(!normal||this.dot(normal,n)*normalSign<.82)continue;
-      const center=vertices.reduce((sum,v)=>sum.map((x,k)=>x+Number(v[k])/vertices.length),[0,0,0]);
-      const value=this.dot(center,n);
-      if(!values.some(old=>Math.abs(old-value)<1e-4))values.push(value);
-    }
-    values.sort((a,b)=>a-b);
-    if(!values.length){this.setGeometry(before);return;}
-    const selected=values[Math.max(0,Math.min(values.length-1,Math.round(layer*(values.length-1)/Math.max(1,(axis.layers||values.length)-1))) )];
-    const selectedFaces=(before.faces||[]).map(face=>{
-      const vertices=face.vertices||[];
-      const center=vertices.reduce((sum,v)=>sum.map((x,k)=>x+Number(v[k])/Math.max(1,vertices.length)),[0,0,0]);
-      const coordinate=this.dot(center,n);
-      let nearest=values[0];
-      for(const value of values)if(Math.abs(value-coordinate)<Math.abs(nearest-coordinate))nearest=value;
-      return Math.abs(nearest-selected)<1e-4;
-    });
-    const c=Math.cos(angle),s=Math.sin(angle);
-    const faces=before.faces.map((face,i)=>{
-      if(!selectedFaces[i])return face;
-      return {...face,vertices:face.vertices.map(v=>{
-        const d=v.map(Number),cross=[n[1]*d[2]-n[2]*d[1],n[2]*d[0]-n[0]*d[2],n[0]*d[1]-n[1]*d[0]];
-        const dot=this.dot(n,d);
-        return d.map((x,k)=>x*c+cross[k]*s+n[k]*dot*(1-c));
+  animateSnapBack(before, axis, layer, normalSign, fromAngle, duration = 150) {
+    this.animateTurn(before, before, axis, 0, duration, fromAngle, layer, normalSign);
+  }
+  previewTurn(before, axis, layer, normalSign, angle) {
+    const vector = [Number(axis.x), Number(axis.y), Number(axis.z)];
+    const length = Math.hypot(...vector);
+    if (!length) { this.setGeometry(before); return; }
+    const n = vector.map(v => v / length), mask = this.layerFaceMask(before, axis, layer, normalSign);
+    const c = Math.cos(angle), s = Math.sin(angle);
+    const faces = before.faces.map((face, i) => {
+      if (!mask[i]) return face;
+      return {...face, vertices: face.vertices.map(v => {
+        const d = v.map(Number), cross = [
+          n[1]*d[2]-n[2]*d[1], n[2]*d[0]-n[0]*d[2], n[0]*d[1]-n[1]*d[0]
+        ];
+        const dot = this.dot(n, d);
+        return d.map((x, k) => x*c + cross[k]*s + n[k]*dot*(1-c));
       })};
     });
     this.setGeometry({faces});
