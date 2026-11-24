@@ -17,6 +17,9 @@ export class PuzzleRenderer {
     canvas.style.touchAction="none";
     canvas.addEventListener("contextmenu",e=>e.preventDefault());
     canvas.addEventListener("pointerdown",e=>{
+      // One pointer gesture owns the canvas until it is released; a second
+      // pointer/button cannot replace the active layer drag mid-turn.
+      if(this.pointer)return;
       if(e.button!==0&&e.button!==1&&e.button!==2)return;
       const rect=canvas.getBoundingClientRect();
       const axes=window.pCubes?.getAxesInfo?.()||[];
@@ -40,8 +43,11 @@ export class PuzzleRenderer {
         this.rotationX=Math.max(-1.52,Math.min(1.52,this.rotationX+dy*.009));
         this.draw();
       } else if(p.button===0&&p.hit&&p.before){
-        const rect=canvas.getBoundingClientRect();
-        const target=this.pickLayerForDrag(p.hit,p.axes,e.clientX-p.downX,e.clientY-p.downY);
+        // Resolve the turning axis and slice once per drag. Keep that exact
+        // slice locked until pointerup so the gesture cannot jump layers.
+        if(!p.dragTarget)
+          p.dragTarget=this.pickLayerForDrag(p.hit,p.axes,e.clientX-p.downX,e.clientY-p.downY);
+        const target=p.dragTarget;
         if(target){
           p.pick=target.pick;p.axis=target.axis;
           canvas.dataset.pickedAxis=String(p.pick.axis);canvas.dataset.pickedLayer=String(p.pick.layer);
