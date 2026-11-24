@@ -2905,6 +2905,7 @@ rtl.module("DOM",["System","JS","Web","SysUtils"],function () {
     };
     this.GetItem = function (Index) {
       var Result = null;
+      if ((Index < 0) || (Index >= rtl.length(this.FItems))) return null;
       Result = this.FItems[Index];
       return Result;
     };
@@ -2935,6 +2936,7 @@ rtl.module("DOM",["System","JS","Web","SysUtils"],function () {
     };
     this.GetItem = function (Index) {
       var Result = null;
+      if ((Index < 0) || (Index >= rtl.length(this.FItems))) return null;
       Result = this.FItems[Index];
       return Result;
     };
