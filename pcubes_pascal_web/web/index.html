@@ -16,7 +16,7 @@
         <button id="scramble" disabled>Scramble</button><button id="undo" disabled>Undo</button><button id="redo" disabled>Redo</button><button id="reset" disabled>Reset</button>
         <button id="library" disabled>Open library</button><button id="load">Load puzzle XML</button><button id="add-figure" disabled>Add figure</button>
         <label for="turn-axis">Turn axis</label><select id="turn-axis" disabled></select><label for="turn-layer">Layer</label><select id="turn-layer" disabled></select><div class="turn-buttons"><button id="turn-ccw" disabled>Turn −90°</button><button id="turn-cw" disabled>Turn +90°</button></div><button id="view-reset" type="button">Reset camera</button>
-        <input id="puzzle-file" type="file" accept=".xml,text/xml" hidden><input id="figure-file" type="file" accept=".xml,text/xml" hidden>
+        <input id="puzzle-file" type="file" accept=".xml,text/xml" hidden><input id="figure-file" type="file" accept=".xml,text/xml" multiple hidden>
       </div>
       <p class="muted">Left-drag a visible face to turn its layer. Right-drag to rotate the camera. Scroll to zoom.</p>
       <p id="engine-status" role="status" aria-live="polite">Loading compiled Pascal module…</p>
