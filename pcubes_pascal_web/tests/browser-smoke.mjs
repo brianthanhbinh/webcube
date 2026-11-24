@@ -67,6 +67,18 @@ try {
   await cubeButton.click();
   await page.waitForFunction(() => document.querySelector("#library-dialog")?.open === false);
   assert.equal(await page.evaluate(() => window.pCubes.isPuzzleReady()), true);
+  const twoModel = await page.evaluate(() => window.pCubes.getModelInfo());
+  assert.equal(twoModel.parts, 8, "2x2 did not load eight cubies");
+  const twoAxes = await page.evaluate(() => window.pCubes.getAxesInfo());
+  assert.equal(twoAxes.length, 3, "2x2 should expose three turn axes");
+  assert.ok(twoAxes.every(axis => axis.layers === 2), "2x2 should have two layers per axis");
+  const beforeTwoTurn = await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData()));
+  assert.equal(await page.evaluate(({axis}) => window.pCubes.turnLayer(axis,0,1), {axis:twoAxes[0].index}), true, "2x2 manual turn failed");
+  assert.notEqual(await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData())), beforeTwoTurn, "2x2 turn did not change geometry");
+  const beforeTwoScramble = await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData()));
+  assert.equal(await page.evaluate(() => window.pCubes.scramble()), true, "2x2 scramble failed");
+  assert.notEqual(await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData())), beforeTwoScramble, "2x2 scramble did not change geometry");
+  await page.evaluate(() => window.pCubes.reset());
   await page.locator("#library").click();
   await page.waitForFunction(() => document.querySelector("#library-dialog")?.open === true);
   const three = page.locator("#library-list button").filter({hasText:/^Rubik's cube 3x3x3/});
