@@ -1,0 +1,53 @@
+name: Deploy WebCube to GitHub Pages
+
+on:
+  workflow_run:
+    workflows:
+      - Build Pascal browser app
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out latest successful source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && 'main' || 'main' }}
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Verify static app files
+        run: |
+          test -s pcubes_pascal_web/web/index.html
+          test -s pcubes_pascal_web/web/app.js
+          test -s pcubes_pascal_web/web/renderer.js
+          test -s pcubes_pascal_web/web/rtl.js
+          test -s pcubes_pascal_web/web/pcubes_web.js
+
+      - name: Upload WebCube site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pcubes_pascal_web/web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
