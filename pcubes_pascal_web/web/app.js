@@ -28,9 +28,15 @@ import { loadBuiltinLibrary } from "./library-data.js";
   let preflightReport = [];
 
   function parseXml(text) {
+    // Uploaded library files sometimes contain Markdown wrappers/citation
+    // debris after the closing XML root. Remove only that non-XML suffix.
+    let source = String(text).replace(/^\\uFEFF/, "").trimStart();
+    source = source.replace(/\\s+```(?:xml)?\\s*\\[[^\\]]*\\]\\s*$/i, "");
+    source = source.replace(/\\s+```\\s*$/i, "");
+    source = source.replace(/\\s+\\[cite:\\s*\\d+\\]\\s*$/i, "");
     // DOMParser receives a JavaScript Unicode string, not raw file bytes; remove
     // the original byte-encoding declaration before parsing that string.
-    const source = String(text).replace(/(<\?xml[^>]*?)\s+encoding\s*=\s*(["'])[^"']+\2/i, "$1");
+    source = source.replace(/(<\\?xml[^>]*?)\\s+encoding\\s*=\\s*(["'])[^"']+\\2/i, "$1");
     const doc = new DOMParser().parseFromString(source, "application/xml");
     const error = doc.getElementsByTagName("parsererror")[0];
     if (error) throw new Error(error.textContent || "Invalid XML.");
