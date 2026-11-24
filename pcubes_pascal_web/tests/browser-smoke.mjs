@@ -138,8 +138,13 @@ try{
  await remoteCube.waitFor({state:"visible"});
  await remoteCube.click();
  await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open);
- assert.match((await page.evaluate(()=>window.pCubes.getModelInfo())).name,/2x2x2 Cube/i);
+ const remoteModel=await page.evaluate(()=>window.pCubes.getModelInfo());
+ assert.match(remoteModel.name,/2x2x2 Cube/i);
+ assert.ok(remoteModel.parts>=8,"Remote cube did not split into cubies: "+remoteModel.parts);
  assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0),"Remote library puzzle did not render");
+ const remoteAxes=await page.evaluate(()=>window.pCubes.getAxesInfo());
+ assert.equal(remoteAxes.length,3,"Remote cube must load all three axes");
+ assert.deepEqual(remoteAxes.map(a=>[Math.round(a.x),Math.round(a.y),Math.round(a.z)]),[[1,0,0],[0,1,0],[0,0,1]],"NormVector attributes were not loaded for remote axes");
  // Generator UI is available after the Pascal startup self-test.
  await page.locator("#generator").click();
  await page.waitForFunction(()=>document.querySelector("#generator-dialog")?.open);

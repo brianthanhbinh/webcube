@@ -606,11 +606,20 @@ begin // FillAxis
 end; // FillAxis
 
 class function TXmlReadWrite.AxisLoadFromXml(Axis: TAxis; XmlNode: TDomNode): Boolean;
+var
+  NormVectorText: String;
 begin // AxisLoadFromXml
   Result := False;
 
   if not LineLoadFromXml(Axis.Line, XmlNode) then
     exit;
+
+  // Library XML stores axis directions as a NormVector attribute; desktop
+  // XML may store the same vector as a child element. Accept both formats.
+  NormVectorText := TDomElement(XmlNode).GetAttribute('NormVector');
+  if NormVectorText <> '' then
+    Axis.Line.NormVector := GetVectorFromString(NormVectorText);
+  Axis.Line.NormVector.Normalize;
 
   FillAxis(Axis,
     string(GetAttrOrParent(XmlNode, 'PlaneDistances', '')),
