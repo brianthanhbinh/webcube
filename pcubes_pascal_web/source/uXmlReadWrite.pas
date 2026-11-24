@@ -252,6 +252,291 @@ end;
 
 // ========================= Vector ===================================
 
+var
+  i: integer;
+  EList: TList<Extended>;
+  V, V1: TVar;
+  Token: String;
+begin
+  EList := TList<Extended>.Create;
+  try
+    // Scan delimiters directly. This avoids Pos/Delete edge cases in the
+    // Pas2JS string RTL and preserves every plane distance in browser builds.
+    Token := '';
+    for i := 1 to Length(Names) + 1 do begin
+      if (i > Length(Names)) or (Names[i] = ';') then begin
+        Token := XmlTrim(Token);
+        if Token <> '' then begin
+          if Calc.VarByName(Token + '[0]', V) and
+             (not Calc.VarByName(Token, V1)) and
+             (VarType(V.Value) = varDouble) then begin
+            // Keep the original expression-array support.
+            EList.Add(CalcExpression(Token));
+          end else
+            EList.Add(CalcExpression(Token));
+        end;
+        Token := '';
+      end else
+        Token := Token + Names[i];
+    end;
+    Result := EList.ToArray;
+  finally
+    EList.Free;
+  end;
+end; // LoadArrayFromString***********************************}
+{                                                            }
+{  Unit uXmlReadWrite                                        }
+{  2018-2023                                                 }
+{                                                            }
+{  Author: Boris Mouradov                                    }
+{                                                            }
+{************************************************************}
+
+unit uXmlReadWrite;
+
+{$mode Delphi}
+
+interface
+
+uses Types,
+     uPuzzle, uVector, uPlane, uLine, uLayer, uAxis, uFace, uPart, uMacro, uTexture, uTurn,
+     DOM, Graphics, Generics.Collections;
+
+const
+  XML_VERSION: integer = 2;
+  PUZZLES_ARCHIVE_PATH = 'Puzzles.zip';
+  LIBRARY_PATH = 'Library.xml';
+  MENU_FILE = 'Menu.xml';
+
+type
+  TXmlReadWrite = class
+  private
+    class var lMacros: TList<TDomNode>;
+
+//    FPuzzle: TPuzzle;
+    class function FindMacros(const XmlNode: TDomNode; var MacroNodes: TList<TDomNode>; var RepeatN: integer): Boolean;
+    class procedure AddCylinder(Part: TPart; const Base, Top: TVector; Radius: extended; Color, BaseColor, TopColor: TColor);
+    class procedure AddCircle(Part: TPart; const Base, Center: TVector; Radius: extended; Color: TColor);
+    class procedure Transfer(Puzzle: TPuzzle; XmlNode: TDomNode); static;
+    class procedure Turn(Puzzle: TPuzzle; XmlNode: TDomNode); static;
+    class procedure DecodeLayers(const LayersString: String; var Layers: array of Boolean);
+    class function LoadArrayFromString(const Names: String): TArray<extended>;
+    class function PuzzleLoadFromXmlCommon(Puzzle: TPuzzle; XmlDoc: TXmlDocument; const FileName: String): Boolean;
+  public
+//    property Puzzle: TPuzzle write FPuzzle;
+
+    constructor Create;
+
+    class function GetAttrOrParent(XmlNode: TDomNode; const aName, aDefault: DomString): DomString;
+
+    class function GetVectorFromString(S: String): TVector;
+    class procedure GetVectorsFromString(S: String; Vectors: TList<TVector>);
+
+    class function VectorLoadFromXml(var Vector: TVector; XmlNode: TDomNode): Boolean;
+    class function VectorSaveToXml(Vector: TVector; XmlNode: TDomElement): Boolean;
+    class function VectorsLoadFromXml(Vectors: TList<TVector>; XmlNode: TDomNode): Boolean;
+    class procedure VectorsSaveToXml(Vectors: TList<TVector>; XmlDoc: TXmlDocument; XmlNode: TDomNode);
+
+    class function LineLoadFromXml(var Line: TLine; XmlNode: TDomNode): Boolean;
+    class function LineSaveToXml(const Line: TLine; XmlDoc: TXmlDocument; XmlNode: TDomNode): Boolean;
+
+//    function LoadHeaderFromXmlFile(Puzzle: TPuzzle; const FileName: String): Boolean;
+//    class function LoadVectorsFromXml(var Vectors: TList<TVector>; XmlNode: TDomNode): Boolean;
+//    class function PlanesLoadFromXml(Planes: TPlanes; XmlNode: TDomNode): Boolean;
+//    class procedure PlanesSaveToXml(Planes: TPlanes; XmlNode: TDomElement);
+    class function PlaneLoadFromXml(var Plane: TPlane; XmlNode: TDomNode): Boolean;
+    class procedure PlaneSaveToXml(Plane: TPlane; XmlDoc: TXmlDocument; XmlNode: TDomElement);
+
+//    class function LayerLoadFromXml(Layer: TLayer; XmlNode: TDomNode): Boolean;
+//    class procedure LayerSaveToXml(Layer: TLayer; XmlNode: TDomElement);
+//    function LayersLoadFromXml(XmlNode: TDomNode): Boolean;
+//    procedure LayersSaveToXml(XmlNode: TDomElement);
+    class function AxisLoadFromXml(Axis: TAxis; XmlNode: TDomNode): Boolean;
+    class procedure AxisSaveToXml(Axis: TAxis; XmlDoc: TXmlDocument; XmlNode: TDomNode);
+    class procedure FillAxis(Axis: TAxis; const PlaneDistances, TurningAngles, AvailableAngles, JumbleAngle, FixedLayers, MinAngles, MaxAngles: String; TurnAxesWithLayer, TurnAxesWithPartNo: integer);
+
+    class function AxesLoadFromXml(Axes: TList<TAxis>; XmlNode: TDomNode): Boolean;
+    class procedure AxesSaveToXml(Axes: TList<TAxis>; XmlDoc: TXmlDocument; XmlNode: TDomNode);
+
+    class function FaceLoadFromXml(Face: TFace; XmlNode: TDomNode): Boolean;
+    class procedure FaceSaveToXml(Face: TFace; XmlNode: TDomNode);
+    class function FacesLoadFromXml(Faces: TList<TFace>; XmlNode: TDomNode; Points: TList<TVector>): Boolean;
+    class procedure FacesSaveToXml(Faces: TList<TFace>; XmlDoc: TXmlDocument; XmlNode: TDomNode; Points: TList<TVector>);
+
+    class function PartLoadFromXml(Part: TPart; XmlNode: TDomNode): Boolean;
+    class function PartLoadCylinder(Part: TPart; XmlNode: TDomNode): Boolean;
+    class function PartLoadCircle(Part: TPart; XmlNode: TDomNode): Boolean;
+    class procedure PartSaveToXml(Part: TPart; XmlDoc: TXmlDocument; XmlNode: TDomNode);
+
+    class function PuzzleCheckVersionFromXml(Puzzle: TPuzzle; XmlNode: TDomNode): Boolean;
+    class function PuzzleLoadHeaderFromXml(Puzzle: TPuzzle; XmlNode: TDomNode): Boolean;
+    class function PuzzleLoadHeaderFromXmlFile(Puzzle: TPuzzle; const FileName: String): Boolean;
+    class function PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNode): Boolean;
+    class function PuzzleLoadFromXmlFile(Puzzle: TPuzzle; const FileName: String): Boolean;
+    class function PuzzleLoadFromCompressedXmlFile(Puzzle: TPuzzle; const FileName: String): Boolean;
+    class function PuzzleExecMacroFromXmlFile(Puzzle: TPuzzle; const FileName: String; MacroString: String): Boolean;
+    class procedure PuzzleSaveHeaderToXml(Puzzle: TPuzzle; XmlDoc: TXmlDocument; XmlNode: TDomNode);
+    class procedure PuzzleSaveToXml(Puzzle: TPuzzle; XmlDoc: TXmlDocument; XmlRoot: TDomNode); virtual;
+    class procedure PuzzleSaveToXmlFile(Puzzle: TPuzzle; const FileName: String);
+
+//    class function MacroTurnLoadFromXml(MacroTurn: TMacroTurn; XmlNode: TDomNode): Boolean;
+//    class procedure MacroTurnSaveToXml(MacroTurn: TMacroTurn; XmlNode: TDomNode);
+//    class function MacroTurnsLoadFromXml(MacroTurns: TList<TMacroTurn>; XmlNode: TDomNode): Boolean;
+//    class procedure MacroTurnsSaveToXml(MacroTurns: TList<TMacroTurn>; XmlNode: TDomNode);
+    class function MacroLoadFromXml(Macro: TMacro; XmlNode: TDomNode): Boolean;
+    class procedure MacroSaveToXml(Macro: TMacro; XmlNode: TDomNode);
+    class function MacrosLoadFromXml(Macros: TList<TMacro>; XmlNode: TDomNode): Boolean;
+    class procedure MacrosSaveToXml(Macros: TList<TMacro>; XmlDoc: TXmlDocument; XmlNode: TDomNode);
+
+    class function TextureLoadFromXml(Texture: TTexture; XmlNode: TDomNode): Boolean;
+
+    class function TurnLoadFromXml(Puzzle: TPuzzle; Turn: TTurn; XmlNode: TDomNode): Boolean;
+    class procedure TurnSaveToXml(Turn: TTurn; XmlNode: TDomElement);
+    class function TurnsLoadFromXml(Puzzle: TPuzzle; Turns: TList<TTurn>; XmlNode: TDomNode): Boolean;
+    class procedure TurnsSaveToXml(Turns: TList<TTurn>; XmlDoc: TXmlDocument; XmlNode: TDomNode);
+  end;
+
+implementation
+
+
+uses
+  uScript, uUtils, uXmlUtils, uMatrix, uSolvedState, uPuzzleUtils, uSelection, uGeometryUtils,
+  {$IFDEF PAS2JS} JS, Variants, {$ELSE} Variants, {$ENDIF} SysUtils, StrUtils, Classes, Math,
+{Unzip,} XmlRead, XMLWrite{, ZipUtils};
+
+function XmlUpperCase(const S: String): String;
+var
+  I: Integer;
+  C: Integer;
+begin
+  Result := S;
+  for I := 1 to Length(Result) do begin
+    C := Ord(Result[I]);
+    if (C >= Ord('a')) and (C <= Ord('z')) then
+      Result[I] := Chr(C - 32);
+  end;
+end;
+
+function XmlSameText(const A, B: String): Boolean;
+begin
+  Result := XmlUpperCase(A) = XmlUpperCase(B);
+end;
+
+function XmlStrToIntDef(const S: String; Default: Integer): Integer;
+var
+  I, Sign, N: Integer;
+begin
+  if S = '' then Exit(Default);
+  I := 1;
+  Sign := 1;
+  if S[1] = '-' then begin
+    Sign := -1;
+    I := 2;
+  end;
+  if I > Length(S) then Exit(Default);
+  N := 0;
+  while I <= Length(S) do begin
+    if (S[I] < '0') or (S[I] > '9') then Exit(Default);
+    N := N * 10 + Ord(S[I]) - Ord('0');
+    Inc(I);
+  end;
+  Result := N * Sign;
+end;
+
+function XmlStrToInt(const S: String): Integer;
+var
+  I, Sign, N: Integer;
+begin
+  Result := 0;
+  I := 1;
+  Sign := 1;
+  if (Length(S) > 0) and (S[1] = '-') then begin
+    Sign := -1;
+    I := 2;
+  end;
+  while I <= Length(S) do begin
+    N := Ord(S[I]) - Ord('0');
+    if (N < 0) or (N > 9) then Exit(0);
+    Result := Result * 10 + N;
+    Inc(I);
+  end;
+  Result := Result * Sign;
+end;
+
+function XmlFloatToStr(Value: Extended): String;
+begin
+  {$IFDEF PAS2JS}
+  Result := JS.toString(Value);
+  {$ELSE}
+  Result := SysUtils.FloatToStr(Value);
+  {$ENDIF}
+end;
+
+function XmlIntToStr(Value: Integer): String;
+var
+  N: Integer;
+begin
+  if Value = 0 then Exit('0');
+  N := Value;
+  Result := '';
+  while N > 0 do begin
+    Result := Chr(Ord('0') + (N mod 10)) + Result;
+    N := N div 10;
+  end;
+end;
+
+function XmlTrim(const S: String): String;
+var
+  First, Last: Integer;
+begin
+  First := 1;
+  Last := Length(S);
+  while (First <= Last) and (S[First] <= ' ') do Inc(First);
+  while (Last >= First) and (S[Last] <= ' ') do Dec(Last);
+  Result := Copy(S, First, Last - First + 1);
+end;
+
+function XmlExtractFilePath(const FileName: String): String;
+begin
+  {$IFDEF PAS2JS}
+  Result := '';
+  {$ELSE}
+  Result := SysUtils.ExtractFilePath(FileName);
+  {$ENDIF}
+end;
+
+function XmlFileExists(const FileName: String): Boolean;
+begin
+  {$IFDEF PAS2JS}
+  Result := False;
+  {$ELSE}
+  Result := SysUtils.FileExists(FileName);
+  {$ENDIF}
+end;
+
+const
+  CIRCLE_SECTORS = 64;
+
+constructor TXmlReadWrite.Create;
+begin
+  inherited;
+//  FPuzzle := nil;
+end;
+
+class function TXmlReadWrite.GetAttrOrParent(XmlNode: TDomNode; const aName, aDefault: DomString): DomString;
+begin
+  Result := aDefault;
+  if XmlNode = nil then Exit;
+  Result := TDomElement(XmlNode).GetAttribute(aName);
+  if Result <> '' then Exit;
+  XmlNode := XmlNode.ParentNode;
+  if XmlNode = nil then Exit;
+  Result := TDomElement(XmlNode).GetAttribute(aName);
+  if Result = '' then Result := aDefault;
+end;
+
+// ========================= Vector ===================================
+
 class function TXmlReadWrite.LoadArrayFromString(const Names: String): TArray<extended>;
 var
   i, Separator: integer;
