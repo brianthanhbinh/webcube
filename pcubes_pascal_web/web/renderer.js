@@ -58,6 +58,9 @@ export class PuzzleRenderer {
         }
         const target=p.dragTarget;
         if(target){
+          const dx0=e.clientX-p.downX,dy0=e.clientY-p.downY;
+          if(Math.abs(target.drag)<4)
+            target.drag=Math.abs(dx0)>=Math.abs(dy0)?dx0:dy0;
           p.pick=target.pick;p.axis=target.axis;
           canvas.dataset.pickedAxis=String(p.pick.axis);canvas.dataset.pickedLayer=String(p.pick.layer);
           const step=Number(p.axis.angle)||Math.PI/2;
