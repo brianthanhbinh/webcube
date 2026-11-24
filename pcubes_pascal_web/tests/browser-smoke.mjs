@@ -81,6 +81,22 @@ try{
  assert.equal(customModel.name,"Custom cube with external figure");
  assert.ok(customModel.parts>0,"Custom figure XML loaded no parts");
  assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0),"Attached custom figure did not render");
+ const custom4=customXml
+   .replace("Custom cube with external figure","Custom 4x4x4")
+   .replace('PlaneDistances="-1/6;1/6"','PlaneDistances="-0.25;0;0.25"')
+   .replace('PlaneDistances = "-1/6; 1/6"','PlaneDistances = "-0.25; 0; 0.25"');
+ const custom4Doc=await page.evaluate(xmlText=>{
+   const d=new DOMParser().parseFromString(xmlText,"application/xml");
+   const axes=d.getElementsByTagName("Axes")[0];
+   axes.setAttribute("PlaneDistances","-0.25; 0; 0.25");
+   const load=d.getElementsByTagName("LoadFrom")[0];
+   load.setAttribute("File","Figures\\Cube.xml");
+   return new XMLSerializer().serializeToString(d);
+ },custom4);
+ await page.locator("#puzzle-file").setInputFiles({name:"custom-4x4.xml",mimeType:"application/xml",buffer:Buffer.from(custom4Doc)});
+ await page.waitForFunction(()=>window.pCubes.getModelInfo().name==="Custom 4x4x4");
+ const custom4Model=await page.evaluate(()=>window.pCubes.getModelInfo());
+ assert.equal(custom4Model.parts,64,"Custom 4x4 XML cuts were overwritten instead of making 64 pieces");
  assert.deepEqual(errors,[],"Browser errors: "+errors.join(" | "));
  console.log("PASS: preflight, render, compact viewport, left-drag layer turn, right-drag camera rotation, scramble geometry, undo/redo/reset, exact 2x2/3x3 selection, XML upload.");
 }finally{await browser.close();}
