@@ -101,6 +101,11 @@ end;
 
 function TDomNodeList.GetItem(Index: NativeInt): TDomNode;
 begin
+  // DOM lists are snapshots. Callers sometimes retain a list while the
+  // underlying document is edited, so never let a stale/out-of-range index
+  // escape as the generic EArgumentOutOfRangeException from a dynamic array.
+  if (Index < 0) or (Index >= Length(FItems)) then
+    Exit(nil);
   Result := FItems[Index];
 end;
 
@@ -123,6 +128,9 @@ end;
 
 function TDomNamedNodeMap.GetItem(Index: NativeInt): TDomNode;
 begin
+  // Match the browser NamedNodeMap.item() contract: invalid indexes return nil.
+  if (Index < 0) or (Index >= Length(FItems)) then
+    Exit(nil);
   Result := FItems[Index];
 end;
 
