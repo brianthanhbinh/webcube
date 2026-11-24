@@ -12,6 +12,7 @@ export class PuzzleRenderer {
     this.pointer=null;
     this.projectedFaces=[];
     this.onTurnDrag=null;
+    this.onTurnCommit=null;
     canvas.style.touchAction="none";
     canvas.addEventListener("contextmenu",e=>e.preventDefault());
     canvas.addEventListener("pointerdown",e=>{
@@ -21,7 +22,9 @@ export class PuzzleRenderer {
       const pick=e.button===0?this.pickLayer(e.clientX-rect.left,e.clientY-rect.top,axes):null;
       if(pick){canvas.dataset.pickedAxis=String(pick.axis);canvas.dataset.pickedLayer=String(pick.layer);}
       else{delete canvas.dataset.pickedAxis;delete canvas.dataset.pickedLayer;}
-      this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,downX:e.clientX,downY:e.clientY,button:e.button,moved:false,pick};
+      const axis=pick&&axes.find(a=>a.index===pick.axis);
+      this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,downX:e.clientX,downY:e.clientY,button:e.button,moved:false,pick,
+        before:pick?this.geometry:null,axis,previewAngle:0};
       canvas.setPointerCapture(e.pointerId);
     });
     canvas.addEventListener("pointermove",e=>{
@@ -33,13 +36,24 @@ export class PuzzleRenderer {
         this.rotationY+=dx*.009;
         this.rotationX=Math.max(-1.52,Math.min(1.52,this.rotationX+dy*.009));
         this.draw();
+      } else if(p.button===0&&p.pick&&p.axis&&p.before){
+        const drag=Math.abs(e.clientX-p.downX)>=Math.abs(e.clientY-p.downY)
+          ? e.clientX-p.downX : -(e.clientY-p.downY);
+        const step=Number(p.axis.angle)||Math.PI/2;
+        p.previewAngle=drag/110*step*(p.pick.normalSign||1);
+        this.previewTurn(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
       }
       p.x=e.clientX;p.y=e.clientY;
     });
     canvas.addEventListener("pointerup",e=>{
       const p=this.pointer;
       if(!p||p.id!==e.pointerId)return;
-      if(p.button===0&&p.moved&&this.onTurnDrag){
+      if(p.button===0&&p.pick&&p.axis&&p.before){
+        const step=Math.abs(Number(p.axis.angle)||Math.PI/2);
+        const turns=Math.round(p.previewAngle/step);
+        this.setGeometry(p.before);
+        if(turns&&this.onTurnCommit)this.onTurnCommit(p.pick,turns);
+      } else if(p.button===0&&p.moved&&this.onTurnDrag){
         this.onTurnDrag(e.clientX-p.downX,e.clientY-p.downY,p.pick);
       }
       this.pointer=null;
@@ -94,6 +108,40 @@ export class PuzzleRenderer {
       else { this.turnFrame = 0; this.setGeometry(after); }
     };
     this.turnFrame = requestAnimationFrame(frame);
+  }
+  previewTurn(before,axis,layer,normalSign,angle){
+    const vector=[Number(axis.x),Number(axis.y),Number(axis.z)];
+    const length=Math.hypot(...vector);
+    if(!length){this.setGeometry(before);return;}
+    const n=vector.map(v=>v/length), values=[];
+    for(const face of before.faces||[]){
+      const vertices=face.vertices||[],normal=this.faceNormal(vertices);
+      if(!normal||this.dot(normal,n)*normalSign<.82)continue;
+      const center=vertices.reduce((sum,v)=>sum.map((x,k)=>x+Number(v[k])/vertices.length),[0,0,0]);
+      const value=this.dot(center,n);
+      if(!values.some(old=>Math.abs(old-value)<1e-4))values.push(value);
+    }
+    values.sort((a,b)=>a-b);
+    if(!values.length){this.setGeometry(before);return;}
+    const selected=values[Math.max(0,Math.min(values.length-1,Math.round(layer*(values.length-1)/Math.max(1,(axis.layers||values.length)-1))) )];
+    const selectedFaces=(before.faces||[]).map(face=>{
+      const vertices=face.vertices||[];
+      const center=vertices.reduce((sum,v)=>sum.map((x,k)=>x+Number(v[k])/Math.max(1,vertices.length)),[0,0,0]);
+      const coordinate=this.dot(center,n);
+      let nearest=values[0];
+      for(const value of values)if(Math.abs(value-coordinate)<Math.abs(nearest-coordinate))nearest=value;
+      return Math.abs(nearest-selected)<1e-4;
+    });
+    const c=Math.cos(angle),s=Math.sin(angle);
+    const faces=before.faces.map((face,i)=>{
+      if(!selectedFaces[i])return face;
+      return {...face,vertices:face.vertices.map(v=>{
+        const d=v.map(Number),cross=[n[1]*d[2]-n[2]*d[1],n[2]*d[0]-n[0]*d[2],n[0]*d[1]-n[1]*d[0]];
+        const dot=this.dot(n,d);
+        return d.map((x,k)=>x*c+cross[k]*s+n[k]*dot*(1-c));
+      })};
+    });
+    this.setGeometry({faces});
   }
   resetView(){this.rotationY=-.55;this.rotationX=.35;this.zoom=1;this.draw();}
   resize(){
