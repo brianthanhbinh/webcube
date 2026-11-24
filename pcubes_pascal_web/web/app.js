@@ -208,11 +208,15 @@ import { loadBuiltinLibrary } from "./library-data.js";
   }
 
   function loadXmlText(xmlText) {
-    const doc = parseXml(xmlText);
-    pendingPuzzleDoc = doc;
+    let doc = parseXml(xmlText);
     resolveExternalFigures(doc);
+    // Reparse the serialized document so the Pascal DOM bridge receives the
+    // normalized per-axis attributes as part of the original XML tree, not as
+    // post-parse JavaScript DOM mutations.
+    doc = parseXml(new XMLSerializer().serializeToString(doc));
+    pendingPuzzleDoc = doc;
     if (!call("loadXML", doc.documentElement)) return false;
-    originalXmlText = xmlText;
+    originalXmlText = new XMLSerializer().serializeToString(doc);
     pendingPuzzleDoc = null;
     $("add-figure").disabled = true;
     return true;
@@ -222,6 +226,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     if (!pendingPuzzleDoc) throw new Error("Load the main puzzle XML first.");
     const count = attachFigureDocument(pendingPuzzleDoc, parseXml(xmlText));
     resolveExternalFigures(pendingPuzzleDoc);
+    pendingPuzzleDoc = parseXml(new XMLSerializer().serializeToString(pendingPuzzleDoc));
     if (!call("loadXML", pendingPuzzleDoc.documentElement)) return false;
     originalXmlText = new XMLSerializer().serializeToString(pendingPuzzleDoc);
     pendingPuzzleDoc = null;
