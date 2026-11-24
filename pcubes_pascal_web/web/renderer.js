@@ -331,21 +331,22 @@ export class PuzzleRenderer {
     }
     const cy=Math.cos(this.rotationY),sy=Math.sin(this.rotationY),cx=Math.cos(this.rotationX),sx=Math.sin(this.rotationX);
     const transform=v=>{const x=v[0]*cy+v[2]*sy,z=-v[0]*sy+v[2]*cy;return[x,v[1]*cx-z*sx,v[1]*sx+z*cx];};
-    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity,hasPoint=false;
+    // Use a rotation-invariant model-space bounding sphere. Recomputing the
+    // projected AABB every frame makes the puzzle scale and center wobble as
+    // its orientation changes (both during layer turns and camera drags).
+    let radiusSquared=0,hasPoint=false;
     for(const face of faces){
       const vertices=face.vertices||[];
       for(let j=0;j<vertices.length;j++){
-        const v=vertices[j],x=v[0]*cy+v[2]*sy,z=-v[0]*sy+v[2]*cy;
-        const rx=x,ry=v[1]*cx-z*sx;
-        if(rx<minX)minX=rx;if(rx>maxX)maxX=rx;
-        if(ry<minY)minY=ry;if(ry>maxY)maxY=ry;
+        const v=vertices[j],r2=v[0]*v[0]+v[1]*v[1]+v[2]*v[2];
+        if(r2>radiusSquared)radiusSquared=r2;
         hasPoint=true;
       }
     }
     if(!hasPoint){this.projectedFaces=[];return;}
-    const span=Math.max(maxX-minX,maxY-minY,1e-6),scale=Math.min(w,h)*.68*this.zoom/span;
-    const centerX=(minX+maxX)/2,centerY=(minY+maxY)/2;
-    const project=v=>[w/2+(v[0]-centerX)*scale,h/2-(v[1]-centerY)*scale];
+    const radius=Math.max(Math.sqrt(radiusSquared),1e-6);
+    const scale=Math.min(w,h)*.68*this.zoom/(2*radius);
+    const project=v=>[w/2+v[0]*scale,h/2-v[1]*scale];
     // Back-face culling: only submit polygons whose outward normal points
     // toward the camera. This is especially important for high-order puzzles
     // (e.g. 20x20x20), where drawing every hidden interior-facing polygon
