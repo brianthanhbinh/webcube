@@ -103,6 +103,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const root = figureDoc.documentElement.nodeName.toLowerCase() === "figure" ? figureDoc.documentElement : figureDoc.getElementsByTagName("Figure")[0] || figureDoc.documentElement;
     const nodes = Array.from(root.childNodes).filter(n => n.nodeType === 1 && n.nodeName !== "LoadFrom");
     if (!nodes.length) throw new Error("Selected figure XML contains no figure elements.");
+    if (nodes.some(n => n.nodeName === "Script" || n.getElementsByTagName("Script").length > 0))
+      throw new Error("This figure uses pCubes Script code. The browser Pascal build does not execute the script language yet; use a figure XML with explicit Vertices and Faces instead.");
     const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
     if (!loads.length) throw new Error("Puzzle XML has no LoadFrom placeholder inside Figure.");
     for (const load of loads) {
@@ -114,29 +116,19 @@ import { loadBuiltinLibrary } from "./library-data.js";
   }
 
   function resolveExternalFigures(doc) {
-    const name = doc.getElementsByTagName("Name")[0]?.textContent || "";
     const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
-    const isCubeFigure = node => {
+    // The official Figures/Cube.xml is a single solid. pCubes then applies
+    // SplitByAxes using the puzzle's own PlaneDistances. Build that solid
+    // directly so custom 2x2, 4x4, and non-cubic layer layouts are preserved.
+    for (const node of loads) {
       const path = (node.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
-      return path.endsWith("figures/cube.xml") || path === "cube.xml";
-    };
-    // Generate cubies only for the two known library templates. An uploaded
-    // custom XML with inline Figure/Part data must never be replaced by a 2x2.
-    if (loads.some(isCubeFigure) && /Rubik's cube 2x2x2/i.test(name)) {
-      buildCubeCubies(doc, 2);
-      return;
+      if (path.endsWith("figures/cube.xml") || path === "cube.xml") {
+        addBuiltinCubeFigure(node);
+      } else {
+        throw new Error('Missing external figure "' + node.getAttribute("File") + '". Select that figure XML with Add figure.');
+      }
     }
-    if (loads.some(isCubeFigure) && /Rubik's cube 3x3x3/i.test(name)) {
-      buildCubeCubies(doc, 3);
-      return;
-    }
-    // Copy shared axis attributes to each Axis for other browser-loadable XMLs.
-    const axesNode = doc.getElementsByTagName("Axes")[0];
-    if (axesNode) for (const axis of Array.from(axesNode.getElementsByTagName("Axis"))) {
-      for (const attr of ["PlaneDistances", "TurningAngles", "AvailableAngles", "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles"])
-        if (!axis.hasAttribute(attr) && axesNode.hasAttribute(attr)) axis.setAttribute(attr, axesNode.getAttribute(attr));
-    }
-    if (loads.length) throw new Error('Missing external figure "' + loads[0].getAttribute("File") + '". Click Add figure and select its figure XML.');
+    // AxisLoadFromXml already inherits settings from its parent <Axes>.
   }
 
   function updateModelInfo(api) {
@@ -179,7 +171,10 @@ import { loadBuiltinLibrary } from "./library-data.js";
     try {
       const result = api[name](...args);
       if (typeof result === "string") status.textContent = result;
-      else if (result === false) status.textContent = "Pascal could not complete this request.";
+      else if (result === false) {
+        const engineStatus = typeof api.getStatus === "function" ? api.getStatus() : "";
+        status.textContent = engineStatus || "Pascal could not complete this request.";
+      }
       updateModelInfo(api); return result !== false;
     } catch (error) {
       let detail;
