@@ -35,6 +35,19 @@ try {
   });
   assert.ok(paintedPixels > 100, "Canvas appears blank (" + paintedPixels + " colored pixels)");
 
+  const axes = await page.evaluate(() => window.pCubes.getAxesInfo());
+  assert.ok(axes.length > 0 && axes.some(axis => axis.layers > 0), "No layer-turn axes exported");
+  const axisIndex = axes.findIndex(axis => axis.layers > 0);
+  const beforeTurn = await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData()));
+  assert.equal(await page.evaluate(({axis}) => window.pCubes.turnLayer(axis,0,1), {axis:axisIndex}), true, "Manual turn API failed");
+  const afterTurn = await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData()));
+  assert.notEqual(afterTurn,beforeTurn,"Manual turn did not change geometry");
+  const canvas = page.locator("#puzzle-canvas");
+  const beforeCamera = await canvas.evaluate(el => el.getContext("2d").getImageData(0,0,el.width,el.height).data.join(","));
+  await canvas.hover({position:{x:300,y:200}}); await page.mouse.down(); await page.mouse.move(350,240,{steps:4}); await page.mouse.up();
+  const afterCamera = await canvas.evaluate(el => el.getContext("2d").getImageData(0,0,el.width,el.height).data.join(","));
+  assert.notEqual(afterCamera,beforeCamera,"Drag did not rotate camera");
+
   for (const id of ["scramble", "undo", "redo", "reset"]) {
     await page.locator("#" + id).click();
     await page.waitForTimeout(30);
@@ -54,6 +67,15 @@ try {
   await cubeButton.click();
   await page.waitForFunction(() => document.querySelector("#library-dialog")?.open === false);
   assert.equal(await page.evaluate(() => window.pCubes.isPuzzleReady()), true);
+  await page.locator("#library").click();
+  await page.waitForFunction(() => document.querySelector("#library-dialog")?.open === true);
+  const three = page.locator("#library-list button").filter({hasText:"3x3x3"});
+  assert.equal(await three.count(),1,"3x3x3 entry missing");
+  assert.equal(await three.isEnabled(),true,"3x3x3 entry is disabled");
+  await three.click();
+  await page.waitForFunction(() => document.querySelector("#library-dialog")?.open === false);
+  const loadedName = await page.evaluate(() => window.pCubes.getModelInfo().name);
+  assert.match(loadedName,/3x3x3/i,"3x3x3 selection left old puzzle loaded: "+loadedName);
 
   const xml = await page.evaluate(async () => {
     const { loadBuiltinLibrary } = await import("./library-data.js");
