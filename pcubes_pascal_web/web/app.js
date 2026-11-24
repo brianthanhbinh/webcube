@@ -126,8 +126,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
       const inherited = ["PlaneDistances", "TurningAngles", "AvailableAngles",
         "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles",
         "TurnAxesWithLayer", "TurnAxesWithPartNo"];
-      for (const axis of Array.from(doc.getElementsByTagName("Axis"))) {
-        if (axis.parentNode !== axesParent) continue;
+      for (const axis of Array.from(axesParent.getElementsByTagName("Axis"))) {
         for (const name of inherited) {
           const parentValue = axesParent.getAttribute(name);
           if (!axis.hasAttribute(name) && parentValue !== null)
