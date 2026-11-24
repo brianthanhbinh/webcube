@@ -12,8 +12,9 @@ unit uXmlUtils;
 interface
 uses
   uVector,
-  Classes, Graphics, DOM;
+  Classes, Graphics, DOM, Variants;
 
+function DomValueToString(const S: Variant): String;
 function GetNodeText(XmlNode: TDomNode): string;
 procedure ReadStringFromXml(XmlNode: TDomNode; const AttrName: String; var Str: String; const Default: String); overload;
 function ReadStringFromXml(XmlNode: TDomNode; const AttrName: String; var Str: String): Boolean; overload;
@@ -49,7 +50,7 @@ uses
   {$IFDEF PAS2JS} JS, {$ENDIF}
   SysUtils, Variants; // for Lazarus-xml and null-safe DOM values
 
-function XmlTextToString(const S: Variant): String;
+function DomValueToString(const S: Variant): String;
 begin
   // Some browser DOM implementations expose an absent NodeValue as null.
   // Keep that from reaching Pascal Pos/TUtils.Parse, which calls JS indexOf.
@@ -90,7 +91,7 @@ begin
   Result := Default;
   i := GetAttrIndex(XmlNode, AttrName);
   if i >= 0 then
-    Result := XmlTextToString(XmlNode.Attributes[i].NodeValue);
+    Result := DomValueToString(XmlNode.Attributes[i].NodeValue);
 end; // GetAttrFromXml
 
 function ReadStringFromXml(XmlNode: TDomNode; const AttrName: String; var Str: String): Boolean; overload;
@@ -101,13 +102,13 @@ begin
     Exit(False);
 
   if AttrName = '' then begin
-    Str := XmlTextToString(GetNodeText(XmlNode));
+    Str := DomValueToString(GetNodeText(XmlNode));
     Exit(Str <> '');
   end;
 
   i := GetAttrIndex(XmlNode, AttrName);
   if i >= 0 then begin
-    Str := XmlTextToString(XmlNode.Attributes[i].NodeValue);
+    Str := DomValueToString(XmlNode.Attributes[i].NodeValue);
     Exit(Str <> ''); // ?? Exit(True)
   end;
 
@@ -115,7 +116,7 @@ begin
   if XmlNode = nil then
     Exit(False);
 
-  Str := XmlTextToString(XmlNode.TextContent);
+  Str := DomValueToString(XmlNode.TextContent);
   Result := Str <> '';
 end; // ReadStringFromXml
 
