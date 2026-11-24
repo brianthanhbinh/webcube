@@ -20,7 +20,9 @@ try {
     report: document.querySelector("#preflight-results")?.textContent || "",
     model: document.querySelector("#model-info")?.textContent || ""
   }));
-  assert.equal(preflight.result, "passed", "Startup self-test failed:\n" + preflight.status + "\n" + preflight.report);
+  assert.equal(preflight.result, "passed", "Startup self-test failed:
+" + preflight.status + "
+" + preflight.report);
   assert.match(preflight.status, /All \d+ startup tests passed/);
   assert.match(preflight.model, /parts/);
 
@@ -75,7 +77,15 @@ try {
   await three.click();
   await page.waitForFunction(() => document.querySelector("#library-dialog")?.open === false);
   const loadedName = await page.evaluate(() => window.pCubes.getModelInfo().name);
-  assert.match(loadedName,/3x3x3/i,"3x3x3 selection left old puzzle loaded: "+loadedName);\n  const threeModel = await page.evaluate(() => window.pCubes.getModelInfo());\n  assert.ok(threeModel.parts >= 20, "3x3x3 did not split into cubies; only "+threeModel.parts+" part(s) loaded");\n  const threeAxes = await page.evaluate(() => window.pCubes.getAxesInfo());\n  assert.ok(threeAxes.length >= 3, "3x3x3 axes were not loaded");\n  const beforeThreeTurn = await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData()));\n  const threeAxis = threeAxes.findIndex(a => a.enabled);\n  assert.equal(await page.evaluate(({axis}) => window.pCubes.turnLayer(axis,0,1),{axis:threeAxis}),true,"3x3x3 manual layer turn failed");\n  assert.notEqual(await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData())),beforeThreeTurn,"3x3x3 turn did not change geometry");
+  assert.match(loadedName,/3x3x3/i,"3x3x3 selection left old puzzle loaded: "+loadedName);
+  const threeModel = await page.evaluate(() => window.pCubes.getModelInfo());
+  assert.ok(threeModel.parts >= 20, "3x3x3 did not split into cubies; only "+threeModel.parts+" part(s) loaded");
+  const threeAxes = await page.evaluate(() => window.pCubes.getAxesInfo());
+  assert.ok(threeAxes.length >= 3, "3x3x3 axes were not loaded");
+  const beforeThreeTurn = await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData()));
+  const threeAxis = threeAxes.findIndex(a => a.enabled);
+  assert.equal(await page.evaluate(({axis}) => window.pCubes.turnLayer(axis,0,1),{axis:threeAxis}),true,"3x3x3 manual layer turn failed");
+  assert.notEqual(await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData())),beforeThreeTurn,"3x3x3 turn did not change geometry");
 
   const xml = await page.evaluate(async () => {
     const { loadBuiltinLibrary } = await import("./library-data.js");
@@ -91,7 +101,9 @@ try {
   assert.equal(await page.evaluate(() => window.pCubes.isPuzzleReady()), true);
   assert.ok(await page.evaluate(() => window.pCubes.getRenderData().faces.length > 0));
 
-  assert.deepEqual(pageErrors, [], "Browser runtime errors:\n" + pageErrors.join("\n"));
+  assert.deepEqual(pageErrors, [], "Browser runtime errors:
+" + pageErrors.join("
+"));
   console.log("PASS: startup preflight, 4-item library, canvas rendering, scramble/undo/redo/reset, XML file upload, and no browser exceptions.");
 } finally {
   await browser.close();
