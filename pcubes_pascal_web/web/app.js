@@ -224,7 +224,9 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     let colors = ["C80000", "FF800A", "0000C8", "009600", "FFFF00", "FFFFFF"];
     const cubeScript = /Cube_Coordinates\.inc/i.test(script);
     const cuboidScript = /Cuboid_Coordinates\.inc/i.test(script);
-    const tetraScript = /Vx\[3\]/i.test(script) && !cubeScript && !cuboidScript;
+    // A tetrahedron has exactly four indexed vertices. Merely seeing Vx[3]
+    // is not enough: cylinder and sphere meshes also define Vx[3] and far more.
+    const tetraScript = /Vx\[3\]/i.test(script) && !/Vx\[4\]/i.test(script) && !cubeScript && !cuboidScript;
     if (cubeScript) {
       const w = number("W", 1);
       vertices = [[-w,-w,-w],[-w,-w,w],[-w,w,-w],[-w,w,w],[w,-w,-w],[w,-w,w],[w,w,-w],[w,w,w]];
@@ -289,7 +291,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
         vertexNode.appendChild(add);
       }
       for (const face of Array.from(part.getElementsByTagName("Face"))) {
-        const match = (face.getAttribute("Color") || "").match(/^Colors\[(\d+)\]$/);
+        const match = (face.getAttribute("Color") || "").match(/^Colors\[\s*(\d+)\s*\]$/);
         if (match) face.setAttribute("Color", colors[Number(match[1])] || colors[0]);
       }
     }
