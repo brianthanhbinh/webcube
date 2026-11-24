@@ -7,6 +7,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
   const status = $("engine-status");
   const info = $("model-info");
   const file = $("puzzle-file");
+  const figureFile = $("figure-file");
+  let pendingPuzzleDoc = null;
   const renderer = new PuzzleRenderer($("puzzle-canvas"));
   renderer.onTurnDrag = (dx, dy, pick) => {
     if (!pick) { status.textContent = "Drag from a visible puzzle face to turn its layer."; return; }
@@ -97,6 +99,20 @@ import { loadBuiltinLibrary } from "./library-data.js";
     }
   }
 
+  function attachFigureDocument(doc, figureDoc) {
+    const root = figureDoc.documentElement.nodeName.toLowerCase() === "figure" ? figureDoc.documentElement : figureDoc.getElementsByTagName("Figure")[0] || figureDoc.documentElement;
+    const nodes = Array.from(root.childNodes).filter(n => n.nodeType === 1 && n.nodeName !== "LoadFrom");
+    if (!nodes.length) throw new Error("Selected figure XML contains no figure elements.");
+    const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
+    if (!loads.length) throw new Error("Puzzle XML has no LoadFrom placeholder inside Figure.");
+    for (const load of loads) {
+      const parent = load.parentNode;
+      for (const node of nodes) parent.insertBefore(doc.importNode(node, true), load);
+      parent.removeChild(load);
+    }
+    return loads.length;
+  }
+
   function resolveExternalFigures(doc) {
     const name = doc.getElementsByTagName("Name")[0]?.textContent || "";
     if (/Rubik's cube 2x2x2/i.test(name)) {
@@ -113,7 +129,11 @@ import { loadBuiltinLibrary } from "./library-data.js";
       for (const attr of ["PlaneDistances", "TurningAngles", "AvailableAngles", "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles"])
         if (!axis.hasAttribute(attr) && axesNode.hasAttribute(attr)) axis.setAttribute(attr, axesNode.getAttribute(attr));
     }
-    for (const node of Array.from(doc.getElementsByTagName("LoadFrom"))) addBuiltinCubeFigure(node);
+    for (const node of Array.from(doc.getElementsByTagName("LoadFrom"))) {
+      const name = (node.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
+      if (name.endsWith("figures/cube.xml") || name === "cube.xml") addBuiltinCubeFigure(node);
+      else throw new Error('Missing external figure "' + node.getAttribute("File") + '". Click Add figure and select its figure XML.');
+    }
   }
 
   function updateModelInfo(api) {
@@ -162,9 +182,26 @@ import { loadBuiltinLibrary } from "./library-data.js";
   }
 
   function loadXmlText(xmlText) {
-    const doc = parseXml(xmlText); resolveExternalFigures(doc);
+    const doc = parseXml(xmlText);
+    pendingPuzzleDoc = doc;
+    resolveExternalFigures(doc);
     if (!call("loadXML", doc.documentElement)) return false;
-    originalXmlText = xmlText; return true;
+    originalXmlText = xmlText;
+    pendingPuzzleDoc = null;
+    $("add-figure").disabled = true;
+    return true;
+  }
+
+  function loadFigureText(xmlText) {
+    if (!pendingPuzzleDoc) throw new Error("Load the main puzzle XML first.");
+    const count = attachFigureDocument(pendingPuzzleDoc, parseXml(xmlText));
+    resolveExternalFigures(pendingPuzzleDoc);
+    if (!call("loadXML", pendingPuzzleDoc.documentElement)) return false;
+    originalXmlText = new XMLSerializer().serializeToString(pendingPuzzleDoc);
+    pendingPuzzleDoc = null;
+    $("add-figure").disabled = true;
+    status.textContent = "Figure added (" + count + " external figure reference(s)).";
+    return true;
   }
 
   function supported(entry) {
@@ -240,6 +277,18 @@ import { loadBuiltinLibrary } from "./library-data.js";
   $("library").addEventListener("click", showLibrary);
   $("library-close").addEventListener("click", () => $("library-dialog").close());
   $("load").addEventListener("click", () => file.click());
+  $("add-figure").addEventListener("click", () => figureFile.click());
+  figureFile.addEventListener("change", async () => {
+    const selected = figureFile.files && figureFile.files[0]; if (!selected) return;
+    try {
+      const bytes = new Uint8Array(await selected.arrayBuffer());
+      const header = new TextDecoder("windows-1252").decode(bytes.slice(0,256));
+      const declared = header.match(/<\\?xml[^>]*encoding\\s*=\\s*["']([^"']+)["']/i);
+      const encoding = declared ? declared[1] : "utf-8";
+      loadFigureText(new TextDecoder(encoding).decode(bytes));
+    } catch (error) { status.textContent = "Add figure failed: " + error.message; }
+    finally { figureFile.value = ""; }
+  });
   file.addEventListener("change", async () => {
     const selected = file.files && file.files[0]; if (!selected) return;
     try {
@@ -249,7 +298,11 @@ import { loadBuiltinLibrary } from "./library-data.js";
       const encoding = declared ? declared[1] : "utf-8";
       let xml = new TextDecoder(encoding).decode(bytes);
       xml = xml.replace(/(<\?xml[^>]*?)\s+encoding\s*=\s*(["'])[^"']+\2/i, "$1");
-      loadXmlText(xml);
+      try { loadXmlText(xml); }
+      catch (error) {
+        $("add-figure").disabled = !pendingPuzzleDoc;
+        status.textContent = "XML needs a figure: " + error.message;
+      }
     } catch (error) { status.textContent = "XML load failed: " + error.message; }
     finally { file.value = ""; }
   });
