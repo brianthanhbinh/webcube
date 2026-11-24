@@ -99,12 +99,66 @@ import { loadBuiltinLibrary } from "./library-data.js";
     }
   }
 
+  function expandKnownFigureScript(puzzleDoc, figureDoc, root) {
+    const scriptNode = root.getElementsByTagName("Script")[0];
+    if (!scriptNode) return;
+    const script = scriptNode.textContent || "";
+    const loads = Array.from(puzzleDoc.getElementsByTagName("LoadFrom"));
+    const load = loads[0];
+    if (!load) throw new Error("Puzzle XML has no LoadFrom placeholder inside Figure.");
+    const number = (name, fallback) => {
+      const raw = load.getAttribute(name);
+      const value = raw === null || raw.trim() === "" ? fallback : Number(raw);
+      if (!Number.isFinite(value)) throw new Error("Invalid figure parameter " + name + ".");
+      return value;
+    };
+    let vertices;
+    let colors = ["C80000", "FF800A", "0000C8", "009600", "FFFF00", "FFFFFF"];
+    const cubeScript = /Cube_Coordinates\.inc/i.test(script);
+    const cuboidScript = /Cuboid_Coordinates\.inc/i.test(script);
+    const tetraScript = /Vx\[3\]/i.test(script) && !cubeScript && !cuboidScript;
+    if (cubeScript) {
+      const w = number("W", 1);
+      vertices = [[-w,-w,-w],[-w,-w,w],[-w,w,-w],[-w,w,w],[w,-w,-w],[w,-w,w],[w,w,-w],[w,w,w]];
+    } else if (cuboidScript) {
+      const w = number("W", 0.5), wx = number("Wx", w), wy = number("Wy", w), wz = number("Wz", w);
+      const dx = number("DWX", 0), dy = number("DWY", 0), dz = number("DWZ", 0);
+      vertices = [
+        [-wx+dx,-wy+dy,-wz+dz],[-wx+dx,-wy+dy,wz+dz],[-wx+dx,wy+dy,-wz+dz],[-wx+dx,wy+dy,wz+dz],
+        [wx+dx,-wy+dy,-wz+dz],[wx+dx,-wy+dy,wz+dz],[wx+dx,wy+dy,-wz+dz],[wx+dx,wy+dy,wz+dz]
+      ];
+    } else if (tetraScript) {
+      const w = number("W", 0.5);
+      vertices = [[w,w,w],[-w,-w,w],[-w,w,-w],[w,-w,-w]];
+      colors = ["C80000", "0000C8", "009600", "FFFF00"];
+    } else {
+      throw new Error("This scripted figure uses unsupported pCubes commands. Supported automatic conversion: Cube, Cuboid and Tetrahedron figures.");
+    }
+    for (const part of Array.from(root.getElementsByTagName("Part"))) {
+      const vertexNode = part.getElementsByTagName("Vertices")[0];
+      if (!vertexNode) continue;
+      vertexNode.removeAttribute("Vectors");
+      vertexNode.replaceChildren();
+      for (const point of vertices) {
+        const add = figureDoc.createElement("Add");
+        add.setAttribute("Vector", point.map(v => String(v)).join(";"));
+        vertexNode.appendChild(add);
+      }
+      for (const face of Array.from(part.getElementsByTagName("Face"))) {
+        const match = (face.getAttribute("Color") || "").match(/^Colors\[(\d+)\]$/);
+        if (match) face.setAttribute("Color", colors[Number(match[1])] || colors[0]);
+      }
+    }
+    scriptNode.remove();
+  }
+
   function attachFigureDocument(doc, figureDoc) {
     const root = figureDoc.documentElement.nodeName.toLowerCase() === "figure" ? figureDoc.documentElement : figureDoc.getElementsByTagName("Figure")[0] || figureDoc.documentElement;
+    expandKnownFigureScript(doc, figureDoc, root);
     const nodes = Array.from(root.childNodes).filter(n => n.nodeType === 1 && n.nodeName !== "LoadFrom");
     if (!nodes.length) throw new Error("Selected figure XML contains no figure elements.");
     if (nodes.some(n => n.nodeName === "Script" || n.getElementsByTagName("Script").length > 0))
-      throw new Error("This figure uses pCubes Script code. The browser Pascal build does not execute the script language yet; use a figure XML with explicit Vertices and Faces instead.");
+      throw new Error("This scripted figure uses unsupported pCubes commands. Supported automatic conversion: Cube, Cuboid and Tetrahedron.");
     const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
     if (!loads.length) throw new Error("Puzzle XML has no LoadFrom placeholder inside Figure.");
     for (const load of loads) {
