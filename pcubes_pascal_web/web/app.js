@@ -24,7 +24,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     renderer.deferGeometry = false;
     const target = window.pCubes?.getRenderData?.();
     if (succeeded && target) {
-      renderer.animateTurn(before, target, axis, turns * (Number(axis.angle) || Math.PI/2), 180, previewAngle);
+       renderer.animateTurn(before, target, axis, turns * (Number(axis.angle) || Math.PI/2), 180, previewAngle, pick.layer, pick.normalSign || 1);
     } else renderer.setGeometry(window.pCubes?.getRenderData?.() || before);
   };
   renderer.onTurnDrag = () => {
@@ -322,8 +322,11 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const axis = (api.getAxesInfo() || []).find(item => item.index === axisNo);
     if (!axis) return false;
     const angle = Number(axis.angle) * direction;
+    renderer.deferGeometry = true;
     const result = call("turnLayer", axisNo, layerNo, direction);
-    if (result) renderer.animateTurn(before, api.getRenderData(), axis, angle);
+    renderer.deferGeometry = false;
+    if (result) renderer.animateTurn(before, api.getRenderData(), axis, angle, 220, 0, layerNo, 1);
+    else renderer.setGeometry(api.getRenderData() || before);
     return result;
   }
 
