@@ -44,7 +44,7 @@ try {
   assert.notEqual(afterTurn,beforeTurn,"Manual turn did not change geometry");
   const canvas = page.locator("#puzzle-canvas");
   const beforeCamera = await canvas.evaluate(el => el.getContext("2d").getImageData(0,0,el.width,el.height).data.join(","));
-  await canvas.hover({position:{x:300,y:200}}); await page.mouse.down(); await page.mouse.move(350,240,{steps:4}); await page.mouse.up();
+  await canvas.hover({position:{x:300,y:200}}); await page.mouse.down({button:"right"}); await page.mouse.move(350,240,{steps:4}); await page.mouse.up({button:"right"});
   const afterCamera = await canvas.evaluate(el => el.getContext("2d").getImageData(0,0,el.width,el.height).data.join(","));
   assert.notEqual(afterCamera,beforeCamera,"Drag did not rotate camera");
 
@@ -75,7 +75,7 @@ try {
   await three.click();
   await page.waitForFunction(() => document.querySelector("#library-dialog")?.open === false);
   const loadedName = await page.evaluate(() => window.pCubes.getModelInfo().name);
-  assert.match(loadedName,/3x3x3/i,"3x3x3 selection left old puzzle loaded: "+loadedName);
+  assert.match(loadedName,/3x3x3/i,"3x3x3 selection left old puzzle loaded: "+loadedName);\n  const threeModel = await page.evaluate(() => window.pCubes.getModelInfo());\n  assert.ok(threeModel.parts >= 20, "3x3x3 did not split into cubies; only "+threeModel.parts+" part(s) loaded");\n  const threeAxes = await page.evaluate(() => window.pCubes.getAxesInfo());\n  assert.ok(threeAxes.length >= 3, "3x3x3 axes were not loaded");\n  const beforeThreeTurn = await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData()));\n  const threeAxis = threeAxes.findIndex(a => a.enabled);\n  assert.equal(await page.evaluate(({axis}) => window.pCubes.turnLayer(axis,0,1),{axis:threeAxis}),true,"3x3x3 manual layer turn failed");\n  assert.notEqual(await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData())),beforeThreeTurn,"3x3x3 turn did not change geometry");
 
   const xml = await page.evaluate(async () => {
     const { loadBuiltinLibrary } = await import("./library-data.js");
