@@ -269,9 +269,11 @@ var
 begin
   EList := TList<Extended>.Create;
   try
-    Values := SplitString(Names, ';');
-    for S in Values do begin
-      PS := XmlTrim(S);
+    S := Names;
+    while XmlTrim(S) <> '' do begin
+      PS := XmlTrim(TUtils.Parse(S, ';'));
+      if PS = '' then
+        Continue;
       // check if it's an array
       if Calc.VarByName(PS + '[0]', V) and (not Calc.VarByName(PS, V1)) and ((VarType(V.Value) = varDouble)) then begin
         i := 0;
