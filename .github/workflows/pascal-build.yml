@@ -133,6 +133,8 @@ jobs:
             sleep 1
           done
           node --check pcubes_pascal_web/web/app.js
+          node --check pcubes_pascal_web/web/generator.js
+          node --check pcubes_pascal_web/web/remote-library.js
           node --check pcubes_pascal_web/web/renderer.js
           node --check pcubes_pascal_web/tests/browser-smoke.mjs
           node pcubes_pascal_web/tests/browser-smoke.mjs

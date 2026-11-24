@@ -130,5 +130,21 @@ try{
  const custom4Model=await page.evaluate(()=>window.pCubes.getModelInfo());
  assert.equal(custom4Model.parts,64,"Custom 4x4 XML cuts were overwritten instead of making 64 pieces");
  assert.deepEqual(errors,[],"Browser errors: "+errors.join(" | "));
- console.log("PASS: preflight, render, compact viewport, left-drag layer turn, right-drag camera rotation, scramble geometry, undo/redo/reset, exact 2x2/3x3 selection, XML upload.");
+ // Remote repository library entries keep their subdirectory labels and resolve figure XML automatically.
+ await page.locator("#library").click();
+ await page.waitForFunction(()=>document.querySelector("#library-dialog")?.open);
+ await page.locator("#library-search").fill("cubes/cube_2x2x2.xml");
+ const remoteCube=page.locator("#library-list button").filter({hasText:"webcube-library / cubes/cube_2x2x2.xml"});
+ await remoteCube.waitFor({state:"visible"});
+ await remoteCube.click();
+ await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open);
+ assert.match((await page.evaluate(()=>window.pCubes.getModelInfo())).name,/2x2x2 Cube/i);
+ assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0),"Remote library puzzle did not render");
+ // Generator UI is available after the Pascal startup self-test.
+ await page.locator("#generator").click();
+ await page.waitForFunction(()=>document.querySelector("#generator-dialog")?.open);
+ assert.equal(await page.locator("#generator-type option").count(),7,"Not all generator families are offered");
+ await page.locator("#generator-close").click();
+ console.log("PASS: Remote repository library integration and generator UI.");
+ console.log("PASS: preflight, render, drag, scramble, undo/redo/reset, local and remote library, generator UI, XML upload.");
 }finally{await browser.close();}
