@@ -145,6 +145,26 @@ try{
  const remoteAxes=await page.evaluate(()=>window.pCubes.getAxesInfo());
  assert.equal(remoteAxes.length,3,"Remote cube must load all three axes");
  assert.deepEqual(remoteAxes.map(a=>[Math.round(a.x),Math.round(a.y),Math.round(a.z)]),[[1,0,0],[0,1,0],[0,0,1]],"NormVector attributes were not loaded for remote axes");
+ // Exercise every official remote puzzle, not just the two small cube fixtures.
+ const catalog=await page.evaluate(async()=>{const m=await import("./remote-library.js");return await m.loadRemoteLibraryIndex();});
+ const remoteFailures=[];
+ for(const entry of catalog.puzzles){
+   if(!document){} // Keep the loop's browser-side actions entirely in Playwright.
+   if(!await page.locator("#library-dialog").evaluate(d=>d.open)){
+     await page.locator("#library").click();
+     await page.waitForFunction(()=>document.querySelector("#library-dialog")?.open);
+   }
+   await page.locator("#library-search").fill(entry.path);
+   const item=page.locator("#library-list button").filter({hasText:"webcube-library / "+entry.path});
+   try{
+     await item.waitFor({state:"visible",timeout:10000});
+     await item.click();
+     await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open || (document.querySelector("#engine-status")?.textContent||"").startsWith("Library load failed"),null,{timeout:30000});
+     const failed=await page.locator("#library-dialog").evaluate(d=>d.open);
+     if(failed) remoteFailures.push({path:entry.path,error:await page.locator("#engine-status").textContent()});
+   }catch(error){remoteFailures.push({path:entry.path,error:String(error).slice(0,300)});}
+ }
+ console.log("REMOTE_CATALOG_SCAN "+JSON.stringify({total:catalog.puzzles.length,failures:remoteFailures}));
  // Generator UI is available after the Pascal startup self-test.
  await page.locator("#generator").click();
  await page.waitForFunction(()=>document.querySelector("#generator-dialog")?.open);
