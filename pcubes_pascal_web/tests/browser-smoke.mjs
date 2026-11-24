@@ -14,15 +14,17 @@ try{
  const axes=await page.evaluate(()=>window.pCubes.getAxesInfo()),axis=axes.find(a=>a.layers>0)?.index;assert.notEqual(axis,undefined,"No turn axis");
  let before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
  assert.equal(await page.evaluate(a=>window.pCubes.turnLayer(a,0,1),axis),true);assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before);
- // Primary gesture: left-drag freely spins the whole puzzle.
- before=await canvas.evaluate(c=>c.getContext("2d").getImageData(0,0,c.width,c.height).data.join(","));
- await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down();await page.mouse.move(bounds.x+bounds.width/2+75,bounds.y+bounds.height/2+42,{steps:6});await page.mouse.up();
- assert.notEqual(await canvas.evaluate(c=>c.getContext("2d").getImageData(0,0,c.width,c.height).data.join(",")),before,"Left-drag did not spin the puzzle");
- // Right-drag turns the selected layer without clicking turn buttons.
+ // Left-drag turns the selected layer without clicking turn buttons.
  await page.locator("#turn-axis").selectOption(String(axis));await page.locator("#turn-layer").selectOption("0");
  before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
- await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down({button:"right"});await page.mouse.move(bounds.x+bounds.width/2+65,bounds.y+bounds.height/2,{steps:5});await page.mouse.up({button:"right"});
- assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Right-drag did not turn selected layer");
+ await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down();await page.mouse.move(bounds.x+bounds.width/2+65,bounds.y+bounds.height/2,{steps:5});await page.mouse.up();
+ assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Left-drag did not turn selected layer");
+ // Right-drag rotates the camera without changing puzzle geometry.
+ before=await canvas.evaluate(c=>c.getContext("2d").getImageData(0,0,c.width,c.height).data.join(","));
+ const geometryBeforeCamera=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
+ await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down({button:"right"});await page.mouse.move(bounds.x+bounds.width/2+75,bounds.y+bounds.height/2+42,{steps:6});await page.mouse.up({button:"right"});
+ assert.notEqual(await canvas.evaluate(c=>c.getContext("2d").getImageData(0,0,c.width,c.height).data.join(",")),before,"Right-drag did not rotate camera");
+ assert.equal(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),geometryBeforeCamera,"Right-drag unexpectedly turned puzzle layer");
  before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
  await page.locator("#scramble").click();await page.waitForTimeout(40);
  assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Scramble did not change puzzle geometry");
@@ -41,5 +43,5 @@ try{
  await page.locator("#puzzle-file").setInputFiles({name:"cube.xml",mimeType:"application/xml",buffer:Buffer.from(xml)});await page.waitForFunction(()=>/Loaded /.test(document.querySelector("#engine-status")?.textContent||""));
  assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0));
  assert.deepEqual(errors,[],"Browser errors: "+errors.join(" | "));
- console.log("PASS: preflight, render, compact viewport, left-drag spin, right-drag layer turn, scramble geometry, undo/redo/reset, exact 2x2/3x3 selection, XML upload.");
+ console.log("PASS: preflight, render, compact viewport, left-drag layer turn, right-drag camera rotation, scramble geometry, undo/redo/reset, exact 2x2/3x3 selection, XML upload.");
 }finally{await browser.close();}
