@@ -327,8 +327,11 @@ export class PuzzleRenderer {
     const ctx=this.ctx,w=this.canvas.clientWidth,h=this.canvas.clientHeight;
     if(!w||!h)return;
     ctx.clearRect(0,0,w,h);ctx.fillStyle="#111923";ctx.fillRect(0,0,w,h);
-    const faces=this.geometry?.faces||[],points=faces.flatMap(f=>f.vertices||[]);
-    if(!points.length){
+    const faces=this.geometry?.faces||[];
+    // Compute the view bounds without flatMap/map intermediates. The old path
+    // allocated several full-size arrays of vertex references and rotated
+    // points on every redraw; large NxNxN puzzles made those spikes enormous.
+    if(!faces.length){
       this.projectedFaces=[];
       ctx.textAlign="center";ctx.fillStyle="#e8edf5";ctx.font="600 18px system-ui";
       ctx.fillText("Load a pCubes puzzle XML",w/2,h/2-10);
@@ -337,8 +340,18 @@ export class PuzzleRenderer {
     }
     const cy=Math.cos(this.rotationY),sy=Math.sin(this.rotationY),cx=Math.cos(this.rotationX),sx=Math.sin(this.rotationX);
     const transform=v=>{const x=v[0]*cy+v[2]*sy,z=-v[0]*sy+v[2]*cy;return[x,v[1]*cx-z*sx,v[1]*sx+z*cx];};
-    const rotated=points.map(transform),xs=rotated.map(v=>v[0]),ys=rotated.map(v=>v[1]);
-    const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity,hasPoint=false;
+    for(const face of faces){
+      const vertices=face.vertices||[];
+      for(let j=0;j<vertices.length;j++){
+        const v=vertices[j],x=v[0]*cy+v[2]*sy,z=-v[0]*sy+v[2]*cy;
+        const rx=x,ry=v[1]*cx-z*sx;
+        if(rx<minX)minX=rx;if(rx>maxX)maxX=rx;
+        if(ry<minY)minY=ry;if(ry>maxY)maxY=ry;
+        hasPoint=true;
+      }
+    }
+    if(!hasPoint){this.projectedFaces=[];return;}
     const span=Math.max(maxX-minX,maxY-minY,1e-6),scale=Math.min(w,h)*.68*this.zoom/span;
     const centerX=(minX+maxX)/2,centerY=(minY+maxY)/2;
     const project=v=>[w/2+(v[0]-centerX)*scale,h/2-(v[1]-centerY)*scale];
@@ -353,15 +366,17 @@ export class PuzzleRenderer {
       const viewVertices=vertices.map(transform);
       const normal=this.faceNormal(viewVertices);
       if(!normal||normal[2]<=1e-8)continue;
-      ordered.push({face,vertices,viewVertices,screen:viewVertices.map(project),
-        depth:viewVertices.reduce((sum,v)=>sum+v[2],0)/viewVertices.length,index});
+      const screen=viewVertices.map(project);
+      let depth=0;
+      for(let j=0;j<viewVertices.length;j++)depth+=viewVertices[j][2];
+      ordered.push({vertices,screen,depth:depth/viewVertices.length,color:face.color});
     }
     ordered.sort((a,b)=>a.depth-b.depth);
     this.projectedFaces=ordered;
     for(const item of ordered){
       if(item.screen.length<3)continue;
-      ctx.beginPath();item.screen.forEach(([x,y],i)=>{if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
-      ctx.closePath();ctx.fillStyle=this.color(item.face.color);ctx.fill();ctx.strokeStyle="#101820";ctx.lineWidth=1.25;ctx.stroke();
+      ctx.beginPath();for(let i=0;i<item.screen.length;i++){const [x,y]=item.screen[i];if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+      ctx.closePath();ctx.fillStyle=this.color(item.color);ctx.fill();ctx.strokeStyle="#101820";ctx.lineWidth=1.25;ctx.stroke();
     }
   }
   destroy(){this.resizeObserver.disconnect();}
