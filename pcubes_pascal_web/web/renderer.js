@@ -13,6 +13,7 @@ export class PuzzleRenderer {
     this.projectedFaces=[];
     this.onTurnDrag=null;
     this.onTurnCommit=null;
+    this.cameraSnapEnabled=false;
     canvas.style.touchAction="none";
     canvas.addEventListener("contextmenu",e=>e.preventDefault());
     canvas.addEventListener("pointerdown",e=>{
@@ -53,7 +54,7 @@ export class PuzzleRenderer {
         const turns=Math.round(p.previewAngle/step);
         if(turns&&this.onTurnCommit)this.onTurnCommit(p.pick,turns,p.before,p.axis,p.previewAngle);
         else this.animateSnapBack(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
-      } else if(p.button===2||p.button===1){
+      } else if((p.button===2||p.button===1)&&this.cameraSnapEnabled){
         this.snapCameraTo45();
       } else if(p.button===0&&p.moved&&this.onTurnDrag){
         this.onTurnDrag(e.clientX-p.downX,e.clientY-p.downY,p.pick);
@@ -132,7 +133,7 @@ export class PuzzleRenderer {
 
     const layerCenter = selectedSurface - normalSign * spacing / 2;
     const tolerance = spacing * 0.55 + 1e-4;
-    return faces.map(face => {
+    const selected = faces.map(face => {
       const vertices = face.vertices || [];
       if (!vertices.length) return false;
       const center = vertices.reduce(
@@ -141,6 +142,38 @@ export class PuzzleRenderer {
       );
       return Math.abs(this.dot(center, n) - layerCenter) <= tolerance;
     });
+
+    // Polyhedral cuts (notably Megaminx) expose several polygons per physical
+    // piece. Expand each hit face to the rest of its connected piece.
+    if (this.geometryKind === "minx") {
+      const vertexFaces = new Map();
+      faces.forEach((face, faceIndex) => {
+        for (const vertex of face.vertices || []) {
+          const key = vertex.map(value => Number(value).toFixed(5)).join(",");
+          if (!vertexFaces.has(key)) vertexFaces.set(key, []);
+          vertexFaces.get(key).push(faceIndex);
+        }
+      });
+      const expanded = selected.slice();
+      const queue = selected.map((yes, index) => yes ? index : -1).filter(index => index >= 0);
+      for (let cursor = 0; cursor < queue.length; cursor++) {
+        const index = queue[cursor], counts = new Map();
+        for (const vertex of faces[index].vertices || []) {
+          const key = vertex.map(value => Number(value).toFixed(5)).join(",");
+          for (const neighbor of vertexFaces.get(key) || []) {
+            if (neighbor !== index) counts.set(neighbor, (counts.get(neighbor) || 0) + 1);
+          }
+        }
+        for (const [neighbor, shared] of counts) {
+          if (shared >= 2 && !expanded[neighbor]) {
+            expanded[neighbor] = true;
+            queue.push(neighbor);
+          }
+        }
+      }
+      return expanded;
+    }
+    return selected;
   }
   animateTurn(before, after, axis, angle, duration = 220, startAngle = 0, layer = 0, normalSign = 1) {
     if (!before?.faces || !after?.faces || !axis || !Number.isFinite(angle)) {
