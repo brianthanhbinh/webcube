@@ -232,7 +232,6 @@ begin
 end;
 
 begin
-  Randomize;
   CurrentPuzzle := TPuzzle.Create;
   OriginalXmlRoot := nil;
   CurrentPuzzle.DisableAnimation;
