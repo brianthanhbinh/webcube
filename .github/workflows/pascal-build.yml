@@ -8,6 +8,7 @@ on:
       - "pcubes_pascal_web/source/**"
       - "pcubes_pascal_web/web/**"
       - "pcubes_pascal_web/webcompat/**"
+      - "pcubes_pascal_web/tests/**"
       - "pcubes_pascal_web/build/**"
       - ".github/workflows/pascal-build.yml"
   workflow_dispatch:
