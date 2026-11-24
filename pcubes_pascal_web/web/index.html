@@ -3,39 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Browser port of pCubes, combining the Pascal puzzle engine with a web interface and Canvas renderer.">
+  <meta name="description" content="Browser port of pCubes with the Pascal puzzle engine and built-in puzzle library.">
   <title>pCubes — Pascal Web Port</title>
-  <!-- Trigger a fresh Vercel deployment after the generated Pascal assets were committed. -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>pCubes <span class="muted">/ Pascal Web Port</span></h1>
-    <small>Pascal engine · HTML interface · Canvas renderer</small>
-  </header>
+  <header><h1>pCubes <span class="muted">/ Pascal Web Port</span></h1><small>Pascal engine · HTML interface · Canvas renderer</small></header>
   <main>
     <aside>
       <b>Puzzle controls</b>
       <div class="group">
-        <button id="scramble" disabled>Scramble</button>
-        <button id="undo" disabled>Undo</button>
-        <button id="redo" disabled>Redo</button>
-        <button id="reset" disabled>Reset</button>
-        <button id="library" disabled>Open library</button>
-        <button id="load">Load puzzle XML</button>
+        <button id="scramble" disabled>Scramble</button><button id="undo" disabled>Undo</button><button id="redo" disabled>Redo</button><button id="reset" disabled>Reset</button>
+        <button id="library" disabled>Open library</button><button id="load">Load puzzle XML</button>
         <input id="puzzle-file" type="file" accept=".xml,text/xml" hidden>
       </div>
-      <p class="muted">Puzzle rules and transformations stay in Pascal. Browser controls and drawing run in JavaScript.</p>
+      <p class="muted">Choose a built-in puzzle or load your own XML.</p>
       <p id="engine-status" role="status" aria-live="polite">Loading compiled Pascal module…</p>
       <p id="model-info" class="muted">Waiting for Pascal API…</p>
     </aside>
-    <section class="stage" aria-label="Puzzle viewport">
-      <canvas id="puzzle-canvas" aria-label="3D puzzle rendering area"></canvas>
-    </section>
+    <section class="stage" aria-label="Puzzle viewport"><canvas id="puzzle-canvas" aria-label="3D puzzle rendering area"></canvas></section>
   </main>
+  <dialog id="library-dialog">
+    <div class="library-heading"><div><h2>Puzzle library</h2><p class="muted">Built-in puzzles from the supplied pCubes library.</p></div><button id="library-close" type="button">Close</button></div>
+    <input id="library-search" type="search" placeholder="Search puzzles…" autocomplete="off">
+    <div id="library-list"></div>
+  </dialog>
   <footer>Pascal puzzle model · JavaScript Canvas renderer · browser interface</footer>
-  <script src="rtl.js"></script>
-  <script src="pcubes_web.js"></script>
-  <script type="module" src="app.js"></script>
+  <script src="rtl.js"></script><script src="pcubes_web.js"></script><script type="module" src="app.js"></script>
 </body>
 </html>
