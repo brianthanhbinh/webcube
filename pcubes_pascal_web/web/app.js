@@ -205,7 +205,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     resolveExternalFigures(cubeDoc);
     recordTest("Pascal loadXML", loadXmlText(cube.xml));
     const model = api.getModelInfo();
-    recordTest("Cube model ready", api.isPuzzleReady() && model.ready, model.parts + " parts, " + model.axes + " axes");
+    recordTest("Cube model ready", api.isPuzzleReady() && model.ready, model.parts + " parts, " + model.axes + " axes; " + JSON.stringify(api.getAxesInfo()));
     if (/3x3x3/i.test(cube.name)) recordTest("3x3 cubie split", model.parts >= 20, model.parts + " cubies");
     let geometry = api.getRenderData();
     recordTest("3D geometry export", !!geometry && Array.isArray(geometry.faces) && geometry.faces.length > 0,
