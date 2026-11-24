@@ -8,7 +8,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
   const info = $("model-info");
   const file = $("puzzle-file");
   const renderer = new PuzzleRenderer($("puzzle-canvas"));
-  const controls = ["scramble", "undo", "redo", "reset", "library"];
+  const controls = ["scramble", "undo", "redo", "reset"];
   let originalXmlText = "";
   let libraryData = null;
 
@@ -49,6 +49,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const model = api.getModelInfo();
     info.textContent = `Pascal ${api.getVersion()} · model ${model.connected ? "connected" : "offline"} · ${model.parts} parts · ${model.axes} axes · undo ${model.undoCount} · redo ${model.redoCount}`;
     for (const id of controls) $(id).disabled = !model.ready;
+    $("library").disabled = false;
     $("load").disabled = false;
     if (typeof api.getRenderData === "function") renderer.setGeometry(api.getRenderData());
   }
