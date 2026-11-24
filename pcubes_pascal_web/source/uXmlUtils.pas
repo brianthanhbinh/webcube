@@ -47,14 +47,20 @@ implementation
 uses
   uScript, uUtils,
   {$IFDEF PAS2JS} JS, {$ENDIF}
-  SysUtils; // for Lazarus-xml
+  SysUtils, Variants; // for Lazarus-xml and null-safe DOM values
 
-function XmlTextToString(const S: String): String;
+function XmlTextToString(const S: Variant): String;
 begin
+  // Some browser DOM implementations expose an absent NodeValue as null.
+  // Keep that from reaching Pascal Pos/TUtils.Parse, which calls JS indexOf.
+  if VarIsNull(S) or VarIsEmpty(S) then begin
+    Result := '';
+    Exit;
+  end;
   {$IFDEF PAS2JS}
-  Result := S;
+  Result := VarToStr(S);
   {$ELSE}
-  Result := UTF8ToString(S);
+  Result := UTF8ToString(VarToStr(S));
   {$ENDIF}
 end;
 
