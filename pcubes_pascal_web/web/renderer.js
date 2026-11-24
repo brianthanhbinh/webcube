@@ -45,22 +45,22 @@ export class PuzzleRenderer {
       } else if(p.button===0&&p.hit&&p.before){
         // Resolve the turning axis and slice once per drag. Keep that exact
         // slice locked until pointerup so the gesture cannot jump layers.
+        const dx0=e.clientX-p.downX,dy0=e.clientY-p.downY;
         if(!p.dragTarget){
-          const dx0=e.clientX-p.downX,dy0=e.clientY-p.downY;
           p.dragTarget=this.pickLayerForDrag(p.hit,p.axes,dx0,dy0);
-          // Preserve the established face-drag behavior if the swipe is too
-          // ambiguous to infer a perpendicular middle slice. The chosen
-          // target is still latched for the remainder of this gesture.
+          // If the swipe cannot identify a perpendicular slice, retain the
+          // original face-selected layer. Lock that fallback for this gesture.
           if(!p.dragTarget&&p.pick&&p.axis){
             const horizontal=Math.abs(dx0)>=Math.abs(dy0);
-            p.dragTarget={pick:p.pick,axis:p.axis,drag:horizontal?dx0:dy0,direction:1};
+            p.dragTarget={pick:p.pick,axis:p.axis,direction:1,dragAxis:horizontal?"x":"y"};
           }
         }
         const target=p.dragTarget;
         if(target){
-          const dx0=e.clientX-p.downX,dy0=e.clientY-p.downY;
-          if(Math.abs(target.drag)<4)
-            target.drag=Math.abs(dx0)>=Math.abs(dy0)?dx0:dy0;
+          // Keep the layer fixed, but continuously measure the full drag
+          // distance from pointerdown so the preview follows the pointer.
+          target.drag=target.dragAxis==="x"?dx0:target.dragAxis==="y"?dy0:
+            dx0*target.perpendicular[0]+dy0*target.perpendicular[1];
           p.pick=target.pick;p.axis=target.axis;
           canvas.dataset.pickedAxis=String(p.pick.axis);canvas.dataset.pickedLayer=String(p.pick.layer);
           const step=Number(p.axis.angle)||Math.PI/2;
@@ -352,8 +352,8 @@ export class PuzzleRenderer {
     const projected=[a[0]*cy+a[2]*sy, -(a[1]*cx-(-a[0]*sy+a[2]*cy)*sx)];
     const plen=Math.hypot(...projected)||1;
     const perpendicular=[-projected[1]/plen,projected[0]/plen];
-    const drag=dx*perpendicular[0]+dy*perpendicular[1];
-    return {pick:{axis:chosen.axis.index,layer,normalSign:1},axis:chosen.axis,drag,direction:chosen.sign};
+    return {pick:{axis:chosen.axis.index,layer,normalSign:1},axis:chosen.axis,
+      perpendicular,direction:chosen.sign};
   }
   pickLayer(x,y,axes){
     // Test frontmost polygons first so overlapping cubies select the visible face.
