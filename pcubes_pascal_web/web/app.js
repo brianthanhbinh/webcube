@@ -87,10 +87,10 @@ import { loadBuiltinLibrary } from "./library-data.js";
     }
     if (rootStart < 0 || rootEnd < 0)
       throw new Error("No complete XML document root was found.");
-    let prefixStart = source.lastIndexOf("<?xml", rootStart);
-    if (prefixStart < 0) prefixStart = rootStart;
-    else if (!/^\s*<\?xml[\s\S]*?\?>\s*(?:<!DOCTYPE[\s\S]*?>\s*)?$/i.test(source.slice(prefixStart, rootStart)))
-      prefixStart = rootStart;
+    const declarationStart = source.lastIndexOf("<?xml", rootStart);
+    const doctypeStart = source.lastIndexOf("<!DOCTYPE", rootStart);
+    const prefixStart = declarationStart >= 0 ? declarationStart :
+      doctypeStart >= 0 ? doctypeStart : rootStart;
     return source.slice(prefixStart, rootEnd);
   }
 
