@@ -75,27 +75,69 @@ export class PuzzleRenderer {
     const vector = [Number(axis?.x), Number(axis?.y), Number(axis?.z)];
     const length = Math.hypot(...vector);
     if (!length || !faces.length) return [];
-    const n = vector.map(v => v / length), values = [];
+    const n = vector.map(v => v / length);
+
+    // First find the parallel outer faces. Their planes identify the requested
+    // layer, but they are NOT the complete layer: side faces have perpendicular
+    // normals and must rotate with the same cubies.
+    const surfaceValues = [];
     for (const face of faces) {
-      const vertices = face.vertices || [], normal = this.faceNormal(vertices);
+      const vertices = face.vertices || [];
+      const normal = this.faceNormal(vertices);
       if (!normal || this.dot(normal, n) * normalSign < .82) continue;
-      const center = vertices.reduce((sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length), [0, 0, 0]);
+      const center = vertices.reduce(
+        (sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length),
+        [0, 0, 0]
+      );
       const value = this.dot(center, n);
-      if (!values.some(old => Math.abs(old - value) < 1e-4)) values.push(value);
+      if (!surfaceValues.some(old => Math.abs(old - value) < 1e-4))
+        surfaceValues.push(value);
     }
-    values.sort((a, b) => a - b);
-    if (!values.length) return [];
-    const selected = values[Math.max(0, Math.min(values.length - 1,
-      Math.round(layer * (values.length - 1) / Math.max(1, (axis.layers || values.length) - 1))))];
+    surfaceValues.sort((a, b) => a - b);
+    if (!surfaceValues.length) return [];
+
+    const selectedSurface = surfaceValues[Math.max(0, Math.min(
+      surfaceValues.length - 1,
+      Math.round(layer * (surfaceValues.length - 1) /
+        Math.max(1, (axis.layers || surfaceValues.length) - 1))
+    ))];
+
+    // Estimate layer thickness from the spacing between adjacent parallel
+    // surface planes. The cubie center lies half a layer inward from the
+    // selected outer surface. Include faces by their center's axial position,
+    // regardless of their own normal, so side faces rotate too.
+    const gaps = [];
+    for (let i = 1; i < surfaceValues.length; i++) {
+      const gap = surfaceValues[i] - surfaceValues[i - 1];
+      if (gap > 1e-4) gaps.push(gap);
+    }
+    const spacing = gaps.length
+      ? gaps[Math.floor(gaps.length / 2)]
+      : 0;
+    if (!spacing) {
+      // A one-layer object has no neighboring plane from which to infer its
+      // thickness; retain a conservative coplanar selection.
+      return faces.map(face => {
+        const vertices = face.vertices || [];
+        if (!vertices.length) return false;
+        const center = vertices.reduce(
+          (sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length),
+          [0, 0, 0]
+        );
+        return Math.abs(this.dot(center, n) - selectedSurface) < 1e-4;
+      });
+    }
+
+    const layerCenter = selectedSurface - normalSign * spacing / 2;
+    const tolerance = spacing * 0.55 + 1e-4;
     return faces.map(face => {
       const vertices = face.vertices || [];
       if (!vertices.length) return false;
-      const center = vertices.reduce((sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length), [0, 0, 0]);
-      const coordinate = this.dot(center, n);
-      let nearest = values[0];
-      for (const value of values)
-        if (Math.abs(value - coordinate) < Math.abs(nearest - coordinate)) nearest = value;
-      return Math.abs(nearest - selected) < 1e-4;
+      const center = vertices.reduce(
+        (sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length),
+        [0, 0, 0]
+      );
+      return Math.abs(this.dot(center, n) - layerCenter) <= tolerance;
     });
   }
   animateTurn(before, after, axis, angle, duration = 220, startAngle = 0, layer = 0, normalSign = 1) {
