@@ -537,7 +537,6 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   }
 
   function turnLayerAnimated(axisNo, layerNo, direction) {
-    if (renderer.isTurning) return false;
     const api = window.pCubes;
     if (!api?.getRenderData || !api?.getAxesInfo) return call("turnLayer", axisNo, layerNo, direction);
     const before = api.getRenderData();
@@ -577,10 +576,6 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   }
 
   function call(name, ...args) {
-    if (renderer.isTurning && ["turnLayer", "scramble", "undo", "redo", "reset", "loadXML"].includes(name)) {
-      status.textContent = "Please wait for the current turn animation to finish.";
-      return false;
-    }
     const api = window.pCubes;
     if (!api || typeof api[name] !== "function") { status.textContent = "Pascal API unavailable: " + name; return false; }
     try {
