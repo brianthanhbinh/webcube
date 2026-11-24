@@ -27,7 +27,7 @@ export async function generatePuzzle(kind,spec,onStatus){
  if(!scripts[kind])throw new Error("Unknown generator.");
  const py=await getRuntime(onStatus);onStatus?.("Downloading official "+kind+" generator…");
  for(const s of scripts[kind])await fetchScript(py,s);
- if(kind==="minx")await fetchFigure(py,"megaminx_figure.xml");
+ if(kind==="minx")await fetchFigure(py,"Dodecahedron.xml");
  const base="/home/pyodide/webcube_generators";
  py.runPython("import os,sys,importlib.util\nos.chdir("+JSON.stringify(base)+")\nsys.path.insert(0,"+JSON.stringify(base)+")");
  py.globals.set("webcube_kind",kind);py.globals.set("webcube_spec",spec);
@@ -71,9 +71,9 @@ elif kind=="minx":
  name,xml,_=m["make_xml"](n)
  # Use the exact reference figure from the library repository. The
  # puzzle XML produced by minx.py points to this filename.
- fp=os.path.join(base,"Figures","megaminx_figure.xml")
- if not os.path.isfile(fp):raise FileNotFoundError("Missing Figures/megaminx_figure.xml")
- figures["Figures/megaminx_figure.xml"]=open(fp,encoding="utf-8").read()
+ fp=os.path.join(base,"Figures","Dodecahedron.xml")
+ if not os.path.isfile(fp):raise FileNotFoundError("Missing Figures/Dodecahedron.xml")
+ figures["Figures/Dodecahedron.xml"]=open(fp,encoding="utf-8").read()
 json.dumps({"name":name,"xml":xml,"figures":figures})
 `;
  return JSON.parse(await py.runPythonAsync(code));
