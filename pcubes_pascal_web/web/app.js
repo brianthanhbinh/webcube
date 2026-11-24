@@ -162,7 +162,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const cubeDoc = parseXml(cube.xml);
     recordTest("XML parser", !!cubeDoc.documentElement && cubeDoc.getElementsByTagName("parsererror").length === 0);
     resolveExternalFigures(cubeDoc);
-    recordTest("Pascal loadXML", api.loadXML(cubeDoc.documentElement) === true);
+    recordTest("Pascal loadXML", loadXmlText(cube.xml));
     const model = api.getModelInfo();
     recordTest("Cube model ready", api.isPuzzleReady() && model.ready, model.parts + " parts, " + model.axes + " axes");
     let geometry = api.getRenderData();
@@ -179,10 +179,11 @@ import { loadBuiltinLibrary } from "./library-data.js";
     recordTest("Redo", api.isPuzzleReady());
     api.reset();
     recordTest("Reset API", api.isPuzzleReady());
+    geometry = api.getRenderData();
+    recordTest("Reset geometry", Array.isArray(geometry.faces) && geometry.faces.length > 0);
 
-    // The UI reset operation reloads the original XML. Verify that path restores
-    // a ready model and fresh render data before enabling the app.
-    recordTest("Reset/reload", api.loadXML(cubeDoc.documentElement) === true && api.isPuzzleReady());
+    // Also verify the same XML reload path used by the visible Reset button.
+    recordTest("Reset/reload", loadXmlText(originalXmlText) && api.isPuzzleReady());
     geometry = api.getRenderData();
     recordTest("Post-reset rendering", Array.isArray(geometry.faces) && geometry.faces.length > 0);
     renderer.setGeometry(geometry);
