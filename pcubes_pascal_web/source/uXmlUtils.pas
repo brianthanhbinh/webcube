@@ -116,6 +116,8 @@ end; // ReadStringFromXml
 function ReadStringFromXml(XmlNode: TDomNode; const AttrName: String): string; overload;
 var Str: String = '';
 begin
+  // Missing XML values must be empty strings, never null/undefined JS strings.
+  Result := '';
   if ReadStringFromXml(XmlNode, AttrName, Str) then
     Result := Str
 end;
