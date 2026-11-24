@@ -290,7 +290,15 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       const indices=Object.keys(arrays.Vx||{}).map(Number).filter(i=>Object.prototype.hasOwnProperty.call(arrays.Vy||{},i)&&Object.prototype.hasOwnProperty.call(arrays.Vz||{},i)).sort((a,b)=>a-b);
       if(!indices.length)return;
       vertices=indices.map(i=>[arrays.Vx[i],arrays.Vy[i],arrays.Vz[i]]);
-      for(let i=0;i<6;i++)if(arrays.Colors?.[i]!==undefined)colors[i]=String(arrays.Colors[i]);
+      // Megaminx figures define twelve face colours (one per pentagonal
+      // face). Preserve every indexed colour instead of silently replacing
+      // Colors[6..11] with the first six defaults.
+      const colorIndexes=Object.keys(arrays.Colors||{}).map(Number).filter(Number.isInteger);
+      if(colorIndexes.length){
+        colors=[];
+        for(const index of colorIndexes.sort((a,b)=>a-b))
+          colors[index]=String(arrays.Colors[index]);
+      }
     }
     for (const part of Array.from(root.getElementsByTagName("Part"))) {
       const vertexNode = part.getElementsByTagName("Vertices")[0];
