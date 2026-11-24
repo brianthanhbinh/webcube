@@ -286,7 +286,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
       const bytesPromise = item.file.arrayBuffer();
       item.promise = bytesPromise.then(bytes => {
         const header = new TextDecoder("windows-1252").decode(bytes.slice(0,256));
-        const declared = header.match(/<\\?xml[^>]*encoding\\s*=\\s*["']([^"']+)["']/i);
+        const declared = header.match(/<\?xml[^>]*encoding\s*=\s*["']([^"']+)["']/i);
         const encoding = declared ? declared[1] : "utf-8";
         item.doc = parseXml(new TextDecoder(encoding).decode(bytes));
       });
