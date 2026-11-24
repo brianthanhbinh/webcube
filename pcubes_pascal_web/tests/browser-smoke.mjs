@@ -37,7 +37,7 @@ try {
 
   const axes = await page.evaluate(() => window.pCubes.getAxesInfo());
   assert.ok(axes.length > 0 && axes.some(axis => axis.layers > 0), "No layer-turn axes exported");
-  const axisIndex = axes.findIndex(axis => axis.layers > 0);
+  const axisIndex = axes.find(axis => axis.layers > 0).index;
   const beforeTurn = await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData()));
   assert.equal(await page.evaluate(({axis}) => window.pCubes.turnLayer(axis,0,1), {axis:axisIndex}), true, "Manual turn API failed");
   const afterTurn = await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData()));
@@ -81,7 +81,7 @@ try {
   const threeAxes = await page.evaluate(() => window.pCubes.getAxesInfo());
   assert.ok(threeAxes.length >= 3, "3x3x3 axes were not loaded");
   const beforeThreeTurn = await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData()));
-  const threeAxis = threeAxes.findIndex(a => a.enabled);
+  const threeAxis = threeAxes.find(a => a.enabled).index;
   assert.equal(await page.evaluate(({axis}) => window.pCubes.turnLayer(axis,0,1),{axis:threeAxis}),true,"3x3x3 manual layer turn failed");
   assert.notEqual(await page.evaluate(() => JSON.stringify(window.pCubes.getRenderData())),beforeThreeTurn,"3x3x3 turn did not change geometry");
 
