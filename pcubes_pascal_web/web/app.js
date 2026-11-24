@@ -195,8 +195,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
 
     const library = await loadBuiltinLibrary();
     recordTest("Library data", Array.isArray(library.puzzles) && library.puzzles.length > 0, library.puzzles.length + " entries");
-    const cube = library.puzzles.find(entry => /2x2x2/i.test(entry.name)) ||
-                 library.puzzles.find(entry => /3x3x3/i.test(entry.name) && supported(entry));
+    const cube = library.puzzles.find(entry => /3x3x3/i.test(entry.name) && supported(entry)) ||
+                 library.puzzles.find(entry => /2x2x2/i.test(entry.name) && supported(entry));
     recordTest("Built-in cube entry", !!cube, cube ? cube.name : "No supported cube found");
     const cubeDoc = parseXml(cube.xml);
     recordTest("XML parser", !!cubeDoc.documentElement && cubeDoc.getElementsByTagName("parsererror").length === 0);
@@ -206,6 +206,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     recordTest("Pascal loadXML", loadXmlText(cube.xml));
     const model = api.getModelInfo();
     recordTest("Cube model ready", api.isPuzzleReady() && model.ready, model.parts + " parts, " + model.axes + " axes");
+    if (/3x3x3/i.test(cube.name)) recordTest("3x3 cubie split", model.parts >= 20, model.parts + " cubies");
     let geometry = api.getRenderData();
     recordTest("3D geometry export", !!geometry && Array.isArray(geometry.faces) && geometry.faces.length > 0,
       geometry && geometry.faces ? geometry.faces.length + " faces" : "No faces");
@@ -215,7 +216,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const beforeScramble = JSON.stringify(api.getRenderData());
     const scrambled = api.scramble();
     const afterScramble = JSON.stringify(api.getRenderData());
-    recordTest("Scramble", scrambled === true && afterScramble !== beforeScramble, "must change exported geometry");
+    recordTest("Scramble", scrambled === true && afterScramble !== beforeScramble, "must change exported geometry; axes=" + JSON.stringify(api.getAxesInfo()));
     api.undo();
     recordTest("Undo", api.isPuzzleReady());
     api.redo();
