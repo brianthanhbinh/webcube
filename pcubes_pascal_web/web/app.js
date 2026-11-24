@@ -8,12 +8,16 @@ import { loadBuiltinLibrary } from "./library-data.js";
   const info = $("model-info");
   const file = $("puzzle-file");
   const renderer = new PuzzleRenderer($("puzzle-canvas"));
-  renderer.onTurnDrag = (dx, dy) => {
-    const axis = Number($("turn-axis").value), layer = Number($("turn-layer").value);
-    if (!Number.isInteger(axis) || !Number.isInteger(layer)) return;
+  renderer.onTurnDrag = (dx, dy, pick) => {
+    if (!pick) { status.textContent = "Drag from a visible puzzle face to turn its layer."; return; }
     const delta = Math.abs(dx) >= Math.abs(dy) ? dx : -dy;
     if (Math.abs(delta) < 18) return;
-    call("turnLayer", axis, layer, delta >= 0 ? 1 : -1);
+    const axisSelect = $("turn-axis"), layerSelect = $("turn-layer");
+    axisSelect.value = String(pick.axis);
+    refreshTurnControls(window.pCubes);
+    layerSelect.value = String(pick.layer);
+    const direction = (delta >= 0 ? 1 : -1) * (pick.normalSign || 1);
+    call("turnLayer", pick.axis, pick.layer, direction);
   };
   const controls = ["scramble", "undo", "redo", "reset", "turn-ccw", "turn-cw"];
   let originalXmlText = "";
@@ -206,7 +210,27 @@ import { loadBuiltinLibrary } from "./library-data.js";
   $("turn-ccw").addEventListener("click", () => call("turnLayer", Number($("turn-axis").value), Number($("turn-layer").value), -1));
   $("turn-cw").addEventListener("click", () => call("turnLayer", Number($("turn-axis").value), Number($("turn-layer").value), 1));
   $("view-reset").addEventListener("click", () => renderer.resetView());
-  $("scramble").addEventListener("click", () => call("scramble"));
+  $("scramble").addEventListener("click", () => {
+    const api = window.pCubes;
+    if (!api?.isPuzzleReady?.()) { status.textContent = "Load a puzzle before scrambling."; return; }
+    const axes = api.getAxesInfo().filter(axis => axis.enabled && axis.layers > 0);
+    const moves = [];
+    let previous = null;
+    for (let attempt = 0; attempt < 500 && moves.length < 30; attempt++) {
+      if (!axes.length) break;
+      const axis = axes[Math.floor(Math.random() * axes.length)];
+      const layer = Math.floor(Math.random() * axis.layers);
+      const direction = Math.random() < 0.5 ? -1 : 1;
+      if (previous && previous.axis === axis.index && previous.layer === layer && previous.direction === -direction) continue;
+      if (call("turnLayer", axis.index, layer, direction)) {
+        moves.push({ axis: axis.index, layer, direction });
+        previous = moves[moves.length - 1];
+      }
+    }
+    status.textContent = moves.length
+      ? "Scrambled: " + moves.length + " random layer turns."
+      : "Scramble failed: this puzzle has no movable layers.";
+  });
   $("undo").addEventListener("click", () => call("undo"));
   $("redo").addEventListener("click", () => call("redo"));
   $("reset").addEventListener("click", () => {
