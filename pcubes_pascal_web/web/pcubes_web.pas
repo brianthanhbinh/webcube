@@ -1,7 +1,7 @@
 program pcubes_web;
 {$mode objfpc}{$H+}
 { Browser bridge for the original Pascal pCubes puzzle model. }
-uses JS, Web, SysUtils, DOM, uPuzzle, uXmlReadWrite, uPart, uFace, uVector;
+uses JS, Web, SysUtils, Math, DOM, uPuzzle, uXmlReadWrite, uPart, uFace, uVector, uAxis;
 var
   StatusNode: TJSElement;
   API: TJSObject;
@@ -55,6 +55,7 @@ begin
   Result := TJSArray.new;
   if CurrentPuzzle = nil then Exit;
   for I := 0 to CurrentPuzzle.Axes.Count - 1 do begin
+    if (Abs(CurrentPuzzle.Axes[I].NormVector.X) + Abs(CurrentPuzzle.Axes[I].NormVector.Y) + Abs(CurrentPuzzle.Axes[I].NormVector.Z)) < 0.0001 then Continue;
     AxisInfo := TJSObject.new;
     AxisInfo['index'] := I;
     AxisInfo['layers'] := CurrentPuzzle.Axes[I].Layers.Count;
@@ -97,6 +98,7 @@ begin
   Turns := 0;
   for I := 1 to 30 do begin
     AxisNo := Random(CurrentPuzzle.Axes.Count);
+    if (Abs(CurrentPuzzle.Axes[AxisNo].NormVector.X) + Abs(CurrentPuzzle.Axes[AxisNo].NormVector.Y) + Abs(CurrentPuzzle.Axes[AxisNo].NormVector.Z)) < 0.0001 then Continue;
     if not CurrentPuzzle.Axes[AxisNo].Enabled then Continue;
     if CurrentPuzzle.Axes[AxisNo].Layers.Count = 0 then Continue;
     LayerNo := Random(CurrentPuzzle.Axes[AxisNo].Layers.Count);
@@ -173,6 +175,30 @@ end;
 procedure APIOpenLibrary;
 begin SetStatus('Choose a puzzle XML file to load a puzzle.'); end;
 
+procedure ConfigureStandardCube(Puzzle: TPuzzle);
+var I, J: Integer; Distances: array of Extended; PuzzleName: String;
+begin
+  PuzzleName := Puzzle.Header.Name;
+  if Pos('3x3x3', PuzzleName) > 0 then begin
+    SetLength(Distances, 2);
+    Distances[0] := -1/6;
+    Distances[1] := 1/6;
+  end else if Pos('2x2x2', PuzzleName) > 0 then begin
+    SetLength(Distances, 1);
+    Distances[0] := 0;
+  end else
+    Exit;
+
+  for I := 0 to Puzzle.Axes.Count - 1 do begin
+    if (Abs(Puzzle.Axes[I].NormVector.X) + Abs(Puzzle.Axes[I].NormVector.Y) +
+        Abs(Puzzle.Axes[I].NormVector.Z)) < 0.0001 then Continue;
+    Puzzle.Axes[I].CreateLayers(Distances);
+    for J := 0 to Puzzle.Axes[I].Layers.Count - 1 do
+      Puzzle.Axes[I].Layers[J].TurningAngle := Pi/2;
+  end;
+  Puzzle.PositionsInvalidate;
+end;
+
 function APILoadXML(XmlRoot: TJSObject): Boolean;
 var
   NewPuzzle: TPuzzle;
@@ -190,6 +216,8 @@ begin
       SetStatus('XML load failed: pCubes rejected the puzzle definition.');
       Exit;
     end;
+
+    ConfigureStandardCube(NewPuzzle);
 
     if (NewPuzzle.Parts.Count = 0) or (NewPuzzle.Axes.Count = 0) then begin
       SetStatus('XML load failed: the file contains no usable puzzle parts or axes.');
