@@ -62,7 +62,7 @@ begin
     AxisInfo['y'] := CurrentPuzzle.Axes[I].NormVector.Y;
     AxisInfo['z'] := CurrentPuzzle.Axes[I].NormVector.Z;
     AxisInfo['enabled'] := CurrentPuzzle.Axes[I].Enabled;
-    AxisInfo['turningAngle'] := CurrentPuzzle.Axes[I].Layers.Count > 0;
+    AxisInfo['layerCount'] := CurrentPuzzle.Axes[I].Layers.Count;
     if CurrentPuzzle.Axes[I].Layers.Count > 0 then AxisInfo['angle'] := CurrentPuzzle.Axes[I].Layers[0].TurningAngle;
     Result.push(AxisInfo);
   end;
@@ -144,13 +144,6 @@ begin
             FacesArray.push(FaceObject);
           end;
   Result['faces'] := FacesArray;
-end;
-
-procedure APIScramble;
-begin
-  if not APIIsPuzzleReady then begin SetStatus('Scramble unavailable: load a valid puzzle XML first.'); Exit; end;
-  CurrentPuzzle.DisableAnimation; CurrentPuzzle.Scramble;
-  SetStatus('Scrambled using the original Pascal TPuzzle engine.');
 end;
 
 procedure APIUndo;
