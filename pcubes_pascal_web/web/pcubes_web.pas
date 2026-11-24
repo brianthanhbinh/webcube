@@ -84,6 +84,7 @@ begin
   BeforeCount := CurrentPuzzle.UndoCount;
   CurrentPuzzle.RotateLayer(AxisNo, LayerNo, Angle * Direction, True);
   Result := CurrentPuzzle.UndoCount > BeforeCount;
+  if Result then CurrentPuzzle.PositionsInvalidate;
 end;
 
 function APIScramble: Boolean;
@@ -156,6 +157,27 @@ begin
             FacesArray.push(FaceObject);
           end;
   Result['faces'] := FacesArray;
+end;
+
+function APIGetPartCenters: TJSArray;
+var Part: TPart; I: Integer; Center: TJSArray; X, Y, Z: Extended;
+begin
+  Result := TJSArray.new;
+  if CurrentPuzzle = nil then Exit;
+  for Part in CurrentPuzzle.Parts do begin
+    if Part.Vertices.Count = 0 then Continue;
+    X := 0; Y := 0; Z := 0;
+    for I := 0 to Part.Vertices.Count - 1 do begin
+      X := X + Part.Vertices[I].X;
+      Y := Y + Part.Vertices[I].Y;
+      Z := Z + Part.Vertices[I].Z;
+    end;
+    Center := TJSArray.new;
+    Center.push(X / Part.Vertices.Count);
+    Center.push(Y / Part.Vertices.Count);
+    Center.push(Z / Part.Vertices.Count);
+    Result.push(Center);
+  end;
 end;
 
 procedure APIUndo;
@@ -238,6 +260,7 @@ begin
   API['isPuzzleReady'] := TJSFunction(@APIIsPuzzleReady);
   API['getModelInfo'] := TJSFunction(@APIGetModelInfo);
   API['getRenderData'] := TJSFunction(@APIGetRenderData);
+  API['getPartCenters'] := TJSFunction(@APIGetPartCenters);
   API['getAxesInfo'] := TJSFunction(@APIGetAxesInfo);
   API['turnLayer'] := TJSFunction(@APITurnLayer);
   API['scramble'] := TJSFunction(@APIScramble);
