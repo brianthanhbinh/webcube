@@ -113,22 +113,46 @@ import { loadBuiltinLibrary } from "./library-data.js";
     if (!doc.documentElement) throw new Error("XML has no root element.");
     return doc;
   }
-  function addBuiltinCubeFigure(loadNode) {
-    const name = (loadNode.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
-    if (!name.endsWith("figures/cube.xml") && name !== "cube.xml")
-      throw new Error('This library item needs an external figure not supported in the browser: "' + loadNode.getAttribute("File") + '".');
-    const raw = loadNode.getAttribute("W");
-    const width = raw === null || raw.trim() === "" ? 1 : Number(raw);
-    if (!Number.isFinite(width) || width <= 0) throw new Error("The cube figure W attribute must be positive.");
+  function addBuiltinFigure(loadNode) {
+    const name = (loadNode.getAttribute("File") || "").replace(/\\\\/g, "/").toLowerCase();
+    const kind = name.split("/").pop().replace(/\\.xml$/i, "");
     const doc = loadNode.ownerDocument, part = doc.createElement("Part");
     const vertices = doc.createElement("Vertices"), faces = doc.createElement("Faces");
-    const points = [[-1,-1,-1],[-1,-1,1],[-1,1,-1],[-1,1,1],[1,-1,-1],[1,-1,1],[1,1,-1],[1,1,1]];
+    const parameter = (key, fallback) => {
+      const raw = loadNode.getAttribute(key);
+      const value = raw === null || raw.trim() === "" ? fallback : Number(raw);
+      if (!Number.isFinite(value) || value <= 0) throw new Error("Invalid " + key + " value for " + kind + " figure.");
+      return value;
+    };
+    let points, faceData;
+    if (kind === "cube") {
+      const w = parameter("W", 1);
+      points = [[-w,-w,-w],[-w,-w,w],[-w,w,-w],[-w,w,w],[w,-w,-w],[w,-w,w],[w,w,-w],[w,w,w]];
+      faceData = [["C80000","0;1;3;2"],["FF800A","5;4;6;7"],["0000C8","1;0;4;5"],["009600","2;3;7;6"],["FFFF00","0;2;6;4"],["FFFFFF","3;1;5;7"]];
+    } else if (kind === "cuboid") {
+      const wx = parameter("Wx", parameter("W", 0.5));
+      const wy = parameter("Wy", parameter("W", 0.5));
+      const wz = parameter("Wz", parameter("W", 0.5));
+      const dx = Number(loadNode.getAttribute("DWX") || 0), dy = Number(loadNode.getAttribute("DWY") || 0), dz = Number(loadNode.getAttribute("DWZ") || 0);
+      if (![dx,dy,dz].every(Number.isFinite)) throw new Error("Invalid cuboid offset.");
+      points = [
+        [-wx+dx,-wy+dy,-wz+dz],[-wx+dx,-wy+dy,wz+dz],[-wx+dx,wy+dy,-wz+dz],[-wx+dx,wy+dy,wz+dz],
+        [wx+dx,-wy+dy,-wz+dz],[wx+dx,-wy+dy,wz+dz],[wx+dx,wy+dy,-wz+dz],[wx+dx,wy+dy,wz+dz]
+      ];
+      faceData = [["C80000","0;1;3;2"],["FF800A","5;4;6;7"],["0000C8","1;0;4;5"],["009600","2;3;7;6"],["FFFF00","0;2;6;4"],["FFFFFF","3;1;5;7"]];
+    } else if (kind === "tetrahedron") {
+      const w = parameter("W", 0.5);
+      points = [[w,w,w],[-w,-w,w],[-w,w,-w],[w,-w,-w]];
+      faceData = [["C80000","1;2;3"],["0000C8","0;3;2"],["009600","0;1;3"],["FFFF00","0;2;1"]];
+    } else {
+      throw new Error('Figure "' + loadNode.getAttribute("File") + '" is not bundled. Use Add figure to select its XML file.');
+    }
     for (const p of points) {
       const v = doc.createElement("Vector");
-      v.setAttribute("X", String(p[0]*width)); v.setAttribute("Y", String(p[1]*width)); v.setAttribute("Z", String(p[2]*width));
+      v.setAttribute("X", String(p[0])); v.setAttribute("Y", String(p[1])); v.setAttribute("Z", String(p[2]));
       vertices.appendChild(v);
     }
-    for (const [color, indexes] of [["C80000","0;1;3;2"],["FF800A","5;4;6;7"],["0000C8","1;0;4;5"],["009600","2;3;7;6"],["FFFF00","0;2;6;4"],["FFFFFF","3;1;5;7"]]) {
+    for (const [color, indexes] of faceData) {
       const face = doc.createElement("Face"); face.setAttribute("Color",color); face.setAttribute("VertexIndexes",indexes); faces.appendChild(face);
     }
     part.append(vertices, faces); loadNode.parentNode.insertBefore(part, loadNode); loadNode.remove();
@@ -297,7 +321,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     for (const node of loads) {
       const path = (node.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
       if (path.endsWith("figures/cube.xml") || path === "cube.xml") {
-        addBuiltinCubeFigure(node);
+        addBuiltinFigure(node);
       } else {
         throw new Error('Missing external figure "' + node.getAttribute("File") + '". Select that figure XML with Add figure.');
       }
@@ -414,7 +438,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const doc = parseXml(entry.xml);
     return Array.from(doc.getElementsByTagName("LoadFrom")).every(n => {
       const path = (n.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
-      return path.endsWith("figures/cube.xml") || path === "cube.xml";
+      return /(?:^|\\/)figures\\/(?:cube|cuboid|tetrahedron)\\.xml$/.test(path) || /^(?:cube|cuboid|tetrahedron)\\.xml$/.test(path);
     });
   }
 
