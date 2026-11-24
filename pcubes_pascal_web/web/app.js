@@ -361,6 +361,11 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const encodingProbe = parseXml('<?xml version="1.0" encoding="windows-1251"?><xml><Name>Cube</Name></xml>');
     recordTest("Legacy XML encoding", encodingProbe.documentElement.nodeName === "xml" && encodingProbe.getElementsByTagName("Name")[0].textContent === "Cube");
     resolveExternalFigures(cubeDoc);
+    const axesXml = Array.from(cubeDoc.getElementsByTagName("Axes")[0]?.getElementsByTagName("Axis") || []);
+    const inheritedPlanes = axesXml.map(axis => axis.getAttribute("PlaneDistances"));
+    recordTest("Axis XML inherited settings", axesXml.length >= 3 &&
+      inheritedPlanes.every(value => value.includes("-1/6") && value.includes("1/6")),
+      JSON.stringify(inheritedPlanes));
     recordTest("Pascal loadXML", loadXmlText(cube.xml));
     const model = api.getModelInfo();
     recordTest("Cube model ready", api.isPuzzleReady() && model.ready, model.parts + " parts, " + model.axes + " axes; " + JSON.stringify(api.getAxesInfo()));
