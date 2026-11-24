@@ -603,7 +603,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   function loadXmlText(xmlText) {
     let doc = parseXml(xmlText);
     const puzzleName = (doc.getElementsByTagName("Name")[0]?.textContent || "").toLowerCase();
-    renderer.geometryKind = /mega.?minx|minx|gigaminx|teraminx|petaminx/.test(puzzleName) ? "minx" :
+    renderer.geometryKind = /mega.?minx|minx|gigaminx|teraminx|petaminx|pyraminx/.test(puzzleName) ? "minx" :
       /cuboid/.test(puzzleName) ? "cuboid" : "other";
     renderer.cameraSnapEnabled = renderer.geometryKind === "cuboid";
     // Retain the parsed puzzle even when an external figure is missing, so
@@ -649,7 +649,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   async function loadPuzzleWithFigures(xmlText, suppliedFigures = {}) {
     let doc = parseXml(xmlText);
     const puzzleName = (doc.getElementsByTagName("Name")[0]?.textContent || "").toLowerCase();
-    renderer.geometryKind = /mega.?minx|minx|gigaminx|teraminx|petaminx/.test(puzzleName) ? "minx" :
+    renderer.geometryKind = /mega.?minx|minx|gigaminx|teraminx|petaminx|pyraminx/.test(puzzleName) ? "minx" :
       /cuboid/.test(puzzleName) ? "cuboid" : "other";
     renderer.cameraSnapEnabled = renderer.geometryKind === "cuboid";
     pendingPuzzleDoc = doc;
