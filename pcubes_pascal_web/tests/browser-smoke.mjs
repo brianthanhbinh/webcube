@@ -61,6 +61,10 @@ try{
  const xml=await page.evaluate(async()=>{const {loadBuiltinLibrary}=await import("./library-data.js");const l=await loadBuiltinLibrary();return l.puzzles.find(p=>/2x2x2/i.test(p.name)).xml;});
  await page.locator("#puzzle-file").setInputFiles({name:"cube.xml",mimeType:"application/xml",buffer:Buffer.from(xml)});await page.waitForFunction(()=>/Loaded /.test(document.querySelector("#engine-status")?.textContent||""));
  assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0));
+ // Real library XML files can have an accidental Markdown citation after </xml>.
+ await page.locator("#puzzle-file").setInputFiles({name:"cube-with-citation.xml",mimeType:"application/xml",buffer:Buffer.from(xml+"\\n```[cite: 7]")});
+ await page.waitForFunction(()=>/Loaded /.test(document.querySelector("#engine-status")?.textContent||""));
+ assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true,"Trailing citation debris broke XML import");
  // A custom puzzle using an external Figure XML must keep its own figure,
  // rather than being silently replaced with the built-in 2x2 template.
  const customXml=xml.replaceAll("Rubik's cube 2x2x2","Custom cube with external figure").replaceAll("Figures\\Cube.xml","Figures\\CustomFigure.xml");
