@@ -153,35 +153,26 @@ export class PuzzleRenderer {
       return Boolean(isSelectedOuterFace || isSelectedCubieSide);
     });
 
-    // Polyhedral cuts (notably Megaminx) expose several polygons per physical
-    // piece. Expand each hit face to the rest of its connected piece.
+    // The Pascal model exports each face separately, but all faces belonging
+    // to one physical cubie share the same Part index. Use that identity for
+    // polyhedral puzzles: vertex-connectivity is not a safe proxy because
+    // neighboring Megaminx pieces also meet at cut vertices.
     if (this.geometryKind === "minx") {
-      const vertexFaces = new Map();
-      faces.forEach((face, faceIndex) => {
-        for (const vertex of face.vertices || []) {
-          const key = vertex.map(value => Number(value).toFixed(5)).join(",");
-          if (!vertexFaces.has(key)) vertexFaces.set(key, []);
-          vertexFaces.get(key).push(faceIndex);
-        }
-      });
-      const expanded = selected.slice();
-      const queue = selected.map((yes, index) => yes ? index : -1).filter(index => index >= 0);
-      for (let cursor = 0; cursor < queue.length; cursor++) {
-        const index = queue[cursor], counts = new Map();
-        for (const vertex of faces[index].vertices || []) {
-          const key = vertex.map(value => Number(value).toFixed(5)).join(",");
-          for (const neighbor of vertexFaces.get(key) || []) {
-            if (neighbor !== index) counts.set(neighbor, (counts.get(neighbor) || 0) + 1);
-          }
-        }
-        for (const [neighbor, shared] of counts) {
-          if (shared >= 2 && !expanded[neighbor]) {
-            expanded[neighbor] = true;
-            queue.push(neighbor);
-          }
-        }
+      const movingParts = new Set();
+      for (let i = 0; i < faces.length; i++) {
+        if (!selected[i]) continue;
+        const face = faces[i], normal = this.faceNormal(face.vertices || []);
+        if (!normal || this.dot(normal, n) * normalSign < .82) continue;
+        const center = (face.vertices || []).reduce(
+          (sum, v) => sum.map((x, k) => x + Number(v[k]) / face.vertices.length),
+          [0, 0, 0]
+        );
+        if (Math.abs(this.dot(center, n) - selectedSurface) <= Math.max(1e-4, spacing * .08) &&
+            Number.isInteger(face.partIndex))
+          movingParts.add(face.partIndex);
       }
-      return expanded;
+      if (movingParts.size)
+        return faces.map(face => movingParts.has(face.partIndex));
     }
     return selected;
   }
