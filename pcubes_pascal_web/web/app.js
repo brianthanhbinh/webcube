@@ -222,12 +222,24 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     };
     let vertices;
     let colors = ["C80000", "FF800A", "0000C8", "009600", "FFFF00", "FFFFFF"];
+    const mirrorScript = /0\.34\s*\*\s*W/i.test(script) && /0\.36\s*\*\s*W/i.test(script) && /0\.30\s*\*\s*W/i.test(script);
     const cubeScript = /Cube_Coordinates\.inc/i.test(script);
     const cuboidScript = /Cuboid_Coordinates\.inc/i.test(script);
     // A tetrahedron has exactly four indexed vertices. Merely seeing Vx[3]
     // is not enough: cylinder and sphere meshes also define Vx[3] and far more.
     const tetraScript = /Vx\[3\]/i.test(script) && !/Vx\[4\]/i.test(script) && !cubeScript && !cuboidScript;
-    if (cubeScript) {
+    if (mirrorScript) {
+      // Mirror.xml deliberately offsets the regular cube relative to the
+      // cutting axes. That offset creates the characteristic irregular
+      // shape-mod pieces. Reproduce the figure's include + loop transform,
+      // which the browser Pascal build cannot execute directly.
+      const w = number("W", 0.5);
+      vertices = [
+        [-w,-w,-w],[-w,-w,w],[-w,w,-w],[-w,w,w],
+        [w,-w,-w],[w,-w,w],[w,w,-w],[w,w,w]
+      ].map(([x,y,z]) => [x + 0.34*w, y - 0.36*w, z + 0.30*w]);
+      colors = Array(6).fill("B0B8C0");
+    } else if (cubeScript) {
       const w = number("W", 1);
       vertices = [[-w,-w,-w],[-w,-w,w],[-w,w,-w],[-w,w,w],[w,-w,-w],[w,-w,w],[w,w,-w],[w,w,w]];
     } else if (cuboidScript) {
@@ -636,6 +648,10 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
 
   async function loadPuzzleWithFigures(xmlText, suppliedFigures = {}) {
     let doc = parseXml(xmlText);
+    const puzzleName = (doc.getElementsByTagName("Name")[0]?.textContent || "").toLowerCase();
+    renderer.geometryKind = /mega.?minx|minx|gigaminx|teraminx|petaminx/.test(puzzleName) ? "minx" :
+      /cuboid/.test(puzzleName) ? "cuboid" : "other";
+    renderer.cameraSnapEnabled = renderer.geometryKind === "cuboid";
     pendingPuzzleDoc = doc;
     const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
     if (!loads.length) {
