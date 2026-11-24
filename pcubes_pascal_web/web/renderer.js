@@ -18,8 +18,10 @@ export class PuzzleRenderer {
       if(e.button!==0&&e.button!==1&&e.button!==2)return;
       const rect=canvas.getBoundingClientRect();
       const axes=window.pCubes?.getAxesInfo?.()||[];
-      this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,downX:e.clientX,downY:e.clientY,button:e.button,moved:false,
-        pick:e.button===0?this.pickLayer(e.clientX-rect.left,e.clientY-rect.top,axes):null};
+      const pick=e.button===0?this.pickLayer(e.clientX-rect.left,e.clientY-rect.top,axes):null;
+      if(pick){canvas.dataset.pickedAxis=String(pick.axis);canvas.dataset.pickedLayer=String(pick.layer);}
+      else{delete canvas.dataset.pickedAxis;delete canvas.dataset.pickedLayer;}
+      this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,downX:e.clientX,downY:e.clientY,button:e.button,moved:false,pick};
       canvas.setPointerCapture(e.pointerId);
     });
     canvas.addEventListener("pointermove",e=>{
