@@ -606,6 +606,28 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
 
 
 
+  function makeDodecahedronFigureXml() {
+    // Regular dodecahedron coordinates matching the official pCubes figure.
+    const radius=0.7, angle=(Math.atan(2)+Math.asin(2/3))/2;
+    const angle2=(Math.atan(2)-Math.asin(2/3))/2, step=2*Math.PI/5;
+    const rs=radius*Math.sin(angle), rc=radius*Math.cos(angle);
+    const r2s=radius*Math.sin(angle2), r2c=radius*Math.cos(angle2);
+    const vertices=[];
+    for(let i=0;i<5;i++)vertices.push([rc*Math.sin(step*(i-.5)),rc*Math.cos(step*(i-.5)),rs]);
+    for(let i=5;i<10;i++)vertices.push([r2c*Math.sin(step*(i-.5)),r2c*Math.cos(step*(i-.5)),r2s]);
+    for(let i=10;i<15;i++)vertices.push([r2c*Math.sin(step*i),r2c*Math.cos(step*i),-r2s]);
+    for(let i=15;i<20;i++)vertices.push([rc*Math.sin(step*i),rc*Math.cos(step*i),-rs]);
+    const faces=[
+      [4,3,2,1,0],[0,1,6,10,5],[1,2,7,11,6],[2,3,8,12,7],[3,4,9,13,8],[4,0,5,14,9],
+      [18,17,12,8,13],[19,18,13,9,14],[15,19,14,5,10],[16,15,10,6,11],[17,16,11,7,12],[15,16,17,18,19]
+    ];
+    const colors=["FFFF00","00FF00","FF0080","0000A0","FF0000","800000","008000","800080","3868BF","FF6000","00DCB4","FFFFFF"];
+    const esc=s=>String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+    return "<xml><Part><Vertices>"+vertices.map(v=>'<Add Vector="'+esc(v.map(n=>n.toFixed(12)).join(";"))+'"/>').join("")+
+      "</Vertices><Faces>"+faces.map((f,i)=>'<Face Color="'+colors[i]+'" VertexIndexes="'+f.join(";")+'"/>').join("")+
+      "</Faces></Part></xml>";
+  }
+
   async function loadPuzzleWithFigures(xmlText, suppliedFigures = {}) {
     let doc = parseXml(xmlText);
     pendingPuzzleDoc = doc;
@@ -630,6 +652,8 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
           figureText = await response.text();
         }
       }
+      if (!figureText && base.toLowerCase() === "dodecahedron.xml")
+        figureText = makeDodecahedronFigureXml();
       if (!figureText) throw new Error('Required figure "' + base + '" was not found.');
       const f = new File([figureText], base, {type:"application/xml"});
       Object.defineProperty(f, "webkitRelativePath", {value:"Figures/" + base});

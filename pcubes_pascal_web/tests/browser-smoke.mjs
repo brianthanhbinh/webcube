@@ -174,6 +174,7 @@ try{
    }
  }
  console.log("REMOTE_CATALOG_SCAN "+JSON.stringify({total:catalog.puzzles.length,failures:remoteFailures}));
+ assert.deepEqual(remoteFailures,[],"Remote library XML failures: "+JSON.stringify(remoteFailures));
  // Generator UI is available after the Pascal startup self-test.
  await page.locator("#generator").click();
  await page.waitForFunction(()=>document.querySelector("#generator-dialog")?.open);
