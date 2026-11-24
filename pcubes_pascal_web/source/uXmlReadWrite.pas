@@ -254,7 +254,7 @@ begin
 
   i := GetAttrIndex(XmlNode, aName);
   if i >= 0 then
-    Exit(XmlNode.Attributes[i].NodeValue);
+    Exit(DomValueToString(XmlNode.Attributes[i].NodeValue));
 end;
 
 // ========================= Vector ===================================
@@ -930,7 +930,7 @@ begin
       if not ExecMacro(XmlSubNode) then
         exit;
     end else if S = 'Script' then
-      ExecuteScript(String(XmlSubNode.TextContent))
+      ExecuteScript(DomValueToString(XmlSubNode.TextContent))
   end;
 
   Result := True;
@@ -970,7 +970,7 @@ begin
     XmlSubNode := XmlNode.ChildNodes[i];
     S := XmlSubNode.NodeName;
     if S = 'Script' then
-      ExecuteScript(XmlSubNode.TextContent)
+      ExecuteScript(DomValueToString(XmlSubNode.TextContent))
     else if S = 'Vertices' then
       VectorsLoadFromXml(Part.Vertices, XmlSubNode)
     else if S = 'Faces' then
@@ -1554,7 +1554,7 @@ class function TXmlReadWrite.PuzzleLoadFromXml(Puzzle: TPuzzle; XmlNode: TDomNod
     Part: TPart;
   begin
     sl := TStringList.Create;
-    S := String(XmlNode.TextContent);
+    S := DomValueToString(XmlNode.TextContent);
     sl.Text := S;
 
     Result := False;
