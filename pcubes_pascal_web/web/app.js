@@ -164,6 +164,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
     recordTest("Built-in cube entry", !!cube, cube ? cube.name : "No supported cube found");
     const cubeDoc = parseXml(cube.xml);
     recordTest("XML parser", !!cubeDoc.documentElement && cubeDoc.getElementsByTagName("parsererror").length === 0);
+    const encodingProbe = parseXml('<?xml version="1.0" encoding="windows-1251"?><xml><Name>Cube</Name></xml>');
+    recordTest("Legacy XML encoding", encodingProbe.documentElement.nodeName === "xml" && encodingProbe.getElementsByTagName("Name")[0].textContent === "Cube");
     resolveExternalFigures(cubeDoc);
     recordTest("Pascal loadXML", loadXmlText(cube.xml));
     const model = api.getModelInfo();
@@ -192,7 +194,9 @@ import { loadBuiltinLibrary } from "./library-data.js";
     renderer.setGeometry(geometry);
     api.openLibrary();
     recordTest("Open library API", typeof api.getStatus() === "string");
-    recordTest("File loader prerequisites", typeof TextDecoder === "function" && typeof FileReader !== "undefined");
+    const fileProbe = new Blob(['<?xml version="1.0" encoding="UTF-8"?><xml/>']);
+    const fileText = new TextDecoder("utf-8").decode(new Uint8Array(await fileProbe.arrayBuffer()));
+    recordTest("File byte decoding", parseXml(fileText).documentElement.nodeName === "xml");
     return cube.name;
   }
 
