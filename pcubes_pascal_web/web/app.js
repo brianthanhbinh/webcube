@@ -213,7 +213,6 @@ import { loadBuiltinLibrary } from "./library-data.js";
     renderer.setGeometry(geometry);
     recordTest("Canvas renderer", !!renderer.geometry && renderer.geometry.faces.length > 0);
 
-    api.scramble();
     const beforeScramble = JSON.stringify(api.getRenderData());
     const scrambled = api.scramble();
     const afterScramble = JSON.stringify(api.getRenderData());
