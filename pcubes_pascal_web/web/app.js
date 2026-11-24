@@ -114,8 +114,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
     return doc;
   }
   function addBuiltinFigure(loadNode) {
-    const name = (loadNode.getAttribute("File") || "").replace(/\\\\/g, "/").toLowerCase();
-    const kind = name.split("/").pop().replace(/\\.xml$/i, "");
+    const name = (loadNode.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
+    const kind = name.split("/").pop().replace(/\.xml$/i, "");
     const doc = loadNode.ownerDocument, part = doc.createElement("Part");
     const vertices = doc.createElement("Vertices"), faces = doc.createElement("Faces");
     const parameter = (key, fallback) => {
@@ -438,7 +438,8 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const doc = parseXml(entry.xml);
     return Array.from(doc.getElementsByTagName("LoadFrom")).every(n => {
       const path = (n.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
-      return /(?:^|\\/)figures\\/(?:cube|cuboid|tetrahedron)\\.xml$/.test(path) || /^(?:cube|cuboid|tetrahedron)\\.xml$/.test(path);
+      const fileName = path.split("/").pop();
+      return ["cube.xml", "cuboid.xml", "tetrahedron.xml"].includes(fileName);
     });
   }
 
