@@ -245,7 +245,7 @@ begin
 
   i := GetAttrIndex(XmlNode, aName);
   if i >= 0 then
-    Exit(DomValueToString(XmlNode.Attributes[i].NodeValue));
+    Exit(TDomElement(XmlNode).GetAttribute(aName));
 
   XmlNode := XmlNode.ParentNode;
 
