@@ -62,7 +62,7 @@ try{
  await page.locator("#puzzle-file").setInputFiles({name:"cube.xml",mimeType:"application/xml",buffer:Buffer.from(xml)});await page.waitForFunction(()=>/Loaded /.test(document.querySelector("#engine-status")?.textContent||""));
  assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0));
  // Real library XML files can have an accidental Markdown citation after </xml>.
- await page.locator("#puzzle-file").setInputFiles({name:"cube-with-citation.xml",mimeType:"application/xml",buffer:Buffer.from(xml+"\\n```[cite: 7]")});
+ await page.locator("#puzzle-file").setInputFiles({name:"cube-with-citation.xml",mimeType:"application/xml",buffer:Buffer.from(xml+"\n```[cite: 7]")});
  await page.waitForFunction(()=>/Loaded /.test(document.querySelector("#engine-status")?.textContent||""));
  assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true,"Trailing citation debris broke XML import");
  // A custom puzzle using an external Figure XML must keep its own figure,
