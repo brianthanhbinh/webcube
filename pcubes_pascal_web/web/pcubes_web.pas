@@ -95,7 +95,6 @@ begin
     SetStatus('Scramble unavailable: load a valid puzzle XML first.');
     Exit;
   end;
-  Randomize;
   Turns := 0;
   PreviousAxis := -1; PreviousLayer := -1; PreviousDirection := 0;
   for I := 1 to 30 do begin
