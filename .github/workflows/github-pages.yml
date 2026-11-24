@@ -32,10 +32,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Check out latest successful source
+      - name: Check out latest source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && 'main' || 'main' }}
+          ref: main
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -44,6 +44,8 @@ jobs:
         run: |
           test -s pcubes_pascal_web/web/index.html
           test -s pcubes_pascal_web/web/app.js
+          test -s pcubes_pascal_web/web/remote-library.js
+          test -s pcubes_pascal_web/web/generator.js
           test -s pcubes_pascal_web/web/renderer.js
           test -s pcubes_pascal_web/web/rtl.js
           test -s pcubes_pascal_web/web/pcubes_web.js
@@ -51,11 +53,8 @@ jobs:
       - name: Upload WebCube site
         uses: actions/upload-pages-artifact@v3
         with:
-          name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
           path: pcubes_pascal_web/web
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
