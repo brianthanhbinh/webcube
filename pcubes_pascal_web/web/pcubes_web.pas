@@ -135,12 +135,13 @@ var
   Part: TPart;
   Face: TFace;
   V: TVector;
-  I: Integer;
+  I, PartIndex: Integer;
 begin
   Result := new([]);
   FacesArray := TJSArray.new;
+  PartIndex := 0;
   if CurrentPuzzle <> nil then
-    for Part in CurrentPuzzle.Parts do
+    for Part in CurrentPuzzle.Parts do begin
       if Part.Visible then
         for Face in Part.Faces do
           if Face.GetVertexCount >= 3 then begin
@@ -154,8 +155,11 @@ begin
             end;
             FaceObject['vertices'] := VerticesArray;
             FaceObject['color'] := Face.Color;
+            FaceObject['partIndex'] := PartIndex;
             FacesArray.push(FaceObject);
           end;
+      Inc(PartIndex);
+    end;
   Result['faces'] := FacesArray;
 end;
 
