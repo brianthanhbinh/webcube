@@ -49,6 +49,34 @@ begin
   end;
 end;
 
+function APIGetAxesInfo: TJSArray;
+var I: Integer; AxisInfo: TJSObject;
+begin
+  Result := TJSArray.new;
+  if CurrentPuzzle = nil then Exit;
+  for I := 0 to CurrentPuzzle.Axes.Count - 1 do begin
+    AxisInfo := TJSObject.new;
+    AxisInfo['index'] := I;
+    AxisInfo['layers'] := CurrentPuzzle.Axes[I].Layers.Count;
+    AxisInfo['x'] := CurrentPuzzle.Axes[I].NormVector.X;
+    AxisInfo['y'] := CurrentPuzzle.Axes[I].NormVector.Y;
+    AxisInfo['z'] := CurrentPuzzle.Axes[I].NormVector.Z;
+    AxisInfo['enabled'] := CurrentPuzzle.Axes[I].Enabled;
+    Result.push(AxisInfo);
+  end;
+end;
+
+function APITurnLayer(AxisNo, LayerNo, Direction: Integer): Boolean;
+begin
+  Result := False;
+  if not APIIsPuzzleReady then Exit;
+  if (AxisNo < 0) or (AxisNo >= CurrentPuzzle.Axes.Count) then Exit;
+  if (LayerNo < 0) or (LayerNo >= CurrentPuzzle.Axes[AxisNo].Layers.Count) then Exit;
+  if (Direction <> -1) and (Direction <> 1) then Exit;
+  CurrentPuzzle.RotateLayer(AxisNo, LayerNo, Direction * 1.5707963267948966, True);
+  Result := True;
+end;
+
 function APIGetRenderData: TJSObject;
 var
   FacesArray, VerticesArray, VertexArray: TJSArray;
@@ -163,6 +191,8 @@ begin
   API['isPuzzleReady'] := TJSFunction(@APIIsPuzzleReady);
   API['getModelInfo'] := TJSFunction(@APIGetModelInfo);
   API['getRenderData'] := TJSFunction(@APIGetRenderData);
+  API['getAxesInfo'] := TJSFunction(@APIGetAxesInfo);
+  API['turnLayer'] := TJSFunction(@APITurnLayer);
   API['scramble'] := TJSFunction(@APIScramble);
   API['undo'] := TJSFunction(@APIUndo);
   API['redo'] := TJSFunction(@APIRedo);
