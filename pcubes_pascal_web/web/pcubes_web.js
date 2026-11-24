@@ -10577,6 +10577,7 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
     BeforeCount = $mod.CurrentPuzzle.GetUndoCount();
     $mod.CurrentPuzzle.RotateLayer(AxisNo,LayerNo,Angle * Direction,true);
     Result = $mod.CurrentPuzzle.GetUndoCount() > BeforeCount;
+    if (Result) $mod.CurrentPuzzle.PositionsInvalidate();
     return Result;
   };
   this.APIScramble = function () {
@@ -10684,6 +10685,41 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
     Result["faces"] = FacesArray;
     return Result;
   };
+  this.APIGetPartCenters = function () {
+    var Result = null;
+    var Part = null;
+    var I = 0;
+    var Center = null;
+    var X = 0.0;
+    var Y = 0.0;
+    var Z = 0.0;
+    Result = new Array();
+    if ($mod.CurrentPuzzle === null) return Result;
+    var $in = $mod.CurrentPuzzle.FParts.GetEnumerator$1();
+    try {
+      while ($in.MoveNext()) {
+        Part = $in.DoGetCurrent();
+        if (Part.FVertices.FLength === 0) continue;
+        X = 0;
+        Y = 0;
+        Z = 0;
+        for (var $l = 0, $end = Part.FVertices.FLength - 1; $l <= $end; $l++) {
+          I = $l;
+          X = X + Part.FVertices.GetItem(I).x;
+          Y = Y + Part.FVertices.GetItem(I).y;
+          Z = Z + Part.FVertices.GetItem(I).z;
+        };
+        Center = new Array();
+        Center.push(X / Part.FVertices.FLength);
+        Center.push(Y / Part.FVertices.FLength);
+        Center.push(Z / Part.FVertices.FLength);
+        Result.push(Center);
+      }
+    } finally {
+      $in = rtl.freeLoc($in)
+    };
+    return Result;
+  };
   this.APIUndo = function () {
     if ($mod.APIIsPuzzleReady() && $mod.CurrentPuzzle.Undo(false)) {
       $mod.SetStatus("Undo performed by Pascal TPuzzle.")}
@@ -10772,6 +10808,7 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
     $mod.API["isPuzzleReady"] = $mod.APIIsPuzzleReady;
     $mod.API["getModelInfo"] = $mod.APIGetModelInfo;
     $mod.API["getRenderData"] = $mod.APIGetRenderData;
+    $mod.API["getPartCenters"] = $mod.APIGetPartCenters;
     $mod.API["getAxesInfo"] = $mod.APIGetAxesInfo;
     $mod.API["turnLayer"] = $mod.APITurnLayer;
     $mod.API["scramble"] = $mod.APIScramble;
