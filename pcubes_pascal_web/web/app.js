@@ -10,13 +10,22 @@ import { loadBuiltinLibrary } from "./library-data.js";
   const figureFile = $("figure-file");
   let pendingPuzzleDoc = null;
   const renderer = new PuzzleRenderer($("puzzle-canvas"));
-  renderer.onTurnCommit = (pick, turns) => {
+  renderer.onTurnCommit = (pick, turns, before, axis, previewAngle) => {
     const axisSelect = $("turn-axis"), layerSelect = $("turn-layer");
     axisSelect.value = String(pick.axis);
     refreshTurnControls(window.pCubes);
     layerSelect.value = String(pick.layer);
     const direction = Math.sign(turns);
-    for (let i=0;i<Math.abs(turns);i++) call("turnLayer", pick.axis, pick.layer, direction);
+    renderer.deferGeometry = true;
+    let succeeded = true;
+    for (let i=0;i<Math.abs(turns);i++) {
+      if (!call("turnLayer", pick.axis, pick.layer, direction)) { succeeded = false; break; }
+    }
+    renderer.deferGeometry = false;
+    const target = window.pCubes?.getRenderData?.();
+    if (succeeded && target) {
+      renderer.animateTurn(before, target, axis, turns * (Number(axis.angle) || Math.PI/2), 180, previewAngle);
+    } else renderer.setGeometry(window.pCubes?.getRenderData?.() || before);
   };
   renderer.onTurnDrag = () => {
     status.textContent = "Drag from a visible puzzle face to turn its layer.";
@@ -303,7 +312,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     $("library").disabled = !preflightPassed;
     $("load").disabled = false;
     refreshTurnControls(api);
-    if (typeof api.getRenderData === "function") renderer.setGeometry(api.getRenderData());
+    if (typeof api.getRenderData === "function" && !renderer.deferGeometry) renderer.setGeometry(api.getRenderData());
   }
 
   function turnLayerAnimated(axisNo, layerNo, direction) {
