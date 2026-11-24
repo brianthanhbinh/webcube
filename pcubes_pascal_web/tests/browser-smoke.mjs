@@ -85,6 +85,7 @@ try{
  const figureRoot=await fs.mkdtemp(path.join(os.tmpdir(),"pcubes-figure-folder-"));
  await fs.mkdir(path.join(figureRoot,"Figures"),{recursive:true});
  await fs.writeFile(path.join(figureRoot,"Figures","cube.xml"),figureXml);
+ await fs.writeFile(path.join(figureRoot,"Library.xml"),"<xml><Puzzle><Name>Not a figure</Name></Puzzle></xml>");
  // Folder scan must recursively discover XML and preserve relative paths.
  await page.locator("#figure-folder").setInputFiles(figureRoot);
  await page.waitForFunction(()=>/Figure added/.test(document.querySelector("#engine-status")?.textContent||""));
