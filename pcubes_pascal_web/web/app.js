@@ -117,7 +117,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const name = doc.getElementsByTagName("Name")[0]?.textContent || "";
     const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
     const isCubeFigure = node => {
-      const path = (node.getAttribute("File") || "").replace(/\\\\/g, "/").toLowerCase();
+      const path = (node.getAttribute("File") || "").replace(/\\/g, "/").toLowerCase();
       return path.endsWith("figures/cube.xml") || path === "cube.xml";
     };
     // Generate cubies only for the two known library templates. An uploaded
