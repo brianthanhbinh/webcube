@@ -69,9 +69,11 @@ end;
 function GetNodeText(XmlNode: TDomNode): string;
 var TextNode: TDomNode;
 begin
+  Result := '';
+  if XmlNode = nil then Exit;
   TextNode := XmlNode.FindNode('#text');
   if Assigned(TextNode) then
-    Result := Trim(TextNode.NodeValue)
+    Result := Trim(DomValueToString(TextNode.NodeValue))
   else
     Result := '';
 end; // GetNodeText
