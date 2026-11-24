@@ -20,11 +20,13 @@ export class PuzzleRenderer {
       if(e.button!==0&&e.button!==1&&e.button!==2)return;
       const rect=canvas.getBoundingClientRect();
       const axes=window.pCubes?.getAxesInfo?.()||[];
-      const pick=e.button===0?this.pickLayer(e.clientX-rect.left,e.clientY-rect.top,axes):null;
+      const x=e.clientX-rect.left,y=e.clientY-rect.top;
+      const hit=e.button===0?this.pickFace(x,y):null;
+      const pick=hit?this.pickLayer(x,y,axes):null;
       if(pick){canvas.dataset.pickedAxis=String(pick.axis);canvas.dataset.pickedLayer=String(pick.layer);}
       else{delete canvas.dataset.pickedAxis;delete canvas.dataset.pickedLayer;}
       const axis=pick&&axes.find(a=>a.index===pick.axis);
-      this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,downX:e.clientX,downY:e.clientY,button:e.button,moved:false,pick,
+      this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,downX:e.clientX,downY:e.clientY,button:e.button,moved:false,pick,hit,axes,
         before:pick?this.geometry:null,axis,previewAngle:0};
       canvas.setPointerCapture(e.pointerId);
     });
@@ -37,12 +39,16 @@ export class PuzzleRenderer {
         this.rotationY+=dx*.009;
         this.rotationX=Math.max(-1.52,Math.min(1.52,this.rotationX+dy*.009));
         this.draw();
-      } else if(p.button===0&&p.pick&&p.axis&&p.before){
-        const drag=Math.abs(e.clientX-p.downX)>=Math.abs(e.clientY-p.downY)
-          ? e.clientX-p.downX : -(e.clientY-p.downY);
-        const step=Number(p.axis.angle)||Math.PI/2;
-        p.previewAngle=drag/110*step*(p.pick.normalSign||1);
-        this.previewTurn(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
+      } else if(p.button===0&&p.hit&&p.before){
+        const rect=canvas.getBoundingClientRect();
+        const target=this.pickLayerForDrag(p.hit,p.axes,e.clientX-p.downX,e.clientY-p.downY);
+        if(target){
+          p.pick=target.pick;p.axis=target.axis;
+          canvas.dataset.pickedAxis=String(p.pick.axis);canvas.dataset.pickedLayer=String(p.pick.layer);
+          const step=Number(p.axis.angle)||Math.PI/2;
+          p.previewAngle=target.drag/110*step*target.direction;
+          this.previewTurn(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
+        }
       }
       p.x=e.clientX;p.y=e.clientY;
     });
@@ -277,6 +283,59 @@ export class PuzzleRenderer {
       if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))inside=!inside;
     }
     return inside;
+  }
+  pickFace(x,y){
+    for(let i=this.projectedFaces.length-1;i>=0;i--){
+      const item=this.projectedFaces[i];
+      if(item.screen.length>=3&&this.pointInPolygon(x,y,item.screen)){
+        const normal=this.faceNormal(item.vertices);
+        if(normal)return {item,normal,center:item.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/item.vertices.length),[0,0,0])};
+      }
+    }
+    return null;
+  }
+  pickLayerForDrag(hit,axes,dx,dy){
+    const distance=Math.hypot(dx,dy);
+    if(distance<4)return null;
+    const cy=Math.cos(this.rotationY),sy=Math.sin(this.rotationY),cx=Math.cos(this.rotationX),sx=Math.sin(this.rotationX);
+    // Convert the screen swipe into a direction in model space.
+    const dragWorld=[dx*cy, -dy*cx, -dx*sy+dy*sx];
+    const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+    const desired=cross(hit.normal,dragWorld),desiredLength=Math.hypot(...desired);
+    if(desiredLength<1e-8)return null;
+    const direction=desired.map(v=>v/desiredLength);
+    let chosen=null,best=0;
+    for(const axis of axes||[]){
+      const vector=[Number(axis.x),Number(axis.y),Number(axis.z)],length=Math.hypot(...vector);
+      if(!length||!axis.layers)continue;
+      const score=Math.abs(this.dot(direction,vector.map(v=>v/length)));
+      if(score>best){best=score;chosen={axis,vector:vector.map(v=>v/length),sign:this.dot(direction,vector.map(v=>v/length))>=0?1:-1};}
+    }
+    if(!chosen||best<.8)return null;
+    const values=[];
+    for(const face of this.projectedFaces){
+      const normal=this.faceNormal(face.vertices);
+      if(!normal||Math.abs(this.dot(normal,chosen.vector))<.82)continue;
+      const center=face.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/face.vertices.length),[0,0,0]);
+      const value=this.dot(center,chosen.vector);
+      if(!values.some(old=>Math.abs(old-value)<1e-4))values.push(value);
+    }
+    values.sort((a,b)=>a-b);
+    if(!values.length)return null;
+    const coordinate=this.dot(hit.center,chosen.vector);
+    let layer=0,bestDistance=Infinity;
+    values.forEach((v,index)=>{const d=Math.abs(v-coordinate);if(d<bestDistance){bestDistance=d;layer=index;}});
+    if(values.length!==chosen.axis.layers&&values.length>1)
+      layer=Math.round(layer*(chosen.axis.layers-1)/(values.length-1));
+    layer=Math.max(0,Math.min(chosen.axis.layers-1,layer));
+    // Use the swipe's component perpendicular to the projected turning axis
+    // as the signed drag distance for a natural direct-manipulation gesture.
+    const a=chosen.vector;
+    const projected=[a[0]*cy+a[2]*sy, -(a[1]*cx-(-a[0]*sy+a[2]*cy)*sx)];
+    const plen=Math.hypot(...projected)||1;
+    const perpendicular=[-projected[1]/plen,projected[0]/plen];
+    const drag=dx*perpendicular[0]+dy*perpendicular[1];
+    return {pick:{axis:chosen.axis.index,layer,normalSign:1},axis:chosen.axis,drag,direction:chosen.sign};
   }
   pickLayer(x,y,axes){
     // Test frontmost polygons first so overlapping cubies select the visible face.
