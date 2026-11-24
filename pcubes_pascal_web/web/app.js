@@ -190,8 +190,9 @@ import { loadBuiltinLibrary } from "./library-data.js";
       const result = api[name](...args);
       if (typeof result === "string") status.textContent = result;
       else if (result === false) {
-        const engineStatus = typeof api.getStatus === "function" ? api.getStatus() : "";
-        status.textContent = engineStatus || "Pascal could not complete this request.";
+        // Keep the detailed Pascal loader error already written to the status node.
+        if (!status.textContent || status.textContent === "Running startup tests…")
+          status.textContent = "Pascal could not complete this request.";
       }
       updateModelInfo(api); return result !== false;
     } catch (error) {
