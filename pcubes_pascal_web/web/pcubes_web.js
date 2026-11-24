@@ -8844,6 +8844,7 @@ rtl.module("uXmlUtils",["System","uVector","Classes","Graphics","DOM"],function 
   this.ReadStringFromXml$2 = function (XmlNode, AttrName) {
     var Result = "";
     var Str = "";
+    Result = "";
     if ($mod.ReadStringFromXml$1(XmlNode,AttrName,{get: function () {
         return Str;
       }, set: function (v) {
