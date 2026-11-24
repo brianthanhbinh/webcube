@@ -19,7 +19,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: pascal-browser-build-${{ github.ref }}
+  group: pascal-browser-build-v2-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
