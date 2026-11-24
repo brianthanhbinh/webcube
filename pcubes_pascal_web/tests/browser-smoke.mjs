@@ -44,6 +44,20 @@ try{
  assert.equal(await cube3.count(),1,"3x3 exact entry missing/duplicated");assert.equal(await cube3.isEnabled(),true);await cube3.click();await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open);
  const model=await page.evaluate(()=>window.pCubes.getModelInfo());assert.match(model.name,/3x3x3/i);assert.ok(model.parts>=20,"Cubies not split: "+model.parts);
  const axes3=await page.evaluate(()=>window.pCubes.getAxesInfo());assert.ok(axes3.length>=3);
+ // Repeated turns across different axes must recalculate cubie-to-layer membership.
+ // Stale cached positions previously caused pieces to overlap and disappear.
+ for(let turn=0;turn<60;turn++){
+   const axis=axes3[turn%3];
+   const moved=await page.evaluate(({axis,turn})=>window.pCubes.turnLayer(axis.index,turn%axis.layers,turn%2?1:-1),{axis,turn});
+   assert.equal(moved,true,"Repeated move failed at turn "+turn);
+ }
+ const centers=await page.evaluate(()=>window.pCubes.getPartCenters());
+ const centerKeys=centers.map(c=>c.map(v=>Math.round(v*100000)).join(","));
+ assert.equal(centers.length,27,"A cubie disappeared after repeated turns");
+ assert.equal(new Set(centerKeys).size,27,"Cubies overlapped after repeated turns");
+ const allowed=[-1/3,0,1/3];
+ for(const center of centers)for(const value of center)
+   assert.ok(allowed.some(expected=>Math.abs(value-expected)<1e-5),"Cubie drifted off the 3x3 grid: "+center.join(","));
  const xml=await page.evaluate(async()=>{const {loadBuiltinLibrary}=await import("./library-data.js");const l=await loadBuiltinLibrary();return l.puzzles.find(p=>/2x2x2/i.test(p.name)).xml;});
  await page.locator("#puzzle-file").setInputFiles({name:"cube.xml",mimeType:"application/xml",buffer:Buffer.from(xml)});await page.waitForFunction(()=>/Loaded /.test(document.querySelector("#engine-status")?.textContent||""));
  assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0));
