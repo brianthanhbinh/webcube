@@ -240,10 +240,43 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       vertices = [[w,w,w],[-w,-w,w],[-w,w,-w],[w,-w,-w]];
       colors = ["C80000", "0000C8", "009600", "FFFF00"];
     } else {
-      // Unknown scripts are preserved and executed by the Pascal pCubes
-      // runtime. Only the legacy bundled include-based primitives need
-      // conversion because their .inc files are not available in the browser.
-      return;
+      // The browser Pascal build does not execute Pascal Script nodes. Convert
+      // data-only coordinate scripts (Vx[i], Vy[i], Vz[i], Colors[i]) into XML.
+      const arrays = Object.create(null), params = Object.create(null);
+      for (const name of ["W","Wr","Wh","Wx","Wy","Wz","DWX","DWY","DWZ"]) {
+        const raw=load.getAttribute(name);
+        if(raw!==null&&raw.trim()!==""){const value=Number(raw);if(!Number.isFinite(value))throw new Error("Invalid figure parameter "+name+".");params[name]=value;}
+      }
+      const evaluate = source => {
+        const tokens=String(source).match(/(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|[A-Za-z_]\w*|[()+\-*/^]/g)||[];
+        let at=0;
+        const primary=()=>{
+          const token=tokens[at++];
+          if(token==="+"||token==="-"){const value=primary();return token==="-"?-value:value;}
+          if(token==="("){const value=expression();if(tokens[at++]!==")")throw new Error("Unclosed figure expression.");return value;}
+          if(token&&(/^[0-9]/.test(token)||/^\./.test(token)))return Number(token);
+          if(token&&/^[A-Za-z_]\w*$/.test(token)){
+            if(tokens[at]==="("){at++;const value=expression();if(tokens[at++]!==")")throw new Error("Invalid figure function.");const fn=token.toLowerCase();if(fn==="sqrt")return Math.sqrt(value);if(fn==="sin")return Math.sin(value);if(fn==="cos")return Math.cos(value);throw new Error("Unsupported figure function: "+token);}
+            if(Object.prototype.hasOwnProperty.call(params,token))return params[token];
+            if(token.toLowerCase()==="pi")return Math.PI;
+          }
+          throw new Error("Unsupported figure expression: "+source);
+        };
+        const power=()=>{let v=primary();while(tokens[at]==="^"){at++;v=Math.pow(v,primary());}return v;};
+        const product=()=>{let v=power();while(tokens[at]==="*"||tokens[at]==="/"){const op=tokens[at++],r=power();v=op==="*"?v*r:v/r;}return v;};
+        const expression=()=>{let v=product();while(tokens[at]==="+"||tokens[at]==="-"){const op=tokens[at++],r=product();v=op==="+"?v+r:v-r;}return v;};
+        const value=expression();if(at!==tokens.length||!Number.isFinite(value))throw new Error("Invalid figure expression: "+source);return value;
+      };
+      const assignment=/\b([A-Za-z_]\w*)\s*\[\s*(\d+)\s*\]\s*:=\s*([^;]+);/g;
+      let match;
+      while((match=assignment.exec(script))){
+        const [,name,index,raw]=match,value=raw.trim(),quoted=/^(['"])([\s\S]*)\1$/.exec(value);
+        (arrays[name] ||= Object.create(null))[Number(index)]=quoted?quoted[2]:evaluate(value);
+      }
+      const indices=Object.keys(arrays.Vx||{}).map(Number).filter(i=>Object.prototype.hasOwnProperty.call(arrays.Vy||{},i)&&Object.prototype.hasOwnProperty.call(arrays.Vz||{},i)).sort((a,b)=>a-b);
+      if(!indices.length)return;
+      vertices=indices.map(i=>[arrays.Vx[i],arrays.Vy[i],arrays.Vz[i]]);
+      for(let i=0;i<6;i++)if(arrays.Colors?.[i]!==undefined)colors[i]=String(arrays.Colors[i]);
     }
     for (const part of Array.from(root.getElementsByTagName("Part"))) {
       const vertexNode = part.getElementsByTagName("Vertices")[0];

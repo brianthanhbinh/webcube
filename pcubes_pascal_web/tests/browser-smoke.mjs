@@ -160,8 +160,18 @@ try{
      await item.click();
      await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open || (document.querySelector("#engine-status")?.textContent||"").startsWith("Library load failed"),null,{timeout:30000});
      const failed=await page.locator("#library-dialog").evaluate(d=>d.open);
-     if(failed) remoteFailures.push({path:entry.path,error:await page.locator("#engine-status").textContent()});
-   }catch(error){remoteFailures.push({path:entry.path,error:String(error).slice(0,300)});}
+     if(failed) {
+       remoteFailures.push({path:entry.path,error:await page.locator("#engine-status").textContent()});
+       await page.locator("#library-close").click();
+       await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open);
+     }
+   }catch(error){
+     remoteFailures.push({path:entry.path,error:String(error).slice(0,300)});
+     if(await page.locator("#library-dialog").evaluate(d=>d.open)){
+       await page.locator("#library-close").click();
+       await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open);
+     }
+   }
  }
  console.log("REMOTE_CATALOG_SCAN "+JSON.stringify({total:catalog.puzzles.length,failures:remoteFailures}));
  // Generator UI is available after the Pascal startup self-test.
