@@ -24,7 +24,7 @@ begin
 end;
 
 function APIGetVersion: String;
-begin Result := '0.3.0'; end;
+begin Result := '0.3.1'; end;
 
 function APIIsPuzzleReady: Boolean;
 begin
@@ -87,31 +87,44 @@ begin
 end;
 
 function APIScramble: Boolean;
-var I, AxisNo, LayerNo, Direction, Turns, BeforeCount: Integer;
-    Angle: Extended;
+var I, AxisNo, LayerNo, Direction, Turns, BeforeCount, PreviousAxis, PreviousLayer, PreviousDirection: Integer;
+    Angle: Extended; Attempts: Integer;
 begin
   Result := False;
   if not APIIsPuzzleReady then begin
     SetStatus('Scramble unavailable: load a valid puzzle XML first.');
     Exit;
   end;
+  Randomize;
   Turns := 0;
+  PreviousAxis := -1; PreviousLayer := -1; PreviousDirection := 0;
   for I := 1 to 30 do begin
-    AxisNo := Random(CurrentPuzzle.Axes.Count);
+    Attempts := 0;
+    repeat
+      Inc(Attempts);
+      AxisNo := Random(CurrentPuzzle.Axes.Count);
+      if CurrentPuzzle.Axes[AxisNo].Layers.Count = 0 then Continue;
+      LayerNo := Random(CurrentPuzzle.Axes[AxisNo].Layers.Count);
+      Direction := Random(2) * 2 - 1;
+      if (AxisNo = PreviousAxis) and (LayerNo = PreviousLayer) and
+         (Direction = -PreviousDirection) then Continue;
+      Break;
+    until Attempts >= 100;
+    if Attempts >= 100 then Continue;
     if (Abs(CurrentPuzzle.Axes[AxisNo].NormVector.X) + Abs(CurrentPuzzle.Axes[AxisNo].NormVector.Y) + Abs(CurrentPuzzle.Axes[AxisNo].NormVector.Z)) < 0.0001 then Continue;
     if not CurrentPuzzle.Axes[AxisNo].Enabled then Continue;
-    if CurrentPuzzle.Axes[AxisNo].Layers.Count = 0 then Continue;
-    LayerNo := Random(CurrentPuzzle.Axes[AxisNo].Layers.Count);
     if CurrentPuzzle.Axes[AxisNo].Layers[LayerNo].Fixed then Continue;
     Angle := CurrentPuzzle.Axes[AxisNo].Layers[LayerNo].TurningAngle;
     if Abs(Angle) < 0.000001 then Continue;
-    Direction := Random(2) * 2 - 1;
     BeforeCount := CurrentPuzzle.UndoCount;
     CurrentPuzzle.RotateLayer(AxisNo, LayerNo, Angle * Direction, True);
-    if CurrentPuzzle.UndoCount > BeforeCount then Inc(Turns);
+    if CurrentPuzzle.UndoCount > BeforeCount then begin
+      Inc(Turns);
+      PreviousAxis := AxisNo; PreviousLayer := LayerNo; PreviousDirection := Direction;
+    end;
   end;
   Result := Turns > 0;
-  if Result then SetStatus('Scrambled with ' + IntToStr(Turns) + ' valid layer turns.')
+  if Result then SetStatus('Scrambled: ' + IntToStr(Turns) + ' layer moves.')
   else SetStatus('Scramble failed: this puzzle has no movable layers.');
 end;
 
@@ -122,7 +135,7 @@ var
   Part: TPart;
   Face: TFace;
   V: TVector;
-  I, J: Integer;
+  I: Integer;
 begin
   Result := new([]);
   FacesArray := TJSArray.new;
@@ -136,9 +149,7 @@ begin
             for I := 0 to Face.GetVertexCount - 1 do begin
               V := Face.GetVertex(I);
               VertexArray := TJSArray.new;
-              VertexArray.push(V.X);
-              VertexArray.push(V.Y);
-              VertexArray.push(V.Z);
+              VertexArray.push(V.X); VertexArray.push(V.Y); VertexArray.push(V.Z);
               VerticesArray.push(VertexArray);
             end;
             FaceObject['vertices'] := VerticesArray;
@@ -168,8 +179,7 @@ begin
     SetStatus('Reset unavailable: no original puzzle XML has been loaded.');
     Exit;
   end;
-  if APILoadXML(OriginalXmlRoot) then
-    SetStatus('Puzzle reset to its original XML state.');
+  if APILoadXML(OriginalXmlRoot) then SetStatus('Puzzle reset to its original XML state.');
 end;
 
 procedure APIOpenLibrary;
@@ -180,15 +190,10 @@ var I, J: Integer; Distances: array of Extended; PuzzleName: String;
 begin
   PuzzleName := Puzzle.Header.Name;
   if Pos('3x3x3', PuzzleName) > 0 then begin
-    SetLength(Distances, 2);
-    Distances[0] := -1/6;
-    Distances[1] := 1/6;
+    SetLength(Distances, 2); Distances[0] := -1/6; Distances[1] := 1/6;
   end else if Pos('2x2x2', PuzzleName) > 0 then begin
-    SetLength(Distances, 1);
-    Distances[0] := 0;
-  end else
-    Exit;
-
+    SetLength(Distances, 1); Distances[0] := 0;
+  end else Exit;
   for I := 0 to Puzzle.Axes.Count - 1 do begin
     if (Abs(Puzzle.Axes[I].NormVector.X) + Abs(Puzzle.Axes[I].NormVector.Y) +
         Abs(Puzzle.Axes[I].NormVector.Z)) < 0.0001 then Continue;
@@ -200,41 +205,27 @@ begin
 end;
 
 function APILoadXML(XmlRoot: TJSObject): Boolean;
-var
-  NewPuzzle: TPuzzle;
+var NewPuzzle: TPuzzle;
 begin
   Result := False;
-  if XmlRoot = nil then begin
-    SetStatus('XML load failed: no XML root element was supplied.');
-    Exit;
-  end;
-
+  if XmlRoot = nil then begin SetStatus('XML load failed: no XML root element was supplied.'); Exit; end;
   NewPuzzle := TPuzzle.Create;
   try
     NewPuzzle.DisableAnimation;
     if not TXmlReadWrite.PuzzleLoadFromXml(NewPuzzle, WrapDomNode(TJSNode(XmlRoot))) then begin
-      SetStatus('XML load failed: pCubes rejected the puzzle definition.');
-      Exit;
+      SetStatus('XML load failed: pCubes rejected the puzzle definition.'); Exit;
     end;
-
     ConfigureStandardCube(NewPuzzle);
-
     if (NewPuzzle.Parts.Count = 0) or (NewPuzzle.Axes.Count = 0) then begin
-      SetStatus('XML load failed: the file contains no usable puzzle parts or axes.');
-      Exit;
+      SetStatus('XML load failed: the file contains no usable puzzle parts or axes.'); Exit;
     end;
-
     if CurrentPuzzle <> nil then CurrentPuzzle.Free;
-    CurrentPuzzle := NewPuzzle;
-    OriginalXmlRoot := XmlRoot;
-    NewPuzzle := nil;
+    CurrentPuzzle := NewPuzzle; OriginalXmlRoot := XmlRoot; NewPuzzle := nil;
     SetStatus('Loaded "' + CurrentPuzzle.Header.Name + '" from XML (' +
-      IntToStr(CurrentPuzzle.Parts.Count) + ' parts, ' +
-      IntToStr(CurrentPuzzle.Axes.Count) + ' axes).');
+      IntToStr(CurrentPuzzle.Parts.Count) + ' parts, ' + IntToStr(CurrentPuzzle.Axes.Count) + ' axes).');
     Result := True;
   except
-    on E: Exception do
-      SetStatus('XML load failed: ' + E.Message);
+    on E: Exception do SetStatus('XML load failed: ' + E.Message);
   end;
   if NewPuzzle <> nil then NewPuzzle.Free;
 end;
@@ -242,7 +233,7 @@ end;
 procedure InstallBrowserAPI;
 begin
   API := new([]);
-  API['version'] := '0.3.0';
+  API['version'] := '0.3.1';
   API['getStatus'] := TJSFunction(@APIGetStatus);
   API['getVersion'] := TJSFunction(@APIGetVersion);
   API['isPuzzleReady'] := TJSFunction(@APIIsPuzzleReady);
