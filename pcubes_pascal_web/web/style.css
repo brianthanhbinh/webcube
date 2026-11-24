@@ -3,3 +3,5 @@
 #puzzle-canvas{touch-action:none;cursor:grab}#puzzle-canvas:active{cursor:grabbing}
 
 .turn-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}aside label{font-size:12px;color:#a8b5c8;margin-top:4px}aside select{width:100%;padding:9px;border-radius:7px;border:1px solid #526783;background:#101923;color:#fff}
+
+#puzzle-canvas{touch-action:none;cursor:grab}#puzzle-canvas:active{cursor:grabbing}#puzzle-canvas{user-select:none}
