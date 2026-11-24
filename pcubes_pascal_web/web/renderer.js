@@ -45,8 +45,17 @@ export class PuzzleRenderer {
       } else if(p.button===0&&p.hit&&p.before){
         // Resolve the turning axis and slice once per drag. Keep that exact
         // slice locked until pointerup so the gesture cannot jump layers.
-        if(!p.dragTarget)
-          p.dragTarget=this.pickLayerForDrag(p.hit,p.axes,e.clientX-p.downX,e.clientY-p.downY);
+        if(!p.dragTarget){
+          const dx0=e.clientX-p.downX,dy0=e.clientY-p.downY;
+          p.dragTarget=this.pickLayerForDrag(p.hit,p.axes,dx0,dy0);
+          // Preserve the established face-drag behavior if the swipe is too
+          // ambiguous to infer a perpendicular middle slice. The chosen
+          // target is still latched for the remainder of this gesture.
+          if(!p.dragTarget&&p.pick&&p.axis){
+            const horizontal=Math.abs(dx0)>=Math.abs(dy0);
+            p.dragTarget={pick:p.pick,axis:p.axis,drag:horizontal?dx0:dy0,direction:1};
+          }
+        }
         const target=p.dragTarget;
         if(target){
           p.pick=target.pick;p.axis=target.axis;
