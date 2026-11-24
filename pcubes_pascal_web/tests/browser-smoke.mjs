@@ -32,7 +32,7 @@ try{
  before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
  await page.locator("#scramble").click();await page.waitForTimeout(40);
  assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Scramble did not change puzzle geometry");
- assert.match(await page.locator("#engine-status").textContent(),/Scrambled: 30 random layer turns\\./,"Scramble did not complete 30 random turns");
+ assert.match(await page.locator("#engine-status").textContent(),/Scrambled: 30 random layer turns\./,"Scramble did not complete 30 random turns");
  assert.ok((await page.evaluate(()=>window.pCubes.getModelInfo().undoCount))>=30,"Scramble did not record the random turns");
  for(const id of ["undo","redo","reset"]){await page.locator("#"+id).click();await page.waitForTimeout(40);const s=await page.locator("#engine-status").textContent();assert.doesNotMatch(s,/Pascal error|failed/i,id+": "+s);assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);}
  await page.locator("#library").click();await page.waitForFunction(()=>document.querySelector("#library-dialog")?.open);await page.waitForFunction(()=>document.querySelectorAll("#library-list button").length>0);
