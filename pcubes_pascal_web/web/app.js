@@ -8,7 +8,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
   const info = $("model-info");
   const file = $("puzzle-file");
   const renderer = new PuzzleRenderer($("puzzle-canvas"));
-  const controls = ["scramble", "undo", "redo", "reset"];
+  const controls = ["scramble", "undo", "redo", "reset", "turn-ccw", "turn-cw"];
   let originalXmlText = "";
   let libraryData = null;
   let preflightPassed = false;
@@ -56,7 +56,32 @@ import { loadBuiltinLibrary } from "./library-data.js";
     for (const id of controls) $(id).disabled = !model.ready || !preflightPassed;
     $("library").disabled = !preflightPassed;
     $("load").disabled = false;
+    refreshTurnControls(api);
     if (typeof api.getRenderData === "function") renderer.setGeometry(api.getRenderData());
+  }
+
+  function refreshTurnControls(api) {
+    const axes = api.getAxesInfo?.() || [];
+    const axisSelect = $("turn-axis"), layerSelect = $("turn-layer");
+    const oldAxis = Number(axisSelect.value) || 0, oldLayer = Number(layerSelect.value) || 0;
+    axisSelect.replaceChildren();
+    for (const axis of axes) {
+      const option = document.createElement("option");
+      option.value = axis.index;
+      option.textContent = "Axis " + (axis.index + 1) + " (" + [axis.x,axis.y,axis.z].map(v=>Number(v).toFixed(1)).join(", ") + ")";
+      axisSelect.append(option);
+    }
+    if (axes.length) {
+      axisSelect.value = String(Math.min(oldAxis, axes.length - 1));
+      const axis = axes[Number(axisSelect.value)];
+      layerSelect.replaceChildren();
+      for (let i=0;i<axis.layers;i++) {
+        const option=document.createElement("option"); option.value=i; option.textContent="Layer "+(i+1); layerSelect.append(option);
+      }
+      layerSelect.value=String(Math.min(oldLayer,Math.max(0,axis.layers-1)));
+    }
+    axisSelect.disabled=layerSelect.disabled=!preflightPassed||!axes.length;
+    $("turn-ccw").disabled=$("turn-cw").disabled=!preflightPassed||!axes.length;
   }
 
   function call(name, ...args) {
@@ -115,6 +140,9 @@ import { loadBuiltinLibrary } from "./library-data.js";
     } catch (error) { list.textContent = "Library failed to load: " + error.message; }
   }
 
+  $("turn-axis").addEventListener("change", () => refreshTurnControls(window.pCubes));
+  $("turn-ccw").addEventListener("click", () => call("turnLayer", Number($("turn-axis").value), Number($("turn-layer").value), -1));
+  $("turn-cw").addEventListener("click", () => call("turnLayer", Number($("turn-axis").value), Number($("turn-layer").value), 1));
   $("view-reset").addEventListener("click", () => renderer.resetView());
   $("scramble").addEventListener("click", () => call("scramble"));
   $("undo").addEventListener("click", () => call("undo"));
@@ -152,7 +180,7 @@ import { loadBuiltinLibrary } from "./library-data.js";
 
   async function runPreflight(api) {
     preflightReport = [];
-    const required = ["getStatus", "getVersion", "isPuzzleReady", "getModelInfo", "getRenderData", "scramble", "undo", "redo", "reset", "openLibrary", "loadXML"];
+    const required = ["getStatus", "getVersion", "isPuzzleReady", "getModelInfo", "getRenderData", "getAxesInfo", "turnLayer", "scramble", "undo", "redo", "reset", "openLibrary", "loadXML"];
     for (const name of required) recordTest("API " + name, typeof api[name] === "function");
     recordTest("Pascal version", typeof api.getVersion() === "string" && api.getVersion().length > 0);
     recordTest("Initial status", typeof api.getStatus() === "string");
