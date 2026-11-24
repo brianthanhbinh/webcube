@@ -254,25 +254,23 @@ end;
 
 class function TXmlReadWrite.LoadArrayFromString(const Names: String): TArray<extended>;
 var
-  i: integer;
-  EList: TList<Extended>;
+  i, Count: integer;
   Token: String;
 begin
-  EList := TList<Extended>.Create;
-  try
-    Token := '';
-    for i := 1 to Length(Names) + 1 do begin
-      if (i > Length(Names)) or (Names[i] = ';') then begin
-        Token := XmlTrim(Token);
-        if Token <> '' then
-          EList.Add(CalcExpression(Token));
-        Token := '';
-      end else
-        Token := Token + Names[i];
-    end;
-    Result := EList.ToArray;
-  finally
-    EList.Free;
+  SetLength(Result, 0);
+  Token := '';
+  Count := 0;
+  for i := 1 to Length(Names) + 1 do begin
+    if (i > Length(Names)) or (Names[i] = ';') then begin
+      Token := XmlTrim(Token);
+      if Token <> '' then begin
+        SetLength(Result, Count + 1);
+        Result[Count] := CalcExpression(Token);
+        Inc(Count);
+      end;
+      Token := '';
+    end else
+      Token := Token + Names[i];
   end;
 end;
 
