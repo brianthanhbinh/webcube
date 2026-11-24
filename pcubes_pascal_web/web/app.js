@@ -512,7 +512,10 @@ import { loadBuiltinLibrary } from "./library-data.js";
           if (!canLoad) { button.disabled = true; button.title = "This puzzle depends on an external macro/figure not included in the browser engine."; }
           else button.addEventListener("click", () => {
             try { if (loadXmlText(entry.xml)) dialog.close(); }
-            catch (error) { status.textContent = "Library load failed: " + error.message; }
+            catch (error) {
+              $("add-figure").disabled = !pendingPuzzleDoc;
+              status.textContent = "Library load failed: " + error.message;
+            }
           });
           list.appendChild(button);
         }
