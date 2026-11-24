@@ -239,22 +239,15 @@ begin
 end;
 
 class function TXmlReadWrite.GetAttrOrParent(XmlNode: TDomNode; const aName, aDefault: DomString): DomString;
-var i: integer;
 begin
   Result := aDefault;
-
-  i := GetAttrIndex(XmlNode, aName);
-  if i >= 0 then
-    Exit(TDomElement(XmlNode).GetAttribute(aName));
-
+  if XmlNode = nil then Exit;
+  Result := TDomElement(XmlNode).GetAttribute(aName);
+  if Result <> '' then Exit;
   XmlNode := XmlNode.ParentNode;
-
-  if XmlNode = nil then
-    Exit;
-
-  i := GetAttrIndex(XmlNode, aName);
-  if i >= 0 then
-    Exit(DomValueToString(XmlNode.Attributes[i].NodeValue));
+  if XmlNode = nil then Exit;
+  Result := TDomElement(XmlNode).GetAttribute(aName);
+  if Result = '' then Result := aDefault;
 end;
 
 // ========================= Vector ===================================
