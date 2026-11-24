@@ -20,9 +20,7 @@ try {
     report: document.querySelector("#preflight-results")?.textContent || "",
     model: document.querySelector("#model-info")?.textContent || ""
   }));
-  assert.equal(preflight.result, "passed", "Startup self-test failed:
-" + preflight.status + "
-" + preflight.report);
+  assert.equal(preflight.result, "passed", "Startup self-test failed: " + preflight.status + " | " + preflight.report);
   assert.match(preflight.status, /All \d+ startup tests passed/);
   assert.match(preflight.model, /parts/);
 
