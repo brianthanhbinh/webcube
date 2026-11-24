@@ -397,8 +397,10 @@ import { loadBuiltinLibrary } from "./library-data.js";
     const axesXml = Array.from(cubeDoc.getElementsByTagName("Axes")[0]?.getElementsByTagName("Axis") || []);
     const inheritedPlanes = axesXml.map(axis => axis.getAttribute("PlaneDistances"));
     recordTest("Axis XML inherited settings", axesXml.length >= 3 &&
-      inheritedPlanes.every(value => value.includes("-1/6") && value.includes("1/6")),
-      JSON.stringify(inheritedPlanes));
+      inheritedPlanes.every(value => {
+        const numbers = value.split(";").map(Number);
+        return numbers.length === 2 && Math.abs(numbers[0] + 1/6) < 1e-9 && Math.abs(numbers[1] - 1/6) < 1e-9;
+      }), JSON.stringify(inheritedPlanes));
     const cubeLoaded = loadXmlText(cube.xml);
     recordTest("Pascal loadXML", cubeLoaded, status.textContent);
     const model = api.getModelInfo();
