@@ -90,6 +90,22 @@ jobs:
           chmod +x pcubes_pascal_web/build/build.sh
           ./pcubes_pascal_web/build/build.sh
 
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+
+      - name: Run browser tests before publishing
+        run: |
+          python3 -m http.server 4173 --directory pcubes_pascal_web/web >/tmp/pcubes-web.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node pcubes_pascal_web/tests/browser-smoke.mjs
+
       - name: Commit generated JavaScript for Vercel
         run: |
           git config user.name "github-actions[bot]"
