@@ -10489,8 +10489,10 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
     var Face = null;
     var V = pas.uVector.TVector.$new();
     var I = 0;
+    var PartIndex = 0;
     Result = pas.JS.New([]);
     FacesArray = new Array();
+    PartIndex = 0;
     if ($mod.CurrentPuzzle !== null) {
       var $in = $mod.CurrentPuzzle.FParts.GetEnumerator$1();
       try {
@@ -10515,6 +10517,7 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
                   };
                   FaceObject["vertices"] = VerticesArray;
                   FaceObject["color"] = Face.Color;
+                  FaceObject["partIndex"] = PartIndex;
                   FacesArray.push(FaceObject);
                 };
               }
@@ -10522,6 +10525,7 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
               $in1 = rtl.freeLoc($in1)
             };
           };
+          PartIndex += 1;
         }
       } finally {
         $in = rtl.freeLoc($in)
