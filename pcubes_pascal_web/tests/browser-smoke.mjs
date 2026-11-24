@@ -10,17 +10,24 @@ try{
  assert.equal(pre.result,"passed","Preflight: "+pre.status+" | "+pre.report);assert.match(pre.model,/parts/);
  const canvas=page.locator("#puzzle-canvas");
  const pixels=await canvas.evaluate(c=>{const d=c.getContext("2d").getImageData(0,0,c.width,c.height).data;let n=0;for(let i=0;i<d.length;i+=4)if(d[i]>45||d[i+1]>45||d[i+2]>50)n++;return n;});assert.ok(pixels>100,"Canvas blank");
+ const bounds=await canvas.boundingBox();assert.ok(bounds.height<=820&&bounds.height>=300,"Viewport sizing is out of bounds: "+bounds.height);
  const axes=await page.evaluate(()=>window.pCubes.getAxesInfo()),axis=axes.find(a=>a.layers>0)?.index;assert.notEqual(axis,undefined,"No turn axis");
  let before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
  assert.equal(await page.evaluate(a=>window.pCubes.turnLayer(a,0,1),axis),true);assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before);
- await page.mouse.move(400,300);before=await canvas.evaluate(c=>c.getContext("2d").getImageData(0,0,c.width,c.height).data.join(","));
- await page.mouse.down({button:"right"});await page.mouse.move(455,340,{steps:5});await page.mouse.up({button:"right"});
- assert.notEqual(await canvas.evaluate(c=>c.getContext("2d").getImageData(0,0,c.width,c.height).data.join(",")),before,"Camera drag failed");
+ // Primary gesture: left-drag freely spins the whole puzzle.
+ before=await canvas.evaluate(c=>c.getContext("2d").getImageData(0,0,c.width,c.height).data.join(","));
+ await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down();await page.mouse.move(bounds.x+bounds.width/2+75,bounds.y+bounds.height/2+42,{steps:6});await page.mouse.up();
+ assert.notEqual(await canvas.evaluate(c=>c.getContext("2d").getImageData(0,0,c.width,c.height).data.join(",")),before,"Left-drag did not spin the puzzle");
+ // Right-drag turns the selected layer without clicking turn buttons.
  await page.locator("#turn-axis").selectOption(String(axis));await page.locator("#turn-layer").selectOption("0");
  before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
- await page.mouse.move(600,400);await page.mouse.down();await page.mouse.move(660,400,{steps:5});await page.mouse.up();
- assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Layer drag failed");
- for(const id of ["scramble","undo","redo","reset"]){await page.locator("#"+id).click();await page.waitForTimeout(40);const s=await page.locator("#engine-status").textContent();assert.doesNotMatch(s,/Pascal error|failed/i,id+": "+s);assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);}
+ await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down({button:"right"});await page.mouse.move(bounds.x+bounds.width/2+65,bounds.y+bounds.height/2,{steps:5});await page.mouse.up({button:"right"});
+ assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Right-drag did not turn selected layer");
+ before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
+ await page.locator("#scramble").click();await page.waitForTimeout(40);
+ assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Scramble did not change puzzle geometry");
+ assert.match(await page.locator("#engine-status").textContent(),/Scrambled:/,"Scramble status missing");
+ for(const id of ["undo","redo","reset"]){await page.locator("#"+id).click();await page.waitForTimeout(40);const s=await page.locator("#engine-status").textContent();assert.doesNotMatch(s,/Pascal error|failed/i,id+": "+s);assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);}
  await page.locator("#library").click();await page.waitForFunction(()=>document.querySelector("#library-dialog")?.open);await page.waitForFunction(()=>document.querySelectorAll("#library-list button").length>0);
  assert.ok(await page.locator("#library-list button").count()>=4);
  const cube2=page.locator("#library-list button").filter({has:page.locator("strong").getByText("Rubik's cube 2x2x2",{exact:true})});
@@ -34,5 +41,5 @@ try{
  await page.locator("#puzzle-file").setInputFiles({name:"cube.xml",mimeType:"application/xml",buffer:Buffer.from(xml)});await page.waitForFunction(()=>/Loaded /.test(document.querySelector("#engine-status")?.textContent||""));
  assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);assert.ok(await page.evaluate(()=>window.pCubes.getRenderData().faces.length>0));
  assert.deepEqual(errors,[],"Browser errors: "+errors.join(" | "));
- console.log("PASS: preflight, render, camera drag, layer drag, turn, scramble, undo/redo/reset, exact 2x2/3x3 selection, XML upload.");
+ console.log("PASS: preflight, render, compact viewport, left-drag spin, right-drag layer turn, scramble geometry, undo/redo/reset, exact 2x2/3x3 selection, XML upload.");
 }finally{await browser.close();}
