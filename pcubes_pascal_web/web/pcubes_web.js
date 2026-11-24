@@ -2877,6 +2877,20 @@ rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
     $mod.LongDayNames = $impl.DefaultLongDayNames.slice(0);
   };
 },[]);
+rtl.module("Math",["System"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.IsZero = function (d, Epsilon) {
+    var Result = false;
+    if (Epsilon === 0) Epsilon = 1E-12;
+    Result = Math.abs(d) <= Epsilon;
+    return Result;
+  };
+  $mod.$implcode = function () {
+    $impl.DZeroResolution = 1E-12;
+  };
+},[]);
 rtl.module("DOM",["System","JS","Web","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -5779,20 +5793,6 @@ rtl.module("Graphics",["System"],function () {
     return Result;
   };
 });
-rtl.module("Math",["System"],function () {
-  "use strict";
-  var $mod = this;
-  var $impl = $mod.$impl;
-  this.IsZero = function (d, Epsilon) {
-    var Result = false;
-    if (Epsilon === 0) Epsilon = 1E-12;
-    Result = Math.abs(d) <= Epsilon;
-    return Result;
-  };
-  $mod.$implcode = function () {
-    $impl.DZeroResolution = 1E-12;
-  };
-},[]);
 rtl.module("uFaceUtils",["System","uFace","uPlane","uVector","Generics.Collections"],function () {
   "use strict";
   var $mod = this;
@@ -8063,25 +8063,6 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       };
       this.UndoStack.Clear();
     };
-    this.LayerTurnable = function (AxisNo, Layers, RotateDirection) {
-      var Result = false;
-      var Layer = null;
-      var Axis = null;
-      var i = 0;
-      Axis = this.FAxes.GetItem(AxisNo);
-      Result = false;
-      for (var $l = 0, $end = rtl.length(Layers) - 1; $l <= $end; $l++) {
-        i = $l;
-        if (Layers[i]) {
-          Layer = Axis.Layers.GetItem(i);
-          if ((RotateDirection < 0) && (Layer.Angle < (Layer.MinAngle + 1E-3))) return Result;
-          if ((RotateDirection > 0) && (Layer.Angle > (Layer.MaxAngle - 1E-3))) return Result;
-          if ((RotateDirection === 0) && ((Layer.Angle < (Layer.MinAngle + 1E-3)) || (Layer.Angle > (Layer.MaxAngle - 1E-3)))) return Result;
-        };
-      };
-      Result = true;
-      return Result;
-    };
     this.GetMovingParts = function (AxisNo, Layers) {
       var Result = false;
       var pFrom = 0;
@@ -8275,28 +8256,6 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       Result = !this.IsTurningWhole(pas.uSelection.TSelection.TurnLayers);
       return Result;
     };
-    this.CalcMovingLayers$1 = function (AxisNo, LayerNo, LayersCount) {
-      var Result = false;
-      var Axis = null;
-      var i = 0;
-      Axis = this.FAxes.GetItem(AxisNo);
-      if (!Axis.Enabled) return false;
-      pas.uSelection.TSelection.TurnLayers = rtl.arraySetLength(pas.uSelection.TSelection.TurnLayers,false,Axis.Layers.FLength);
-      for (var $l = 0, $end = rtl.length(pas.uSelection.TSelection.TurnLayers) - 1; $l <= $end; $l++) {
-        i = $l;
-        pas.uSelection.TSelection.TurnLayers[i] = false;
-      };
-      for (var $l1 = 0, $end1 = LayersCount - 1; $l1 <= $end1; $l1++) {
-        i = $l1;
-        this.AddMovingLayer(AxisNo,LayerNo + i,{p: pas.uSelection.TSelection.TSelection, get: function () {
-            return this.p.TurnLayers;
-          }, set: function (v) {
-            this.p.TurnLayers = v;
-          }});
-      };
-      Result = !this.IsTurningWhole(pas.uSelection.TSelection.TurnLayers);
-      return Result;
-    };
     var PI2 = 2 * Math.PI;
     this.GetTurningAngle = function (AxisNo, Layers, Al, AngleMin, AngleMax) {
       var $Self = this;
@@ -8478,100 +8437,6 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       var Result = false;
       Result = this.TurningState in rtl.createSet($mod.TTurningState.tsMidTurn,$mod.TTurningState.tsTurningAnimated);
       return Result;
-    };
-    this.Scramble = function () {
-      var i = 0;
-      var AxisNo = 0;
-      var LayerNo = 0;
-      var Angle = 0.0;
-      var Axis = null;
-      for (i = 0; i <= 200; i++) {
-        AxisNo = pas.System.Random(this.FAxes.FLength);
-        pas.uSelection.TSelection.TurnAxisNo = AxisNo;
-        Axis = this.FAxes.GetItem(AxisNo);
-        LayerNo = pas.System.Random(Axis.Layers.FLength);
-        if (!this.CalcMovingLayers$1(AxisNo,LayerNo,1)) continue;
-        if (Axis.IsLayerFixed(pas.uSelection.TSelection.TurnLayers)) continue;
-        if (this.IsTurningWhole(pas.uSelection.TSelection.TurnLayers)) continue;
-        Angle = Axis.Layers.GetItem(LayerNo).FTurningAngle;
-        Angle = Angle * (pas.System.Random(Math.round((2 * Math.PI) / Angle) - 1) + 1);
-        this.GetRotateAngleRange(AxisNo,pas.uSelection.TSelection.TurnLayers,{p: pas.uSelection.TSelection.TSelection, get: function () {
-            return this.p.AngleMin;
-          }, set: function (v) {
-            this.p.AngleMin = v;
-          }},{p: pas.uSelection.TSelection.TSelection, get: function () {
-            return this.p.AngleMax;
-          }, set: function (v) {
-            this.p.AngleMax = v;
-          }});
-        Angle = this.GetTurningAngle(AxisNo,pas.uSelection.TSelection.TurnLayers,Angle,pas.uSelection.TSelection.AngleMin,pas.uSelection.TSelection.AngleMax);
-        if ((Angle > (pas.uSelection.TSelection.AngleMax + 1E-3)) || (Angle < (pas.uSelection.TSelection.AngleMin - 1E-3))) continue;
-        pas.uSelection.TSelection.RotateDirection = Math.sign(Angle);
-        if (this.LayerTurnable(AxisNo,pas.uSelection.TSelection.TurnLayers,pas.uSelection.TSelection.RotateDirection)) {
-          this.BeforeTurnEvent($mod.TTurningType.ttScramble,AxisNo,{p: pas.uSelection.TSelection.TSelection, get: function () {
-              return this.p.TurnLayers;
-            }, set: function (v) {
-              this.p.TurnLayers = v;
-            }},{p: pas.uSelection.TSelection.TSelection, get: function () {
-              return this.p.AngleMin;
-            }, set: function (v) {
-              this.p.AngleMin = v;
-            }},{p: pas.uSelection.TSelection.TSelection, get: function () {
-              return this.p.AngleMax;
-            }, set: function (v) {
-              this.p.AngleMax = v;
-            }},pas.uSelection.TSelection.RotateDirection);
-          if ((Angle >= (pas.uSelection.TSelection.AngleMin - 1E-3)) && (Angle <= (pas.uSelection.TSelection.AngleMax + 1E-3))) {
-            if (this.FOnBeforeTurn != null) this.FOnBeforeTurn($mod.TTurningType.ttScramble,$mod.TTurningState.tsFree);
-            this.RotateLayers(AxisNo,pas.uSelection.TSelection.TurnLayers,Angle,false);
-            this.AfterTurnEvent($mod.TTurningType.ttScramble);
-            if (this.FOnAfterTurn != null) this.FOnAfterTurn($mod.TTurningType.ttScramble,$mod.TTurningState.tsFree);
-          };
-        };
-      };
-      for (i = 0; i <= 2000; i++) {
-        AxisNo = pas.System.Random(this.FAxes.FLength);
-        LayerNo = pas.System.Random(this.FAxes.GetItem(AxisNo).Layers.FLength);
-        Angle = Math.PI * ((Math.random() * 2) - 1);
-        pas.uSelection.TSelection.TurnAxisNo = AxisNo;
-        Axis = this.FAxes.GetItem(AxisNo);
-        if (!this.CalcMovingLayers$1(AxisNo,LayerNo,1)) continue;
-        if (Axis.IsLayerFixed(pas.uSelection.TSelection.TurnLayers)) continue;
-        if (this.IsTurningWhole(pas.uSelection.TSelection.TurnLayers)) continue;
-        this.GetRotateAngleRange(AxisNo,pas.uSelection.TSelection.TurnLayers,{p: pas.uSelection.TSelection.TSelection, get: function () {
-            return this.p.AngleMin;
-          }, set: function (v) {
-            this.p.AngleMin = v;
-          }},{p: pas.uSelection.TSelection.TSelection, get: function () {
-            return this.p.AngleMax;
-          }, set: function (v) {
-            this.p.AngleMax = v;
-          }});
-        Angle = this.GetTurningAngle(AxisNo,pas.uSelection.TSelection.TurnLayers,Angle,pas.uSelection.TSelection.AngleMin,pas.uSelection.TSelection.AngleMax);
-        if ((Angle > (pas.uSelection.TSelection.AngleMax + 1E-3)) || (Angle < (pas.uSelection.TSelection.AngleMin - 1E-3))) continue;
-        pas.uSelection.TSelection.RotateDirection = Math.sign(Angle);
-        if (this.LayerTurnable(AxisNo,pas.uSelection.TSelection.TurnLayers,pas.uSelection.TSelection.RotateDirection)) {
-          this.BeforeTurnEvent($mod.TTurningType.ttScramble,AxisNo,{p: pas.uSelection.TSelection.TSelection, get: function () {
-              return this.p.TurnLayers;
-            }, set: function (v) {
-              this.p.TurnLayers = v;
-            }},{p: pas.uSelection.TSelection.TSelection, get: function () {
-              return this.p.AngleMin;
-            }, set: function (v) {
-              this.p.AngleMin = v;
-            }},{p: pas.uSelection.TSelection.TSelection, get: function () {
-              return this.p.AngleMax;
-            }, set: function (v) {
-              this.p.AngleMax = v;
-            }},pas.uSelection.TSelection.RotateDirection);
-          if ((Angle >= (pas.uSelection.TSelection.AngleMin - 1E-3)) && (Angle <= (pas.uSelection.TSelection.AngleMax + 1E-3))) {
-            if (this.FOnBeforeTurn != null) this.FOnBeforeTurn($mod.TTurningType.ttScramble,$mod.TTurningState.tsFree);
-            this.RotateLayers(AxisNo,pas.uSelection.TSelection.TurnLayers,Angle,false);
-            this.AfterTurnEvent($mod.TTurningType.ttScramble);
-            if (this.FOnAfterTurn != null) this.FOnAfterTurn($mod.TTurningType.ttScramble,$mod.TTurningState.tsFree);
-          };
-        };
-      };
     };
     this.Undo = function (WithAnimation) {
       var Result = false;
@@ -10624,7 +10489,7 @@ rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine
     $impl.CIRCLE_SECTORS = 64;
   };
 },["uScript","uUtils","uXmlUtils","uMatrix","uSolvedState","uPuzzleUtils","uSelection","uGeometryUtils","JS","Variants","SysUtils","strutils","Classes","Math"]);
-rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWrite","uPart","uFace","uVector"],function () {
+rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXmlReadWrite","uPart","uFace","uVector","uAxis"],function () {
   "use strict";
   var $mod = this;
   this.StatusNode = null;
@@ -10682,6 +10547,7 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
     if ($mod.CurrentPuzzle === null) return Result;
     for (var $l = 0, $end = $mod.CurrentPuzzle.FAxes.FLength - 1; $l <= $end; $l++) {
       I = $l;
+      if ((Math.abs($mod.CurrentPuzzle.FAxes.GetItem(I).GetNormVector().x) + Math.abs($mod.CurrentPuzzle.FAxes.GetItem(I).GetNormVector().y) + Math.abs($mod.CurrentPuzzle.FAxes.GetItem(I).GetNormVector().z)) < 0.0001) continue;
       AxisInfo = new Object();
       AxisInfo["index"] = I;
       AxisInfo["layers"] = $mod.CurrentPuzzle.FAxes.GetItem(I).Layers.FLength;
@@ -10689,19 +10555,63 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
       AxisInfo["y"] = $mod.CurrentPuzzle.FAxes.GetItem(I).GetNormVector().y;
       AxisInfo["z"] = $mod.CurrentPuzzle.FAxes.GetItem(I).GetNormVector().z;
       AxisInfo["enabled"] = $mod.CurrentPuzzle.FAxes.GetItem(I).Enabled;
+      AxisInfo["layerCount"] = $mod.CurrentPuzzle.FAxes.GetItem(I).Layers.FLength;
+      if ($mod.CurrentPuzzle.FAxes.GetItem(I).Layers.FLength > 0) AxisInfo["angle"] = $mod.CurrentPuzzle.FAxes.GetItem(I).Layers.GetItem(0).FTurningAngle;
       Result.push(AxisInfo);
     };
     return Result;
   };
   this.APITurnLayer = function (AxisNo, LayerNo, Direction) {
     var Result = false;
+    var BeforeCount = 0;
+    var Angle = 0.0;
     Result = false;
     if (!$mod.APIIsPuzzleReady()) return Result;
     if ((AxisNo < 0) || (AxisNo >= $mod.CurrentPuzzle.FAxes.FLength)) return Result;
     if ((LayerNo < 0) || (LayerNo >= $mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.FLength)) return Result;
     if ((Direction !== -1) && (Direction !== 1)) return Result;
-    $mod.CurrentPuzzle.RotateLayer(AxisNo,LayerNo,Direction * 1.5707963267948966,true);
-    Result = true;
+    if (!$mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Enabled) return Result;
+    if ($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.GetItem(LayerNo).Fixed) return Result;
+    Angle = $mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.GetItem(LayerNo).FTurningAngle;
+    if (Math.abs(Angle) < 0.000001) return Result;
+    BeforeCount = $mod.CurrentPuzzle.GetUndoCount();
+    $mod.CurrentPuzzle.RotateLayer(AxisNo,LayerNo,Angle * Direction,true);
+    Result = $mod.CurrentPuzzle.GetUndoCount() > BeforeCount;
+    return Result;
+  };
+  this.APIScramble = function () {
+    var Result = false;
+    var I = 0;
+    var AxisNo = 0;
+    var LayerNo = 0;
+    var Direction = 0;
+    var Turns = 0;
+    var BeforeCount = 0;
+    var Angle = 0.0;
+    Result = false;
+    if (!$mod.APIIsPuzzleReady()) {
+      $mod.SetStatus("Scramble unavailable: load a valid puzzle XML first.");
+      return Result;
+    };
+    Turns = 0;
+    for (I = 1; I <= 30; I++) {
+      AxisNo = pas.System.Random($mod.CurrentPuzzle.FAxes.FLength);
+      if ((Math.abs($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).GetNormVector().x) + Math.abs($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).GetNormVector().y) + Math.abs($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).GetNormVector().z)) < 0.0001) continue;
+      if (!$mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Enabled) continue;
+      if ($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.FLength === 0) continue;
+      LayerNo = pas.System.Random($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.FLength);
+      if ($mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.GetItem(LayerNo).Fixed) continue;
+      Angle = $mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.GetItem(LayerNo).FTurningAngle;
+      if (Math.abs(Angle) < 0.000001) continue;
+      Direction = (pas.System.Random(2) * 2) - 1;
+      BeforeCount = $mod.CurrentPuzzle.GetUndoCount();
+      $mod.CurrentPuzzle.RotateLayer(AxisNo,LayerNo,Angle * Direction,true);
+      if ($mod.CurrentPuzzle.GetUndoCount() > BeforeCount) Turns += 1;
+    };
+    Result = Turns > 0;
+    if (Result) {
+      $mod.SetStatus("Scrambled with " + pas.SysUtils.IntToStr(Turns) + " valid layer turns.")}
+     else $mod.SetStatus("Scramble failed: this puzzle has no movable layers.");
     return Result;
   };
   this.APIGetRenderData = function () {
@@ -10755,15 +10665,6 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
     Result["faces"] = FacesArray;
     return Result;
   };
-  this.APIScramble = function () {
-    if (!$mod.APIIsPuzzleReady()) {
-      $mod.SetStatus("Scramble unavailable: load a valid puzzle XML first.");
-      return;
-    };
-    $mod.CurrentPuzzle.DisableAnimation();
-    $mod.CurrentPuzzle.Scramble();
-    $mod.SetStatus("Scrambled using the original Pascal TPuzzle engine.");
-  };
   this.APIUndo = function () {
     if ($mod.APIIsPuzzleReady() && $mod.CurrentPuzzle.Undo(false)) {
       $mod.SetStatus("Undo performed by Pascal TPuzzle.")}
@@ -10784,6 +10685,31 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
   this.APIOpenLibrary = function () {
     $mod.SetStatus("Choose a puzzle XML file to load a puzzle.");
   };
+  this.ConfigureStandardCube = function (Puzzle) {
+    var I = 0;
+    var J = 0;
+    var Distances = [];
+    var PuzzleName = "";
+    PuzzleName = Puzzle.Header.Name;
+    if (pas.System.Pos("3x3x3",PuzzleName) > 0) {
+      Distances = rtl.arraySetLength(Distances,0.0,2);
+      Distances[0] = -1 / 6;
+      Distances[1] = 1 / 6;
+    } else if (pas.System.Pos("2x2x2",PuzzleName) > 0) {
+      Distances = rtl.arraySetLength(Distances,0.0,1);
+      Distances[0] = 0;
+    } else return;
+    for (var $l = 0, $end = Puzzle.FAxes.FLength - 1; $l <= $end; $l++) {
+      I = $l;
+      if ((Math.abs(Puzzle.FAxes.GetItem(I).GetNormVector().x) + Math.abs(Puzzle.FAxes.GetItem(I).GetNormVector().y) + Math.abs(Puzzle.FAxes.GetItem(I).GetNormVector().z)) < 0.0001) continue;
+      Puzzle.FAxes.GetItem(I).CreateLayers(Distances);
+      for (var $l1 = 0, $end1 = Puzzle.FAxes.GetItem(I).Layers.FLength - 1; $l1 <= $end1; $l1++) {
+        J = $l1;
+        Puzzle.FAxes.GetItem(I).Layers.GetItem(J).SetTurningAngle(Math.PI / 2);
+      };
+    };
+    Puzzle.PositionsInvalidate();
+  };
   this.APILoadXML = function (XmlRoot) {
     var Result = false;
     var NewPuzzle = null;
@@ -10799,6 +10725,7 @@ rtl.module("program",["System","JS","Web","SysUtils","DOM","uPuzzle","uXmlReadWr
         $mod.SetStatus("XML load failed: pCubes rejected the puzzle definition.");
         return Result;
       };
+      $mod.ConfigureStandardCube(NewPuzzle);
       if ((NewPuzzle.FParts.FLength === 0) || (NewPuzzle.FAxes.FLength === 0)) {
         $mod.SetStatus("XML load failed: the file contains no usable puzzle parts or axes.");
         return Result;
