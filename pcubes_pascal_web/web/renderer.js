@@ -51,8 +51,8 @@ export class PuzzleRenderer {
       if(p.button===0&&p.pick&&p.axis&&p.before){
         const step=Math.abs(Number(p.axis.angle)||Math.PI/2);
         const turns=Math.round(p.previewAngle/step);
-        this.setGeometry(p.before);
-        if(turns&&this.onTurnCommit)this.onTurnCommit(p.pick,turns);
+        if(turns&&this.onTurnCommit)this.onTurnCommit(p.pick,turns,p.before,p.axis,p.previewAngle);
+        else this.setGeometry(p.before);
       } else if(p.button===0&&p.moved&&this.onTurnDrag){
         this.onTurnDrag(e.clientX-p.downX,e.clientY-p.downY,p.pick);
       }
@@ -70,7 +70,7 @@ export class PuzzleRenderer {
     this.resizeObserver.observe(canvas);
     this.resize();
   }
-  animateTurn(before, after, axis, angle, duration = 220) {
+  animateTurn(before, after, axis, angle, duration = 220, startAngle = 0) {
     if (!before?.faces || !after?.faces || !axis || !Number.isFinite(angle)) {
       this.setGeometry(after); return;
     }
@@ -90,7 +90,7 @@ export class PuzzleRenderer {
     const smooth = t => t < .5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
     const frame = now => {
       const t = Math.min(1, Math.max(0, (now - start) / duration));
-      const theta = angle * smooth(t), c = Math.cos(theta), s = Math.sin(theta);
+      const theta = startAngle + (angle - startAngle) * smooth(t), c = Math.cos(theta), s = Math.sin(theta);
       const geometry = {faces: before.faces.map((face,i) => {
         if (!changed[i]) return face;
         return {...face, vertices: face.vertices.map(v => {
