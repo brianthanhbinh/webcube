@@ -140,7 +140,17 @@ export class PuzzleRenderer {
         (sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length),
         [0, 0, 0]
       );
-      return Math.abs(this.dot(center, n) - layerCenter) <= tolerance;
+      const centerProjection = this.dot(center, n);
+      const normal = this.faceNormal(vertices);
+      // Include the sticker/outer polygon on the selected surface itself,
+      // plus every side polygon belonging to the same cubie slice. The prior
+      // center-only test excluded the grabbed outer face, making turns look
+      // like a single sticker peeling away.
+      const isSelectedOuterFace = normal &&
+        this.dot(normal, n) * normalSign >= .82 &&
+        Math.abs(centerProjection - selectedSurface) <= 1e-4;
+      const isSelectedCubieSide = Math.abs(centerProjection - layerCenter) <= tolerance;
+      return Boolean(isSelectedOuterFace || isSelectedCubieSide);
     });
 
     // Polyhedral cuts (notably Megaminx) expose several polygons per physical
