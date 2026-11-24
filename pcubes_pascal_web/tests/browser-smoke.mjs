@@ -1,5 +1,8 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1365,height:900}});
 const errors=[];page.on("pageerror",e=>errors.push(e.message));
@@ -79,7 +82,11 @@ try{
  <Face Color="0000C8" VertexIndexes="1;0;4;5"/><Face Color="009600" VertexIndexes="2;3;7;6"/>
  <Face Color="FFFF00" VertexIndexes="0;2;6;4"/><Face Color="FFFFFF" VertexIndexes="3;1;5;7"/>
  </Faces></Part></Figure>`;
- await page.locator("#figure-file").setInputFiles({name:"cube.xml",mimeType:"application/xml",buffer:Buffer.from(figureXml)});
+ const figureRoot=await fs.mkdtemp(path.join(os.tmpdir(),"pcubes-figure-folder-"));
+ await fs.mkdir(path.join(figureRoot,"Figures"),{recursive:true});
+ await fs.writeFile(path.join(figureRoot,"Figures","cube.xml"),figureXml);
+ // Folder scan must recursively discover XML and preserve relative paths.
+ await page.locator("#figure-folder").setInputFiles(figureRoot);
  await page.waitForFunction(()=>/Figure added/.test(document.querySelector("#engine-status")?.textContent||""));
  const customModel=await page.evaluate(()=>window.pCubes.getModelInfo());
  assert.equal(customModel.name,"Custom cube with external figure");
