@@ -1,5 +1,5 @@
 /* Direct-manipulation puzzle renderer:
-   left-drag spins the whole puzzle; right-drag turns the selected layer;
+   left-drag turns the selected layer; right-drag rotates the camera;
    wheel zooms. */
 export class PuzzleRenderer {
   constructor(canvas) {
@@ -23,7 +23,7 @@ export class PuzzleRenderer {
       if(!p||p.id!==e.pointerId)return;
       const dx=e.clientX-p.x,dy=e.clientY-p.y;
       if(Math.abs(e.clientX-p.downX)+Math.abs(e.clientY-p.downY)>4)p.moved=true;
-      if(p.button===0||p.button===1){
+      if(p.button===2||p.button===1){
         this.rotationY+=dx*.009;
         this.rotationX=Math.max(-1.52,Math.min(1.52,this.rotationX+dy*.009));
         this.draw();
@@ -33,7 +33,7 @@ export class PuzzleRenderer {
     canvas.addEventListener("pointerup",e=>{
       const p=this.pointer;
       if(!p||p.id!==e.pointerId)return;
-      if(p.button===2&&p.moved&&this.onTurnDrag){
+      if(p.button===0&&p.moved&&this.onTurnDrag){
         this.onTurnDrag(e.clientX-p.downX,e.clientY-p.downY);
       }
       this.pointer=null;
@@ -75,7 +75,7 @@ export class PuzzleRenderer {
       ctx.textAlign="center";ctx.fillStyle="#e8edf5";ctx.font="600 18px system-ui";
       ctx.fillText("Load a pCubes puzzle XML",w/2,h/2-10);
       ctx.fillStyle="#9eacc0";ctx.font="13px system-ui";
-      ctx.fillText("Drag to spin · right-drag a layer · wheel to zoom",w/2,h/2+17);return;
+      ctx.fillText("Left-drag a layer · right-drag to rotate camera · wheel to zoom",w/2,h/2+17);return;
     }
     const cy=Math.cos(this.rotationY),sy=Math.sin(this.rotationY),cx=Math.cos(this.rotationX),sx=Math.sin(this.rotationX);
     const transform=v=>{const x=v[0]*cy+v[2]*sy,z=-v[0]*sy+v[2]*cy;return[x,v[1]*cx-z*sx,v[1]*sx+z*cx];};
