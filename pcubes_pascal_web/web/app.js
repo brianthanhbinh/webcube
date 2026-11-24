@@ -590,6 +590,10 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
 
   function loadXmlText(xmlText) {
     let doc = parseXml(xmlText);
+    const puzzleName = (doc.getElementsByTagName("Name")[0]?.textContent || "").toLowerCase();
+    renderer.geometryKind = /mega.?minx|minx|gigaminx|teraminx|petaminx/.test(puzzleName) ? "minx" :
+      /cuboid/.test(puzzleName) ? "cuboid" : "other";
+    renderer.cameraSnapEnabled = renderer.geometryKind === "cuboid";
     // Retain the parsed puzzle even when an external figure is missing, so
     // the Add figure workflow can attach the selected XML and retry loading.
     pendingPuzzleDoc = doc;
