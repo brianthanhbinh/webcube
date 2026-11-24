@@ -215,7 +215,13 @@ end;
 
 function TDomElement.GetAttribute(const AName: String): String;
 begin
-  Result := TJSElement(FNode).getAttribute(AName);
+  // Browser Element.getAttribute returns null for a missing attribute.
+  // Assigning that null directly to a Pascal String makes the generated
+  // conversion call String.replace on null in the Pas2JS runtime.
+  if not TJSElement(FNode).hasAttribute(AName) then
+    Result := ''
+  else
+    Result := TJSElement(FNode).getAttribute(AName);
 end;
 
 procedure TDomElement.SetAttribute(const AName, AValue: String);
