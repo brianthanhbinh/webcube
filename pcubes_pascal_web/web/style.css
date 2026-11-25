@@ -23,3 +23,12 @@ html.preview-mode #preview-dialog,html.preview-mode #library-dialog,html.preview
 #keybinds-panel summary{cursor:pointer;color:#e8edf5}
 .keybind-list{display:grid;grid-template-columns:auto 1fr;gap:6px 9px;margin-top:9px;align-items:center}
 .keybind-list span:nth-child(odd){padding:2px 5px;border:1px solid #526783;border-radius:4px;background:#101923;color:#fff;font:10px ui-monospace,monospace;white-space:nowrap}
+
+#edit-keybinds{width:100%;margin:8px 0}
+#keybind-dialog{width:min(480px,calc(100vw - 28px))}
+#keybind-editor{display:grid;gap:7px;margin-top:12px}
+.keybind-edit-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;font-size:12px}
+.keybind-edit-row button{min-width:100px}
+.keybind-edit-row button.capturing{border-color:#65e58a;color:#65e58a}
+.keybind-actions{display:flex;justify-content:space-between;gap:8px;margin-top:14px}
+#keybind-status{min-height:1.5em;color:#e8c66a;font-size:11px}
