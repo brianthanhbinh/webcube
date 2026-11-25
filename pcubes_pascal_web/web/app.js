@@ -569,7 +569,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     renderer.deferGeometry = true;
     const result = call("turnLayer", axisNo, layerNo, direction);
     renderer.deferGeometry = false;
-    if (result) renderer.animateTurn(before, api.getRenderData(), axis, angle, 220, 0, layerNo, 1);
+    if (result) { if(!previewMode)startSolveTimer(); renderer.animateTurn(before, api.getRenderData(), axis, angle, 220, 0, layerNo, 1); }
     else renderer.setGeometry(api.getRenderData() || before);
     return result;
   }
