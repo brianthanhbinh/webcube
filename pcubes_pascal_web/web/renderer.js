@@ -164,7 +164,7 @@ export class PuzzleRenderer {
       // center. Include it only for the outermost slice on that side.
       const onPositiveBoundary=index===count-1&&along*normalSign>.82&&
         Math.abs(projection-max)<eps;
-      const onNegativeBoundary=index===0&&along*normalSign<-.82&&
+      const onNegativeBoundary=index===0&&along*normalSign>.82&&
         Math.abs(projection-min)<eps;
       return onPositiveBoundary||onNegativeBoundary||Math.abs(projection-center)<=pitch*.55;
     });
