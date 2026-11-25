@@ -12,6 +12,8 @@ export class PuzzleRenderer {
     this.pointer=null;
     this.projectedFaces=[];
     this.highlightMask=null;
+    this.selectedMask=null;
+    this.hoverMask=null;
     this.onTurnDrag=null;
     this.onTurnCommit=null;
     this.cameraSnapEnabled=false;
@@ -55,8 +57,9 @@ export class PuzzleRenderer {
         const pick=hit?this.pickLayer(x,y,axes):null;
         const axis=pick&&axes.find(a=>a.index===pick.axis);
         const nextMask=pick&&axis?this.layerFaceMask(this.geometry,axis,pick.layer,pick.normalSign||1):null;
-        if(JSON.stringify(nextMask)!==JSON.stringify(this.highlightMask)){
-          this.highlightMask=nextMask;
+        if(JSON.stringify(nextMask)!==JSON.stringify(this.hoverMask)){
+          this.hoverMask=nextMask;
+          this.highlightMask=this.hoverMask||this.selectedMask;
           this.draw();
         }
         return;
@@ -114,12 +117,13 @@ export class PuzzleRenderer {
         this.onTurnDrag(e.clientX-p.downX,e.clientY-p.downY,p.pick);
       }
       this.pointer=null;
-      this.highlightMask=null;
+      this.hoverMask=null;
+      this.highlightMask=this.selectedMask;
       this.draw();
     });
-    const clearPointer=()=>{this.pointer=null;this.highlightMask=null;this.draw();};
+    const clearPointer=()=>{this.pointer=null;this.hoverMask=null;this.highlightMask=this.selectedMask;this.draw();};
     canvas.addEventListener("pointerleave",()=>{
-      if(!this.pointer&&this.highlightMask){this.highlightMask=null;this.draw();}
+      if(!this.pointer&&this.hoverMask){this.hoverMask=null;this.highlightMask=this.selectedMask;this.draw();}
     });
     canvas.addEventListener("pointercancel",clearPointer);
     canvas.addEventListener("lostpointercapture",clearPointer);
@@ -247,6 +251,13 @@ export class PuzzleRenderer {
     this.draw();
   }
   setGeometry(geometry){this.geometry=geometry&&Array.isArray(geometry.faces)?geometry:null;this.draw();}
+  setSelectedLayer(axisIndex,layerIndex){
+    const axes=window.pCubes?.getAxesInfo?.()||[];
+    const axis=axes.find(a=>Number(a.index)===Number(axisIndex));
+    this.selectedMask=axis?this.layerFaceMask(this.geometry,axis,Number(layerIndex)||0,1):null;
+    this.highlightMask=this.hoverMask||this.selectedMask;
+    this.draw();
+  }
   color(value){
     if(typeof value==="string"&&value.startsWith("#"))return value;
     const n=Number(value);
