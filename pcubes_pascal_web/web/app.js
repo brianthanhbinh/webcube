@@ -57,7 +57,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   $("timer-mode")?.addEventListener("change",e=>setTimerMode(e.target.value));
   setTimerMode(timerMode);
   if(!previewMode){
-    window.addEventListener("keydown",e=>{if(e.code!=="Space"||e.repeat||e.target.matches("input,textarea,select,button")||timerMode!=="singular")return;e.preventDefault();if(timerState==="running"){stopSolveTimer();return;}if(timerState==="stopped"){resetSolveTimer();return;}if(timerState==="idle"){timerState="holding";timerHoldAt=performance.now();timerPanel.className="inspecting";timerHint.textContent="Hold SPACE…";timerHoldFrame=requestAnimationFrame(updateHold);}});
+    window.addEventListener("keydown",e=>{if(e.code!=="Space"||e.repeat||e.target.matches("input,textarea,select,button")||timerMode==="free")return;e.preventDefault();if(timerState==="running"){stopSolveTimer();return;}if(timerState==="stopped"){resetSolveTimer();return;}if(timerMode==="singular"&&timerState==="idle"){timerState="holding";timerHoldAt=performance.now();timerPanel.className="inspecting";timerHint.textContent="Hold SPACE…";timerHoldFrame=requestAnimationFrame(updateHold);}});
     window.addEventListener("keyup",e=>{if(e.code!=="Space"||timerMode!=="singular"||timerState!=="holding")return;e.preventDefault();cancelAnimationFrame(timerHoldFrame);if(performance.now()-timerHoldAt>=500)runTimer();else{timerState="idle";timerPanel.className="";timerHint.textContent="Hold SPACE until green, then release";}});
   }
   
