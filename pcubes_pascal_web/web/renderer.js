@@ -96,7 +96,7 @@ export class PuzzleRenderer {
           const tangentLengthSquared=tangent[0]*tangent[0]+tangent[1]*tangent[1];
           p.pick=target.pick;p.axis=target.axis;
           canvas.dataset.pickedAxis=String(p.pick.axis);canvas.dataset.pickedLayer=String(p.pick.layer);
-          const step=Number(p.axis.angle)||Math.PI/2;
+          const step=Math.abs(Number(p.axis.angles?.[p.pick.layer] ?? p.axis.angle))||Math.PI/2;
           p.previewAngle=tangentLengthSquared>1e-8
             ? (dx0*tangent[0]+dy0*tangent[1])/tangentLengthSquared
             : 0;
@@ -110,7 +110,7 @@ export class PuzzleRenderer {
       const p=this.pointer;
       if(!p||p.id!==e.pointerId)return;
       if(p.button===0&&p.pick&&p.axis&&p.before){
-        const step=Math.abs(Number(p.axis.angle)||Math.PI/2);
+        const step=Math.abs(Number(p.axis.angles?.[p.pick.layer] ?? p.axis.angle))||Math.PI/2;
         const turns=Math.round(p.previewAngle/step);
         if(turns&&this.onTurnCommit)this.onTurnCommit(p.pick,turns,p.before,p.axis,p.previewAngle);
         else this.animateSnapBack(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
