@@ -855,8 +855,20 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
         const entry=event.data.entry;
         if(entry.source==="remote"){remoteLibrary ||= await loadRemoteLibraryIndex();await loadRemoteEntry(entry);}else if(!loadXmlText(entry.xml))throw new Error(status.textContent);
         renderer.interactive=false;
-        const spin=()=>{renderer.rotationY+=0.008;renderer.draw();previewSpinFrame=requestAnimationFrame(spin);};
-        spin();status.textContent="Preview: "+entry.name;
+        if(previewSpinFrame)cancelAnimationFrame(previewSpinFrame);
+        let previousFrameTime=0;
+        const spin=now=>{
+          if(!previousFrameTime)previousFrameTime=now;
+          // Use elapsed time, not a fixed angle per frame, so rotation speed
+          // stays constant on 30/60/120/144 Hz displays and during brief stalls.
+          const delta=Math.min(0.05,Math.max(0,(now-previousFrameTime)/1000));
+          previousFrameTime=now;
+          renderer.rotationY+=0.48*delta;
+          renderer.draw();
+          previewSpinFrame=requestAnimationFrame(spin);
+        };
+        previewSpinFrame=requestAnimationFrame(spin);
+        status.textContent="Preview: "+entry.name;
       }catch(error){status.textContent="Preview failed: "+error.message;}
     });
   }
