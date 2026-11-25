@@ -95,7 +95,7 @@ export class PuzzleRenderer {
           p.pick=target.pick;p.axis=target.axis;
           canvas.dataset.pickedAxis=String(p.pick.axis);canvas.dataset.pickedLayer=String(p.pick.layer);
           const step=Number(p.axis.angle)||Math.PI/2;
-          p.previewAngle=target.drag/110*step*target.direction;
+          p.previewAngle=target.drag/78*step*target.direction;
           this.previewTurn(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
         }
       }
@@ -283,7 +283,7 @@ export class PuzzleRenderer {
   }
   pickLayerForDrag(hit,axes,dx,dy){
     const distance=Math.hypot(dx,dy);
-    if(distance<4)return null;
+    if(distance<2)return null;
     const cy=Math.cos(this.rotationY),sy=Math.sin(this.rotationY),cx=Math.cos(this.rotationX),sx=Math.sin(this.rotationX);
     // Convert the screen swipe into a direction in model space.
     const dragWorld=[dx*cy, -dy*cx, -dx*sy+dy*sx];
@@ -298,7 +298,7 @@ export class PuzzleRenderer {
       const score=Math.abs(this.dot(direction,vector.map(v=>v/length)));
       if(score>best){best=score;chosen={axis,vector:vector.map(v=>v/length),sign:this.dot(direction,vector.map(v=>v/length))>=0?1:-1};}
     }
-    if(!chosen||best<.8)return null;
+    if(!chosen||best<.55)return null;
     const values=[];
     // Use every model face, not only projected (visible) faces. Back-face
     // culling hides many slice planes; using projectedFaces collapses the
