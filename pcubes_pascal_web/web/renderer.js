@@ -79,23 +79,22 @@ export class PuzzleRenderer {
         const dx0=e.clientX-p.downX,dy0=e.clientY-p.downY;
         if(!p.dragTarget){
           p.dragTarget=this.pickLayerForDrag(p.hit,p.axes,dx0,dy0);
-          // If the swipe cannot identify a perpendicular slice, retain the
-          // original face-selected layer. Lock that fallback for this gesture.
-          if(!p.dragTarget&&p.pick&&p.axis){
-            const horizontal=Math.abs(dx0)>=Math.abs(dy0);
-            p.dragTarget={pick:p.pick,axis:p.axis,direction:1,dragAxis:horizontal?"x":"y"};
-          }
+          // No face-swipe fallback: turns require a grabbed piece moving
+          // along its projected circular path around the selected axis.
         }
         const target=p.dragTarget;
         if(target){
           // Keep the layer fixed, but continuously measure the full drag
           // distance from pointerdown so the preview follows the pointer.
-          target.drag=target.dragAxis==="x"?dx0:target.dragAxis==="y"?dy0:
-            dx0*target.perpendicular[0]+dy0*target.perpendicular[1];
+          const tangent=target.screenTangent;
+          const tangentLengthSquared=tangent[0]*tangent[0]+tangent[1]*tangent[1];
           p.pick=target.pick;p.axis=target.axis;
           canvas.dataset.pickedAxis=String(p.pick.axis);canvas.dataset.pickedLayer=String(p.pick.layer);
           const step=Number(p.axis.angle)||Math.PI/2;
-          p.previewAngle=target.drag/78*step*target.direction;
+          p.previewAngle=tangentLengthSquared>1e-8
+            ? (dx0*tangent[0]+dy0*tangent[1])/tangentLengthSquared
+            : 0;
+          p.previewAngle=Math.max(-step*1.25,Math.min(step*1.25,p.previewAngle));
           this.previewTurn(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
         }
       }
@@ -284,49 +283,68 @@ export class PuzzleRenderer {
   pickLayerForDrag(hit,axes,dx,dy){
     const distance=Math.hypot(dx,dy);
     if(distance<2)return null;
-    const cy=Math.cos(this.rotationY),sy=Math.sin(this.rotationY),cx=Math.cos(this.rotationX),sx=Math.sin(this.rotationX);
-    // Convert the screen swipe into a direction in model space.
-    const dragWorld=[dx*cy, -dy*cx, -dx*sy+dy*sx];
-    const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
-    const desired=cross(hit.normal,dragWorld),desiredLength=Math.hypot(...desired);
-    if(desiredLength<1e-8)return null;
-    const direction=desired.map(v=>v/desiredLength);
+    const partCenters=window.pCubes?.getPartCenters?.()||[];
+    const center=Number.isInteger(hit?.partIndex)?partCenters[hit.partIndex]:null;
+    if(!center)return null;
+    const cy=Math.cos(this.rotationY),sy=Math.sin(this.rotationY);
+    const cx=Math.cos(this.rotationX),sx=Math.sin(this.rotationX);
+    // A grabbed cubie moves along an arc around the puzzle axis. Compare the
+    // pointer motion with each candidate cubie's projected tangent, rather
+    // than deriving a turn from a swipe across the sticker face.
+    const projectVector=v=>{
+      const x=v[0]*cy+v[2]*sy;
+      const z=-v[0]*sy+v[2]*cy;
+      const y=v[1]*cx-z*sx;
+      return [x,-y];
+    };
+    const swipe=[dx,dy],swipeLength=Math.hypot(dx,dy);
     let chosen=null,best=0;
     for(const axis of axes||[]){
-      const vector=[Number(axis.x),Number(axis.y),Number(axis.z)],length=Math.hypot(...vector);
+      const raw=[Number(axis.x),Number(axis.y),Number(axis.z)];
+      const length=Math.hypot(...raw);
       if(!length||!axis.layers)continue;
-      const score=Math.abs(this.dot(direction,vector.map(v=>v/length)));
-      if(score>best){best=score;chosen={axis,vector:vector.map(v=>v/length),sign:this.dot(direction,vector.map(v=>v/length))>=0?1:-1};}
+      const a=raw.map(v=>v/length);
+      const axial=this.dot(center,a);
+      const radial=center.map((v,k)=>v-a[k]*axial);
+      const radius=Math.hypot(...radial);
+      if(radius<1e-7)continue;
+      const tangent=[
+        a[1]*radial[2]-a[2]*radial[1],
+        a[2]*radial[0]-a[0]*radial[2],
+        a[0]*radial[1]-a[1]*radial[0]
+      ];
+      const screenTangent=projectVector(tangent);
+      const tangentLength=Math.hypot(...screenTangent);
+      if(tangentLength<1e-5)continue;
+      const alignment=Math.abs((swipe[0]*screenTangent[0]+swipe[1]*screenTangent[1])/(swipeLength*tangentLength));
+      if(alignment>best){
+        best=alignment;
+        chosen={axis,vector:a,screenTangent,radialCoordinate:axial};
+      }
     }
-    if(!chosen||best<.55)return null;
-    const values=[];
-    // Use every model face, not only projected (visible) faces. Back-face
-    // culling hides many slice planes; using projectedFaces collapses the
-    // layer list and makes inner slices impossible to identify from some views.
-    for(const face of this.geometry?.faces||[]){
-      const vertices=face.vertices||[];
-      const normal=this.faceNormal(vertices);
-      if(!normal||Math.abs(this.dot(normal,chosen.vector))<.82)continue;
-      const center=vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/vertices.length),[0,0,0]);
-      const value=this.dot(center,chosen.vector);
-      if(!values.some(old=>Math.abs(old-value)<1e-4))values.push(value);
+    // Avoid guessing a turn when the drag is not following an edge/cubie's
+    // natural arc. The user can reposition and make a clearer tangential drag.
+    if(!chosen||best<.28)return null;
+    const positions=[];
+    for(const part of partCenters){
+      const value=this.dot(part,chosen.vector);
+      if(!positions.some(old=>Math.abs(old-value)<1e-4))positions.push(value);
     }
-    values.sort((a,b)=>a-b);
-    if(!values.length)return null;
-    const coordinate=this.dot(hit.center,chosen.vector);
-    let layer=0,bestDistance=Infinity;
-    values.forEach((v,index)=>{const d=Math.abs(v-coordinate);if(d<bestDistance){bestDistance=d;layer=index;}});
-    if(values.length!==chosen.axis.layers&&values.length>1)
-      layer=Math.round(layer*(chosen.axis.layers-1)/(values.length-1));
-    layer=Math.max(0,Math.min(chosen.axis.layers-1,layer));
-    // Use the swipe's component perpendicular to the projected turning axis
-    // as the signed drag distance for a natural direct-manipulation gesture.
-    const a=chosen.vector;
-    const projected=[a[0]*cy+a[2]*sy, -(a[1]*cx-(-a[0]*sy+a[2]*cy)*sx)];
-    const plen=Math.hypot(...projected)||1;
-    const perpendicular=[-projected[1]/plen,projected[0]/plen];
-    return {pick:{axis:chosen.axis.index,layer,normalSign:1},axis:chosen.axis,
-      perpendicular,direction:chosen.sign};
+    positions.sort((a,b)=>a-b);
+    const count=Math.max(1,Number(chosen.axis.layers)||1);
+    let nearest=0,nearestDistance=Infinity;
+    positions.forEach((value,index)=>{
+      const d=Math.abs(value-chosen.radialCoordinate);
+      if(d<nearestDistance){nearestDistance=d;nearest=index;}
+    });
+    const layer=positions.length>1
+      ? Math.max(0,Math.min(count-1,Math.round(nearest*(count-1)/(positions.length-1))))
+      : 0;
+    return {
+      pick:{axis:chosen.axis.index,layer,normalSign:1},
+      axis:chosen.axis,
+      screenTangent:chosen.screenTangent
+    };
   }
   pickLayer(x,y,axes){
     // Test frontmost polygons first so overlapping cubies select the visible face.
