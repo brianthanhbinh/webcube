@@ -191,6 +191,27 @@ try{
  }
  console.log("REMOTE_CATALOG_SCAN "+JSON.stringify({total:catalog.puzzles.length,failures:remoteFailures}));
  assert.deepEqual(remoteFailures,[],"Remote library XML failures: "+JSON.stringify(remoteFailures));
+ // Megaminx regression: verify its external dodecahedron figure, all six
+ // cutting axes, and all twelve independently defined face colours.
+ await page.locator("#library").click();
+ await page.waitForFunction(()=>document.querySelector("#library-dialog")?.open);
+ await page.locator("#library-search").fill("docminx/Megaminx 3x3.xml");
+ const megaminxEntry=page.locator("#library-list button").filter({hasText:"webcube-library / docminx/Megaminx 3x3.xml"});
+ await megaminxEntry.waitFor({state:"visible"});
+ await megaminxEntry.click();
+ await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open || (document.querySelector("#engine-status")?.textContent||"").startsWith("Library load failed"),null,{timeout:30000});
+ assert.equal(await page.locator("#library-dialog").evaluate(d=>d.open),false,"Megaminx failed to load: "+await page.locator("#engine-status").textContent());
+ const megaminx=await page.evaluate(()=>({
+   model:window.pCubes.getModelInfo(),
+   axes:window.pCubes.getAxesInfo(),
+   faces:window.pCubes.getRenderData().faces
+ }));
+ assert.match(megaminx.model.name,/Megaminx 3x3/i,"Wrong puzzle loaded instead of Megaminx");
+ assert.ok(megaminx.model.parts>=12,"Megaminx dodecahedron did not split into its expected pieces: "+megaminx.model.parts);
+ assert.equal(megaminx.axes.length,6,"Megaminx must expose all six dodecahedral turning axes");
+ assert.ok(megaminx.faces.length>=60,"Megaminx is missing rendered pentagonal face geometry: "+megaminx.faces.length);
+ assert.ok(new Set(megaminx.faces.map(face=>String(face.color).toLowerCase())).size>=12,"Megaminx must preserve all twelve face colours");
+ console.log("PASS: Megaminx dodecahedron, six axes, and twelve face colours.");
  // Generator UI is available after the Pascal startup self-test.
  await page.locator("#generator").click();
  await page.waitForFunction(()=>document.querySelector("#generator-dialog")?.open);
