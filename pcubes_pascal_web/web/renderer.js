@@ -11,6 +11,7 @@ export class PuzzleRenderer {
     this.zoom=1;
     this.pointer=null;
     this.projectedFaces=[];
+    this.highlightMask=null;
     this.onTurnDrag=null;
     this.onTurnCommit=null;
     this.cameraSnapEnabled=false;
@@ -30,6 +31,8 @@ export class PuzzleRenderer {
       if(pick){canvas.dataset.pickedAxis=String(pick.axis);canvas.dataset.pickedLayer=String(pick.layer);}
       else{delete canvas.dataset.pickedAxis;delete canvas.dataset.pickedLayer;}
       const axis=pick&&axes.find(a=>a.index===pick.axis);
+      this.highlightMask=pick&&axis?this.layerFaceMask(this.geometry,axis,pick.layer,pick.normalSign||1):null;
+      this.draw();
       this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,downX:e.clientX,downY:e.clientY,button:e.button,moved:false,pick,hit,axes,
         before:pick?this.geometry:null,axis,previewAngle:0};
       canvas.setPointerCapture(e.pointerId);
@@ -85,9 +88,12 @@ export class PuzzleRenderer {
         this.onTurnDrag(e.clientX-p.downX,e.clientY-p.downY,p.pick);
       }
       this.pointer=null;
+      this.highlightMask=null;
+      this.draw();
     });
-    canvas.addEventListener("pointercancel",()=>{this.pointer=null;});
-    canvas.addEventListener("lostpointercapture",()=>{this.pointer=null;});
+    const clearPointer=()=>{this.pointer=null;this.highlightMask=null;this.draw();};
+    canvas.addEventListener("pointercancel",clearPointer);
+    canvas.addEventListener("lostpointercapture",clearPointer);
     canvas.addEventListener("wheel",e=>{
       e.preventDefault();
       if(this.interactive===false)return;
