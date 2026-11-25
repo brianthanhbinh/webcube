@@ -18,3 +18,8 @@ html.preview-mode main{display:block;height:100vh}
 html.preview-mode .stage{height:100%;padding:0}
 html.preview-mode #puzzle-canvas{height:100%;max-height:none;border:0;border-radius:0;pointer-events:none}
 html.preview-mode #preview-dialog,html.preview-mode #library-dialog,html.preview-mode #generator-dialog{display:none}
+
+#keybinds-panel{margin-top:10px;font-size:11px;color:#a8b5c8}
+#keybinds-panel summary{cursor:pointer;color:#e8edf5}
+.keybind-list{display:grid;grid-template-columns:auto 1fr;gap:6px 9px;margin-top:9px;align-items:center}
+.keybind-list span:nth-child(odd){padding:2px 5px;border:1px solid #526783;border-radius:4px;background:#101923;color:#fff;font:10px ui-monospace,monospace;white-space:nowrap}
