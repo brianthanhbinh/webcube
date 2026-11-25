@@ -22,11 +22,9 @@ try{
  before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
  const drag=await page.evaluate(()=>{
    const canvas=document.querySelector("#puzzle-canvas"),r=canvas.__pCubesRenderer;
-   const axes=window.pCubes.getAxesInfo();
-   for(const face of [...r.projectedFaces].reverse()){
-     if(face.screen.length<3)continue;
-     const x=face.screen.reduce((s,p)=>s+p[0],0)/face.screen.length;
-     const y=face.screen.reduce((s,p)=>s+p[1],0)/face.screen.length;
+   const axes=window.pCubes.getAxesInfo(),w=canvas.clientWidth,h=canvas.clientHeight;
+   // Sample the canvas itself; polygon centroids can fall outside concave faces.
+   for(let y=8;y<h-8;y+=5)for(let x=8;x<w-8;x+=5){
      const hit=r.pickFace(x,y);if(!hit)continue;
      for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){
        const target=r.pickLayerForDrag(hit,axes,dx,dy);
