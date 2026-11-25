@@ -55,6 +55,7 @@ jobs:
         with:
           path: pcubes_pascal_web/web
 
+      # Deploy the single Pages artifact created by this fresh workflow run.
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
