@@ -331,10 +331,14 @@ export class PuzzleRenderer {
     }
     if(!chosen||best<.8)return null;
     const values=[];
-    for(const face of this.projectedFaces){
-      const normal=this.faceNormal(face.vertices);
+    // Use every model face, not only projected (visible) faces. Back-face
+    // culling hides many slice planes; using projectedFaces collapses the
+    // layer list and makes inner slices impossible to identify from some views.
+    for(const face of this.geometry?.faces||[]){
+      const vertices=face.vertices||[];
+      const normal=this.faceNormal(vertices);
       if(!normal||Math.abs(this.dot(normal,chosen.vector))<.82)continue;
-      const center=face.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/face.vertices.length),[0,0,0]);
+      const center=vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/vertices.length),[0,0,0]);
       const value=this.dot(center,chosen.vector);
       if(!values.some(old=>Math.abs(old-value)<1e-4))values.push(value);
     }
@@ -373,10 +377,14 @@ export class PuzzleRenderer {
       const cent=item.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/item.vertices.length),[0,0,0]);
       const coordinate=this.dot(cent,chosen.vector);
       const values=[];
-      for(const face of this.projectedFaces){
-        const n=this.faceNormal(face.vertices);
+      // Layer coordinates must come from the complete geometry. The
+      // projected list omits back-facing slice planes and breaks inner-layer
+      // indexing when the puzzle is viewed from certain angles.
+      for(const face of this.geometry?.faces||[]){
+        const vertices=face.vertices||[];
+        const n=this.faceNormal(vertices);
         if(!n||this.dot(n,chosen.vector)*chosen.sign<.82)continue;
-        const c=face.vertices.reduce((sum,v)=>sum.map((z,k)=>z+v[k]/face.vertices.length),[0,0,0]);
+        const c=vertices.reduce((sum,v)=>sum.map((z,k)=>z+v[k]/vertices.length),[0,0,0]);
         const value=this.dot(c,chosen.vector);
         if(!values.some(old=>Math.abs(old-value)<1e-4))values.push(value);
       }
