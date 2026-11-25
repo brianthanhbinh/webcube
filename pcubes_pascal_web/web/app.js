@@ -788,7 +788,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       }catch(error){status.textContent="Preview failed: "+error.message;}
     });
   }
-\n  $("turn-axis").addEventListener("change", () => refreshTurnControls(window.pCubes));
+  $("turn-axis").addEventListener("change", () => refreshTurnControls(window.pCubes));
   $("turn-ccw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), -1));
   $("turn-cw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), 1));
   $("view-reset").addEventListener("click", () => renderer.resetView());
