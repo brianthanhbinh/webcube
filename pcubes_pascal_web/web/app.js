@@ -781,7 +781,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       if(event.source!==parent||event.data?.type!=="pcubes-preview-load")return;
       try{
         const entry=event.data.entry;
-        if(entry.source==="remote")await loadRemoteEntry(entry);else if(!loadXmlText(entry.xml))throw new Error(status.textContent);
+        if(entry.source==="remote"){remoteLibrary ||= await loadRemoteLibraryIndex();await loadRemoteEntry(entry);}else if(!loadXmlText(entry.xml))throw new Error(status.textContent);
         renderer.interactive=false;
         const spin=()=>{renderer.rotationY+=0.008;renderer.draw();previewSpinFrame=requestAnimationFrame(spin);};
         spin();status.textContent="Preview: "+entry.name;
