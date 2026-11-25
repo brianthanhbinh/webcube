@@ -250,11 +250,13 @@ export class PuzzleRenderer {
     this.ctx.setTransform(ratio,0,0,ratio,0,0);
     this.draw();
   }
-  setGeometry(geometry){this.geometry=geometry&&Array.isArray(geometry.faces)?geometry:null;this.draw();}
+  setGeometry(geometry){this.geometry=geometry&&Array.isArray(geometry.faces)?geometry:null;if(this.selectedAxisIndex!==undefined)this.setSelectedLayer(this.selectedAxisIndex,this.selectedLayerIndex);else this.draw();}
   setSelectedLayer(axisIndex,layerIndex){
+    this.selectedAxisIndex=Number(axisIndex);
+    this.selectedLayerIndex=Number(layerIndex)||0;
     const axes=window.pCubes?.getAxesInfo?.()||[];
     const axis=axes.find(a=>Number(a.index)===Number(axisIndex));
-    this.selectedMask=axis?this.layerFaceMask(this.geometry,axis,Number(layerIndex)||0,1):null;
+    this.selectedMask=axis?this.layerFaceMask(this.geometry,axis,this.selectedLayerIndex,1):null;
     this.highlightMask=this.hoverMask||this.selectedMask;
     this.draw();
   }
