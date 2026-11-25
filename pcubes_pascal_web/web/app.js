@@ -12,8 +12,13 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   const figureFile = $("figure-file");
   const figureFolder = $("figure-folder");
   let pendingPuzzleDoc = null;
+  const previewMode = new URLSearchParams(location.search).has("preview");
+  if (previewMode) document.documentElement.classList.add("preview-mode");
   const renderer = new PuzzleRenderer($("puzzle-canvas"));
+  if (previewMode) renderer.interactive = false;
+  let previewSpinFrame = 0;
   renderer.onTurnCommit = (pick, turns, before, axis, previewAngle) => {
+    if (!previewMode) startSolveTimer();
     const axisSelect = $("turn-axis"), layerSelect = $("turn-layer");
     axisSelect.value = String(pick.axis);
     refreshTurnControls(window.pCubes);
@@ -38,6 +43,16 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   let libraryData = null;
   let remoteLibrary = null;
   let preflightPassed = false;
+  let timerState = "idle", timerStartedAt = 0, timerElapsed = 0, timerHoldAt = 0, timerHoldFrame = 0;
+  const timerPanel = $("timer-panel"), timerDisplay = $("timer-display"), timerHint = $("timer-hint");
+  const formatTime = ms => { const cs=Math.floor(ms/10)%100, total=Math.floor(ms/1000), sec=total%60, min=Math.floor(total/60); return String(min).padStart(2,"0")+":"+String(sec).padStart(2,"0")+"."+String(cs).padStart(2,"0"); };
+  function paintTimer(){ const ms=timerState==="running"?performance.now()-timerStartedAt:timerElapsed; timerDisplay.textContent=formatTime(ms); }
+  function startSolveTimer(){ if(timerState!=="idle")return; timerState="running";timerStartedAt=performance.now();timerPanel.className="";timerHint.textContent="Timer running · Press SPACE to stop";requestAnimationFrame(function tick(){if(timerState!=="running")return;paintTimer();requestAnimationFrame(tick);}); }
+  function stopSolveTimer(){if(timerState==="running"){timerElapsed=performance.now()-timerStartedAt;timerState="stopped";paintTimer();timerHint.textContent="Stopped · Press SPACE to reset";}}
+  function resetSolveTimer(){timerState="idle";timerElapsed=0;timerPanel.className="";timerHint.textContent="First move starts the timer · Hold SPACE until green, release to start";paintTimer();}
+  function updateHold(){if(timerState!=="holding")return;const held=performance.now()-timerHoldAt;if(held>=500){timerPanel.className="ready";timerHint.textContent="GREEN · Release SPACE to start";}else timerPanel.className="inspecting";timerHoldFrame=requestAnimationFrame(updateHold);}
+  if(!previewMode){window.addEventListener("keydown",e=>{if(e.code!=="Space"||e.repeat||e.target.matches("input,textarea,select,button"))return;e.preventDefault();if(timerState==="running"){stopSolveTimer();return;}if(timerState==="stopped"){resetSolveTimer();return;}if(timerState==="idle"){timerState="holding";timerHoldAt=performance.now();timerPanel.className="inspecting";timerHint.textContent="Hold SPACE…";timerHoldFrame=requestAnimationFrame(updateHold);}});window.addEventListener("keyup",e=>{if(e.code!=="Space"||timerState!=="holding")return;e.preventDefault();cancelAnimationFrame(timerHoldFrame);if(performance.now()-timerHoldAt>=500){timerState="running";timerStartedAt=performance.now();timerPanel.className="";timerHint.textContent="Timer running · Press SPACE to stop";requestAnimationFrame(function tick(){if(timerState!=="running")return;paintTimer();requestAnimationFrame(tick);});}else{timerState="idle";timerPanel.className="";timerHint.textContent="Hold SPACE until green, then release";}});}
+  
   let preflightReport = [];
 
   function setFigurePickerEnabled(enabled) {
@@ -732,7 +747,10 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
             try{await loadRemoteEntry(entry);dialog.close();}
             catch(error){setFigurePickerEnabled(!!pendingPuzzleDoc);status.textContent="Library load failed: "+error.message;button.disabled=false;}
           });
-          list.appendChild(button);
+          const row=document.createElement("div");row.className="library-row";row.appendChild(button);
+          const preview=document.createElement("button");preview.type="button";preview.className="library-preview";preview.textContent="Preview";
+          preview.addEventListener("click",()=>openCubePreview(entry));row.appendChild(preview);
+          list.appendChild(row);
         }
         if(!list.children.length) list.textContent="No matching puzzles.";
       };
@@ -740,7 +758,37 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     } catch(error){list.textContent="Library failed to load: "+error.message;}
   }
 
-  $("turn-axis").addEventListener("change", () => refreshTurnControls(window.pCubes));
+
+  let previewReadyHandler=null;
+  function openCubePreview(entry){
+    const dialog=$("preview-dialog"),frame=$("preview-frame");
+    $("preview-title").textContent=entry.name+" — Preview";
+    if(previewSpinFrame)cancelAnimationFrame(previewSpinFrame);
+    dialog.showModal();
+    frame.onload=()=>{};
+    frame.src="index.html?preview=1";
+    const onMessage=event=>{
+      if(event.source!==frame.contentWindow||event.data?.type!=="pcubes-preview-ready")return;
+      window.removeEventListener("message",onMessage);
+      frame.contentWindow.postMessage({type:"pcubes-preview-load",entry:{name:entry.name,xml:entry.xml,source:entry.source,path:entry.path}},location.origin);
+    };
+    window.addEventListener("message",onMessage);
+  }
+  $("preview-close").addEventListener("click",()=>{$("preview-dialog").close();$("preview-frame").src="about:blank";});
+  $("preview-dialog").addEventListener("close",()=>{$("preview-frame").src="about:blank";});
+  if(previewMode){
+    window.addEventListener("message",async event=>{
+      if(event.source!==parent||event.data?.type!=="pcubes-preview-load")return;
+      try{
+        const entry=event.data.entry;
+        if(entry.source==="remote")await loadRemoteEntry(entry);else if(!loadXmlText(entry.xml))throw new Error(status.textContent);
+        renderer.interactive=false;
+        const spin=()=>{renderer.rotationY+=0.008;renderer.draw();previewSpinFrame=requestAnimationFrame(spin);};
+        spin();status.textContent="Preview: "+entry.name;
+      }catch(error){status.textContent="Preview failed: "+error.message;}
+    });
+  }
+\n  $("turn-axis").addEventListener("change", () => refreshTurnControls(window.pCubes));
   $("turn-ccw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), -1));
   $("turn-cw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), 1));
   $("view-reset").addEventListener("click", () => renderer.resetView());
@@ -916,6 +964,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       updateModelInfo(api);
       status.textContent = "All " + preflightReport.length + " startup tests passed. Loaded " + cubeName + ".";
       document.documentElement.dataset.preflight = "passed";
+      if(previewMode) parent.postMessage({type:"pcubes-preview-ready"},location.origin);
     } catch (error) {
       preflightPassed = false;
       for (const id of [...controls, "library", "scramble", "undo", "redo", "reset"]) if ($(id)) $(id).disabled = true;
