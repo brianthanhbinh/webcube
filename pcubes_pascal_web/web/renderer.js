@@ -39,10 +39,30 @@ export class PuzzleRenderer {
     });
     canvas.addEventListener("pointermove",e=>{
       const p=this.pointer;
-      if(!p||p.id!==e.pointerId)return;
+      if(!p){
+        if(this.interactive===false)return;
+        const rect=canvas.getBoundingClientRect();
+        const x=e.clientX-rect.left,y=e.clientY-rect.top;
+        const hit=this.pickFace(x,y);
+        const axes=window.pCubes?.getAxesInfo?.()||[];
+        const pick=hit?this.pickLayer(x,y,axes):null;
+        const axis=pick&&axes.find(a=>a.index===pick.axis);
+        const nextMask=pick&&axis?this.layerFaceMask(this.geometry,axis,pick.layer,pick.normalSign||1):null;
+        if(JSON.stringify(nextMask)!==JSON.stringify(this.highlightMask)){
+          this.highlightMask=nextMask;
+          this.draw();
+        }
+        return;
+      }
+      if(p.id!==e.pointerId)return;
       const dx=e.clientX-p.x,dy=e.clientY-p.y;
       if(Math.abs(e.clientX-p.downX)+Math.abs(e.clientY-p.downY)>4)p.moved=true;
       if(p.button===2||p.button===1){
+        this.rotationY+=dx*.009;
+        this.rotationX=Math.max(-1.52,Math.min(1.52,this.rotationX+dy*.009));
+        this.draw();
+      } else if(p.button===0&&!p.hit){
+        // A left drag that starts on empty canvas rotates the camera.
         this.rotationY+=dx*.009;
         this.rotationX=Math.max(-1.52,Math.min(1.52,this.rotationX+dy*.009));
         this.draw();
@@ -92,6 +112,9 @@ export class PuzzleRenderer {
       this.draw();
     });
     const clearPointer=()=>{this.pointer=null;this.highlightMask=null;this.draw();};
+    canvas.addEventListener("pointerleave",()=>{
+      if(!this.pointer&&this.highlightMask){this.highlightMask=null;this.draw();}
+    });
     canvas.addEventListener("pointercancel",clearPointer);
     canvas.addEventListener("lostpointercapture",clearPointer);
     canvas.addEventListener("wheel",e=>{
