@@ -55,7 +55,10 @@ jobs:
         with:
           path: pcubes_pascal_web/web
 
-      # Deploy the single Pages artifact created by this fresh workflow run.
+      # GitHub artifact metadata can lag behind the successful upload.
+      - name: Wait for Pages artifact registration
+        run: sleep 10
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
