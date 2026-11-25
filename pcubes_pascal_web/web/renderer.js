@@ -59,7 +59,7 @@ export class PuzzleRenderer {
         const nextMask=pick&&axis?this.layerFaceMask(this.geometry,axis,pick.layer,pick.normalSign||1):null;
         if(JSON.stringify(nextMask)!==JSON.stringify(this.hoverMask)){
           this.hoverMask=nextMask;
-          this.highlightMask=this.hoverMask||this.selectedMask;
+          this.highlightMask=this.selectedMask;
           this.draw();
         }
         return;
@@ -148,6 +148,32 @@ export class PuzzleRenderer {
     const count=Math.max(1,Number(axis?.layers)||1);
     if(!length||!faces.length)return [];
     const n=vector.map(v=>v/length);
+    const partCenters=window.pCubes?.getPartCenters?.()||[];
+    // Classify each sticker by its owning cubie's center. Polygon centroids
+    // lie on sticker surfaces and can leak across adjacent slice boundaries.
+    if(partCenters.length && faces.some(face=>Number.isInteger(face.partIndex))){
+      const positions=[];
+      for(const center of partCenters){
+        if(!Array.isArray(center)||center.length<3)continue;
+        const value=this.dot(center,n);
+        if(!positions.some(old=>Math.abs(old-value)<1e-4))positions.push(value);
+      }
+      positions.sort((a,b)=>a-b);
+      if(positions.length){
+        const index=Math.max(0,Math.min(count-1,Math.round(Number(layer)||0)));
+        const target=positions.length>count
+          ? positions[Math.round(index*(positions.length-1)/Math.max(1,count-1))]
+          : positions[Math.min(index,positions.length-1)];
+        const gaps=positions.slice(1).map((value,i)=>Math.abs(value-positions[i])).filter(value=>value>1e-6);
+        const tolerance=gaps.length?Math.min(...gaps)*.18:1e-4;
+        return faces.map(face=>{
+          const center=Number.isInteger(face.partIndex)?partCenters[face.partIndex]:null;
+          if(!Array.isArray(center)||center.length<3)return false;
+          return Math.abs(this.dot(center,n)-target)<=tolerance;
+        });
+      }
+    }
+    // Fallback for geometry without part IDs.
     let min=Infinity,max=-Infinity;
     for(const face of faces)for(const v of face.vertices||[]){
       const value=this.dot(v,n);
@@ -155,24 +181,14 @@ export class PuzzleRenderer {
       if(value>max)max=value;
     }
     const pitch=(max-min)/count;
-    if(!(pitch>1e-7))return faces.map(()=>true);
+    if(!(pitch>1e-7))return faces.map(()=>false);
     const index=Math.max(0,Math.min(count-1,Math.round(Number(layer)||0)));
-    const center=min+(index+.5)*pitch;
-    const eps=pitch*.08;
+    const target=min+(index+.5)*pitch;
     return faces.map(face=>{
       const vertices=face.vertices||[];
       if(!vertices.length)return false;
-      const faceCenter=vertices.reduce((sum,v)=>sum.map((x,k)=>x+Number(v[k])/vertices.length),[0,0,0]);
-      const projection=this.dot(faceCenter,n);
-      const normal=this.faceNormal(vertices);
-      const along=normal?this.dot(normal,n):0;
-      // The outside sticker polygon sits on the boundary, not at the cubie
-      // center. Include it only for the outermost slice on that side.
-      const onPositiveBoundary=index===count-1&&along*normalSign>.82&&
-        Math.abs(projection-max)<eps;
-      const onNegativeBoundary=index===0&&along*normalSign>.82&&
-        Math.abs(projection-min)<eps;
-      return onPositiveBoundary||onNegativeBoundary||Math.abs(projection-center)<=pitch*.55;
+      const center=vertices.reduce((sum,v)=>sum.map((x,k)=>x+Number(v[k])/vertices.length),[0,0,0]);
+      return Math.abs(this.dot(center,n)-target)<=pitch*.32;
     });
   }
   animateTurn(before, after, axis, angle, duration = 220, startAngle = 0, layer = 0, normalSign = 1) {
@@ -260,7 +276,7 @@ export class PuzzleRenderer {
     const axes=window.pCubes?.getAxesInfo?.()||[];
     const axis=axes.find(a=>Number(a.index)===Number(axisIndex));
     this.selectedMask=axis?this.layerFaceMask(this.geometry,axis,this.selectedLayerIndex,1):null;
-    this.highlightMask=this.hoverMask||this.selectedMask;
+    this.highlightMask=this.selectedMask;
     this.draw();
   }
   color(value){
@@ -463,7 +479,7 @@ export class PuzzleRenderer {
       const screen=viewVertices.map(project);
       let depth=0;
       for(let j=0;j<viewVertices.length;j++)depth+=viewVertices[j][2];
-      ordered.push({vertices,screen,depth:depth/viewVertices.length,color:face.color,partIndex:face.partIndex,highlighted:Boolean(this.highlightMask?.[index])});
+      ordered.push({vertices,screen,depth:depth/viewVertices.length,color:face.color,partIndex:face.partIndex,selected:Boolean(this.selectedMask?.[index]),hovered:Boolean(this.hoverMask?.[index])});
     }
     ordered.sort((a,b)=>a.depth-b.depth);
     this.projectedFaces=ordered;
@@ -471,7 +487,8 @@ export class PuzzleRenderer {
       if(item.screen.length<3)continue;
       ctx.beginPath();for(let i=0;i<item.screen.length;i++){const [x,y]=item.screen[i];if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
       ctx.closePath();ctx.fillStyle=this.color(item.color);ctx.fill();
-       if(item.highlighted){ctx.fillStyle="rgba(80,220,255,0.38)";ctx.fill();ctx.strokeStyle="#7DEBFF";ctx.lineWidth=2.5;ctx.stroke();}
+       if(item.selected){ctx.fillStyle="rgba(70,190,255,0.12)";ctx.fill();ctx.strokeStyle="#55C9FF";ctx.lineWidth=1.8;ctx.stroke();}
+       else if(item.hovered){ctx.fillStyle="rgba(235,248,255,0.07)";ctx.fill();ctx.strokeStyle="#D8F1FF";ctx.lineWidth=1.35;ctx.stroke();}
        else{ctx.strokeStyle="#101820";ctx.lineWidth=1.25;ctx.stroke();}
     }
   }
