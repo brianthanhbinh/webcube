@@ -19,7 +19,13 @@
         <input id="puzzle-file" type="file" accept=".xml,text/xml" hidden><input id="figure-file" type="file" accept=".xml,.inc,text/xml,text/plain" multiple hidden><input id="figure-folder" type="file" accept=".xml,.inc,text/xml,text/plain" webkitdirectory directory multiple hidden>
       </div>
       <p class="muted">Left-drag a visible face to turn its layer. Right-drag to rotate the camera. Scroll to zoom.</p>
-      <div id="timer-panel"><div id="timer-display" aria-live="off">00:00.00</div><small id="timer-hint">First move starts the timer · Hold SPACE until green, release to start</small></div>
+      <label for="timer-mode">Play mode</label>
+      <select id="timer-mode">
+        <option value="free">Free play</option>
+        <option value="cube">Cube timer</option>
+        <option value="singular">Singular timer</option>
+      </select>
+      <div id="timer-panel" hidden><div id="timer-display" aria-live="off">00:00.00</div><small id="timer-hint">First move starts the timer</small></div>
       <p id="engine-status" role="status" aria-live="polite">Loading compiled Pascal module…</p>
       <p id="model-info" class="muted">Waiting for Pascal API…</p>
       <details id="preflight-panel"><summary>Startup self-test</summary><pre id="preflight-results" aria-live="polite">Tests have not run yet.</pre></details>
