@@ -89,6 +89,9 @@ export class PuzzleRenderer {
         if(target){
           // Keep the layer fixed, but continuously measure the full drag
           // distance from pointerdown so the preview follows the pointer.
+          // screenTangent is measured in pixels per radian, matching the
+          // actual canvas projection. Using model-space units here made a
+          // tiny mouse movement produce a huge angle, then hit the clamp.
           const tangent=target.screenTangent;
           const tangentLengthSquared=tangent[0]*tangent[0]+tangent[1]*tangent[1];
           p.pick=target.pick;p.axis=target.axis;
@@ -326,7 +329,9 @@ export class PuzzleRenderer {
         a[2]*radial[0]-a[0]*radial[2],
         a[0]*radial[1]-a[1]*radial[0]
       ];
-      const screenTangent=projectVector(tangent);
+      const modelTangent=projectVector(tangent);
+      // Convert the projected model-space derivative to screen pixels.
+      const screenTangent=[modelTangent[0]*(this.renderScale||1),modelTangent[1]*(this.renderScale||1)];
       const tangentLength=Math.hypot(...screenTangent);
       if(tangentLength<1e-5)continue;
       const alignment=Math.abs((swipe[0]*screenTangent[0]+swipe[1]*screenTangent[1])/(swipeLength*tangentLength));
@@ -432,6 +437,7 @@ export class PuzzleRenderer {
     if(!hasPoint){this.projectedFaces=[];return;}
     const radius=Math.max(Math.sqrt(radiusSquared),1e-6);
     const scale=Math.min(w,h)*.68*this.zoom/(2*radius);
+    this.renderScale=scale;
     const project=v=>[w/2+v[0]*scale,h/2-v[1]*scale];
     // Back-face culling: only submit polygons whose outward normal points
     // toward the camera. This is especially important for high-order puzzles
