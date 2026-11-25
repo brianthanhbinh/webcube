@@ -276,7 +276,7 @@ export class PuzzleRenderer {
       const item=this.projectedFaces[i];
       if(item.screen.length>=3&&this.pointInPolygon(x,y,item.screen)){
         const normal=this.faceNormal(item.vertices);
-        if(normal)return {item,normal,center:item.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/item.vertices.length),[0,0,0])};
+        if(normal)return {item,normal,partIndex:item.partIndex,center:item.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/item.vertices.length),[0,0,0])};
       }
     }
     return null;
@@ -343,32 +343,27 @@ export class PuzzleRenderer {
         if(score>best){best=score;chosen={axis:axis.index,vector:vector.map(v=>v/length),layers:axis.layers,sign:this.dot(normal,vector.map(v=>v/length))>=0?1:-1};}
       }
       if(!chosen||!chosen.layers)continue;
-      const cent=item.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/item.vertices.length),[0,0,0]);
-      const coordinate=this.dot(cent,chosen.vector);
-      // Map the pointer to the nearest actual slice plane using face
-      // centroids across the complete geometry. A bounds/floor calculation
-      // incorrectly classifies many non-cubic shapes as an outer slice:
-      // their visible surface may sit at the model boundary even when the
-      // selected face belongs to an interior layer.
-      const sliceCenters=[];
-      for(const face of this.geometry?.faces||[]){
-        const vertices=face.vertices||[];
-        if(!vertices.length)continue;
-        const faceNormal=this.faceNormal(vertices);
-        if(!faceNormal||Math.abs(this.dot(faceNormal,chosen.vector))<.82)continue;
-        const center=vertices.reduce((sum,v)=>sum.map((n,k)=>n+Number(v[k])/vertices.length),[0,0,0]);
+      // Select by the clicked part's center, not its outer sticker face.
+      // This distinguishes inner cubies on arbitrary puzzle geometries.
+      const partCenters=window.pCubes?.getPartCenters?.()||[];
+      const partCenter=Number.isInteger(item.partIndex)?partCenters[item.partIndex]:null;
+      const coordinate=partCenter
+        ? this.dot(partCenter,chosen.vector)
+        : this.dot(item.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/item.vertices.length),[0,0,0]),chosen.vector);
+      const positions=[];
+      for(const center of partCenters){
         const value=this.dot(center,chosen.vector);
-        if(!sliceCenters.some(old=>Math.abs(old-value)<1e-4))sliceCenters.push(value);
+        if(!positions.some(old=>Math.abs(old-value)<1e-4))positions.push(value);
       }
-      sliceCenters.sort((a,b)=>a-b);
+      positions.sort((a,b)=>a-b);
       const count=Math.max(1,Number(chosen.layers)||1);
       let nearest=0,nearestDistance=Infinity;
-      for(let index=0;index<sliceCenters.length;index++){
-        const distance=Math.abs(sliceCenters[index]-coordinate);
+      positions.forEach((value,index)=>{
+        const distance=Math.abs(value-coordinate);
         if(distance<nearestDistance){nearestDistance=distance;nearest=index;}
-      }
-      const layer=sliceCenters.length>1
-        ? Math.round(nearest*(count-1)/(sliceCenters.length-1))
+      });
+      const layer=positions.length>1
+        ? Math.max(0,Math.min(count-1,Math.round(nearest*(count-1)/(positions.length-1))))
         : 0;
       return {axis:chosen.axis,layer,normalSign:chosen.sign,faceNormal:normal};
     }
@@ -421,7 +416,7 @@ export class PuzzleRenderer {
       const screen=viewVertices.map(project);
       let depth=0;
       for(let j=0;j<viewVertices.length;j++)depth+=viewVertices[j][2];
-      ordered.push({vertices,screen,depth:depth/viewVertices.length,color:face.color,highlighted:Boolean(this.highlightMask?.[index])});
+      ordered.push({vertices,screen,depth:depth/viewVertices.length,color:face.color,partIndex:face.partIndex,highlighted:Boolean(this.highlightMask?.[index])});
     }
     ordered.sort((a,b)=>a.depth-b.depth);
     this.projectedFaces=ordered;
