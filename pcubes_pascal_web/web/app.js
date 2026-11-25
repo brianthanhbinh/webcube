@@ -23,6 +23,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     axisSelect.value = String(pick.axis);
     refreshTurnControls(window.pCubes);
     layerSelect.value = String(pick.layer);
+    renderer.setSelectedLayer(pick.axis,pick.layer);
     const direction = Math.sign(turns);
     renderer.deferGeometry = true;
     let succeeded = true;
@@ -104,6 +105,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       if(select.disabled||!select.options.length)return;
       e.preventDefault();
       select.selectedIndex=Math.max(0,Math.min(select.options.length-1,select.selectedIndex+(e.key===keybinds.layerPrevious?-1:1)));
+      select.dispatchEvent(new Event("change"));
       return;
     }
     if(e.key===keybinds.axisPrevious||e.key===keybinds.axisNext){
@@ -665,6 +667,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     }
     axisSelect.disabled=layerSelect.disabled=!preflightPassed||!axes.length;
     $("turn-ccw").disabled=$("turn-cw").disabled=!preflightPassed||!axes.length;
+    if(axes.length)renderer.setSelectedLayer(Number(axisSelect.value),Number(layerSelect.value));
   }
 
   function call(name, ...args) {
@@ -858,6 +861,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     });
   }
   $("turn-axis").addEventListener("change", () => refreshTurnControls(window.pCubes));
+  $("turn-layer").addEventListener("change", () => renderer.setSelectedLayer(Number($("turn-axis").value),Number($("turn-layer").value)));
   $("turn-ccw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), -1));
   $("turn-cw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), 1));
   $("view-reset").addEventListener("click", () => renderer.resetView());
