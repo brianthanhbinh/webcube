@@ -54,6 +54,38 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   function resetSolveTimer(){timerState="idle";timerElapsed=0;timerPanel.className="";timerHint.textContent=timerMode==="cube"?"First move starts the timer":"Hold SPACE until green, then release";paintTimer();}
   function updateHold(){if(timerState!=="holding")return;const held=performance.now()-timerHoldAt;if(held>=500){timerPanel.className="ready";timerHint.textContent="GREEN · Release SPACE to start";}else timerPanel.className="inspecting";timerHoldFrame=requestAnimationFrame(updateHold);}
   function setTimerMode(mode){timerMode=mode;cancelAnimationFrame(timerHoldFrame);timerState="idle";timerElapsed=0;timerStartedAt=0;timerPanel.className="";timerPanel.hidden=mode==="free";if(mode==="cube")timerHint.textContent="First move starts the timer · Press SPACE to stop";else if(mode==="singular")timerHint.textContent="Hold SPACE until green, then release to start";paintTimer();}
+  function handleAppKeybinds(e){
+    if(previewMode)return;
+    const target=e.target;
+    if(target&&(/INPUT|TEXTAREA|SELECT|BUTTON/.test(target.tagName)||target.isContentEditable))return;
+    if($("library-dialog")?.open||$("preview-dialog")?.open||$("generator-dialog")?.open)return;
+    const key=e.key.toLowerCase();
+    if((e.ctrlKey||e.metaKey)&&key==="z"){e.preventDefault();call("undo");return;}
+    if((e.ctrlKey||e.metaKey)&&key==="y"){e.preventDefault();call("redo");return;}
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    if(key==="s"){e.preventDefault();$("scramble").click();return;}
+    if(key==="v"){e.preventDefault();renderer.resetView();return;}
+    if(key==="q"||key==="e"){
+      e.preventDefault();
+      turnLayerAnimated(Number($("turn-axis").value),Number($("turn-layer").value),key==="q"?-1:1);
+      return;
+    }
+    if(e.key==="ArrowUp"||e.key==="ArrowDown"){
+      const select=$("turn-layer");
+      if(select.disabled||!select.options.length)return;
+      e.preventDefault();
+      select.selectedIndex=Math.max(0,Math.min(select.options.length-1,select.selectedIndex+(e.key==="ArrowUp"?-1:1)));
+      return;
+    }
+    if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
+      const select=$("turn-axis");
+      if(select.disabled||!select.options.length)return;
+      e.preventDefault();
+      select.selectedIndex=(select.selectedIndex+(e.key==="ArrowLeft"?-1:1)+select.options.length)%select.options.length;
+      select.dispatchEvent(new Event("change"));
+    }
+  }
+  window.addEventListener("keydown",handleAppKeybinds);
   $("timer-mode")?.addEventListener("change",e=>setTimerMode(e.target.value));
   setTimerMode(timerMode);
   if(!previewMode){
