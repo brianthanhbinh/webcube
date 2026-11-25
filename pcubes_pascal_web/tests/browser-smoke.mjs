@@ -38,7 +38,8 @@ try{
  assert.match(await page.locator("#engine-status").textContent(),/Scrambled: 30 random layer turns\./,"Scramble did not complete 30 random turns");
  assert.ok((await page.evaluate(()=>window.pCubes.getModelInfo().undoCount))>=30,"Scramble did not record the random turns");
  for(const id of ["undo","redo","reset"]){await page.locator("#"+id).click();await page.waitForTimeout(40);const s=await page.locator("#engine-status").textContent();assert.doesNotMatch(s,/Pascal error|failed/i,id+": "+s);assert.equal(await page.evaluate(()=>window.pCubes.isPuzzleReady()),true);}
- await page.locator("#library").click();await page.waitForFunction(()=>document.querySelector("#library-dialog")?.open);await page.waitForFunction(()=>document.querySelectorAll("#library-list button").length>0);
+ await page.locator("#library").click();await page.waitForFunction(()=>document.querySelector("#library-dialog")?.open);await page.waitForFunction(()=>document.querySelectorAll("#library-list button").length>0 || (document.querySelector("#library-list")?.textContent||"").startsWith("Library failed to load:"),null,{timeout:45000});
+ const libraryLoadMessage=await page.locator("#library-list").textContent();assert.ok(await page.locator("#library-list button").count()>0,"Library did not populate: "+libraryLoadMessage);
  assert.ok(await page.locator("#library-list button").count()>=4);
  const cube2=page.locator("#library-list button").filter({has:page.locator("strong").getByText("Rubik's cube 2x2x2",{exact:true})});
  assert.equal(await cube2.count(),1,"2x2 exact entry missing/duplicated");assert.equal(await cube2.isEnabled(),true);await cube2.click();await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open);
