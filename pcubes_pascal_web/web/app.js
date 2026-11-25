@@ -15,6 +15,8 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   const previewMode = new URLSearchParams(location.search).has("preview");
   if (previewMode) document.documentElement.classList.add("preview-mode");
   const renderer = new PuzzleRenderer($("puzzle-canvas"));
+  // Expose the renderer on its canvas for deterministic browser smoke tests.
+  $("puzzle-canvas").__pCubesRenderer = renderer;
   if (previewMode) renderer.interactive = false;
   let previewSpinFrame = 0;
   renderer.onTurnCommit = (pick, turns, before, axis, previewAngle) => {
