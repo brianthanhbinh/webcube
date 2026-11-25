@@ -300,7 +300,17 @@ export class PuzzleRenderer {
     const distance=Math.hypot(dx,dy);
     if(distance<2)return null;
     const partCenters=window.pCubes?.getPartCenters?.()||[];
-    const center=Number.isInteger(hit?.partIndex)?partCenters[hit.partIndex]:null;
+    // Some Pascal geometry exports omit face.partIndex. Recover the grabbed
+    // cubie from the picked face center instead of silently disabling turns.
+    let center=Number.isInteger(hit?.partIndex)?partCenters[hit.partIndex]:null;
+    if(!center&&hit?.center&&partCenters.length){
+      let nearest=Infinity;
+      for(const candidate of partCenters){
+        if(!Array.isArray(candidate)||candidate.length<3)continue;
+        const distance=Math.hypot(candidate[0]-hit.center[0],candidate[1]-hit.center[1],candidate[2]-hit.center[2]);
+        if(distance<nearest){nearest=distance;center=candidate;}
+      }
+    }
     if(!center)return null;
     const cy=Math.cos(this.rotationY),sy=Math.sin(this.rotationY);
     const cx=Math.cos(this.rotationX),sx=Math.sin(this.rotationX);
