@@ -54,34 +54,63 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   function resetSolveTimer(){timerState="idle";timerElapsed=0;timerPanel.className="";timerHint.textContent=timerMode==="cube"?"First move starts the timer":"Hold SPACE until green, then release";paintTimer();}
   function updateHold(){if(timerState!=="holding")return;const held=performance.now()-timerHoldAt;if(held>=500){timerPanel.className="ready";timerHint.textContent="GREEN · Release SPACE to start";}else timerPanel.className="inspecting";timerHoldFrame=requestAnimationFrame(updateHold);}
   function setTimerMode(mode){timerMode=mode;cancelAnimationFrame(timerHoldFrame);timerState="idle";timerElapsed=0;timerStartedAt=0;timerPanel.className="";timerPanel.hidden=mode==="free";if(mode==="cube")timerHint.textContent="First move starts the timer · Press SPACE to stop";else if(mode==="singular")timerHint.textContent="Hold SPACE until green, then release to start";paintTimer();}
-  function handleAppKeybinds(e){
+  const defaultKeybinds={turnNegative:"q",turnPositive:"e",layerPrevious:"ArrowUp",layerNext:"ArrowDown",axisPrevious:"ArrowLeft",axisNext:"ArrowRight",scramble:"s",undo:"ctrl+z",redo:"ctrl+y",resetCamera:"v"};
+  const keybindLabels={turnNegative:"Turn selected layer −90°",turnPositive:"Turn selected layer +90°",layerPrevious:"Select previous layer",layerNext:"Select next layer",axisPrevious:"Select previous axis",axisNext:"Select next axis",scramble:"Scramble",undo:"Undo",redo:"Redo",resetCamera:"Reset camera"};
+  let keybinds={...defaultKeybinds};
+  try{const saved=JSON.parse(localStorage.getItem("pcubes-keybinds")||"null");if(saved&&typeof saved==="object")for(const k of Object.keys(defaultKeybinds))if(typeof saved[k]==="string")keybinds[k]=saved[k];}catch{}
+  let keybindCapture=null;
+  const keybindDialog=$("keybind-dialog"),keybindEditor=$("keybind-editor"),keybindStatus=$("keybind-status");
+  const prettyKey=k=>k.split("+").map(part=>part==="ctrl"?"Ctrl":part==="meta"?"Meta":part===" "?"Space":part.startsWith("Arrow")?part.replace("Arrow",""):part.length===1?part.toUpperCase():part).join(" + ");
+  function renderKeybindEditor(){
+    keybindEditor.replaceChildren();
+    for(const [id,label] of Object.entries(keybindLabels)){
+      const row=document.createElement("div");row.className="keybind-edit-row";
+      const name=document.createElement("span");name.textContent=label;
+      const button=document.createElement("button");button.type="button";button.textContent=keybindCapture===id?"Press a key…":prettyKey(keybinds[id]);button.className=keybindCapture===id?"capturing":"";
+      button.addEventListener("click",()=>{keybindCapture=id;keybindStatus.textContent="Press the key for “"+label+"”. Escape cancels.";renderKeybindEditor();});
+      row.append(name,button);keybindEditor.append(row);
+    }
+  }
+  $("edit-keybinds").addEventListener("click",()=>{keybindCapture=null;keybindStatus.textContent="";renderKeybindEditor();keybindDialog.showModal();});
+  $("keybind-close").addEventListener("click",()=>{keybindCapture=null;keybindDialog.close();});
+  $("keybind-reset").addEventListener("click",()=>{keybinds={...defaultKeybinds};keybindCapture=null;keybindStatus.textContent="Default shortcuts restored. Save to apply.";renderKeybindEditor();});
+  $("keybind-save").addEventListener("click",()=>{localStorage.setItem("pcubes-keybinds",JSON.stringify(keybinds));keybindCapture=null;keybindStatus.textContent="Keybinds saved.";renderKeybindEditor();});
+  window.addEventListener("keydown",e=>{
+    if(!keybindCapture)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    if(e.key==="Escape"){keybindCapture=null;keybindStatus.textContent="Key assignment cancelled.";renderKeybindEditor();return;}
+    if(["Shift","Control","Alt","Meta"].includes(e.key))return;
+    const combo=[e.ctrlKey?"ctrl":null,e.metaKey?"meta":null,e.altKey?"alt":null,e.shiftKey?"shift":null,e.key===" "?" ":e.key].filter(Boolean).join("+");
+    const duplicate=Object.entries(keybinds).find(([id,value])=>id!==keybindCapture&&value.toLowerCase()===combo.toLowerCase());
+    if(duplicate){keybindStatus.textContent="That key is already assigned to "+keybindLabels[duplicate[0]]+".";return;}
+    if(combo.toLowerCase()==="space"||combo===" "){keybindStatus.textContent="Space is reserved for timer controls.";return;}
+    keybinds[keybindCapture]=combo;keybindCapture=null;keybindStatus.textContent="Key assigned. Save to keep your changes.";renderKeybindEditor();
+  },true);
+    function handleAppKeybinds(e){
     if(previewMode)return;
     const target=e.target;
     if(target&&(/INPUT|TEXTAREA|SELECT|BUTTON/.test(target.tagName)||target.isContentEditable))return;
     if($("library-dialog")?.open||$("preview-dialog")?.open||$("generator-dialog")?.open)return;
     const key=e.key.toLowerCase();
-    if((e.ctrlKey||e.metaKey)&&key==="z"){e.preventDefault();call("undo");return;}
-    if((e.ctrlKey||e.metaKey)&&key==="y"){e.preventDefault();call("redo");return;}
+    if(keybinds.undo===((e.ctrlKey?"ctrl+":"")+(e.metaKey?"meta+":"")+key)){e.preventDefault();call("undo");return;}
+    if(keybinds.redo===((e.ctrlKey?"ctrl+":"")+(e.metaKey?"meta+":"")+key)){e.preventDefault();call("redo");return;}
+    const pressed=key;
     if(e.ctrlKey||e.metaKey||e.altKey)return;
-    if(key==="s"){e.preventDefault();$("scramble").click();return;}
-    if(key==="v"){e.preventDefault();renderer.resetView();return;}
-    if(key==="q"||key==="e"){
-      e.preventDefault();
-      turnLayerAnimated(Number($("turn-axis").value),Number($("turn-layer").value),key==="q"?-1:1);
-      return;
-    }
-    if(e.key==="ArrowUp"||e.key==="ArrowDown"){
+    if(pressed===keybinds.scramble){e.preventDefault();$("scramble").click();return;}
+    if(pressed===keybinds.resetCamera){e.preventDefault();renderer.resetView();return;}
+    if(pressed===keybinds.turnNegative||pressed===keybinds.turnPositive){e.preventDefault();turnLayerAnimated(Number($("turn-axis").value),Number($("turn-layer").value),pressed===keybinds.turnNegative?-1:1);return;}
+    if(e.key===keybinds.layerPrevious||e.key===keybinds.layerNext){
       const select=$("turn-layer");
       if(select.disabled||!select.options.length)return;
       e.preventDefault();
-      select.selectedIndex=Math.max(0,Math.min(select.options.length-1,select.selectedIndex+(e.key==="ArrowUp"?-1:1)));
+      select.selectedIndex=Math.max(0,Math.min(select.options.length-1,select.selectedIndex+(e.key===keybinds.layerPrevious?-1:1)));
       return;
     }
-    if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
+    if(e.key===keybinds.axisPrevious||e.key===keybinds.axisNext){
       const select=$("turn-axis");
       if(select.disabled||!select.options.length)return;
       e.preventDefault();
-      select.selectedIndex=(select.selectedIndex+(e.key==="ArrowLeft"?-1:1)+select.options.length)%select.options.length;
+      select.selectedIndex=(select.selectedIndex+(e.key===keybinds.axisPrevious?-1:1)+select.options.length)%select.options.length;
       select.dispatchEvent(new Event("change"));
     }
   }
