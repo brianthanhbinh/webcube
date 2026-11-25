@@ -26,6 +26,17 @@
         <option value="singular">Singular timer</option>
       </select>
       <div id="timer-panel" hidden><div id="timer-display" aria-live="off">00:00.00</div><small id="timer-hint">First move starts the timer</small></div>
+      <details id="keybinds-panel"><summary>Keyboard shortcuts</summary>
+        <div class="keybind-list">
+          <span>Q / E</span><span>Turn selected layer −90° / +90°</span>
+          <span>↑ / ↓</span><span>Select previous / next layer</span>
+          <span>← / →</span><span>Select previous / next axis</span>
+          <span>S</span><span>Scramble</span>
+          <span>Ctrl + Z / Ctrl + Y</span><span>Undo / redo</span>
+          <span>V</span><span>Reset camera</span>
+          <span>Space</span><span>Timer controls (Cube / Singular modes)</span>
+        </div>
+      </details>
       <p id="engine-status" role="status" aria-live="polite">Loading compiled Pascal module…</p>
       <p id="model-info" class="muted">Waiting for Pascal API…</p>
       <details id="preflight-panel"><summary>Startup self-test</summary><pre id="preflight-results" aria-live="polite">Tests have not run yet.</pre></details>
