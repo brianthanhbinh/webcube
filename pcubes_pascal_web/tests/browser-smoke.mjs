@@ -26,7 +26,7 @@ try{
    // Sample the canvas itself; polygon centroids can fall outside concave faces.
    for(let y=8;y<h-8;y+=5)for(let x=8;x<w-8;x+=5){
      const hit=r.pickFace(x,y);if(!hit)continue;
-     for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){
+     for(const [dx,dy] of [[10,0],[-10,0],[0,10],[0,-10],[10,10],[-10,10],[10,-10],[-10,-10]]){
        const target=r.pickLayerForDrag(hit,axes,dx,dy);
        if(target)return {x,y,dx:target.screenTangent[0],dy:target.screenTangent[1]};
      }
