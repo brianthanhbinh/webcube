@@ -211,7 +211,19 @@ try{
  assert.equal(megaminx.axes.length,6,"Megaminx must expose all six dodecahedral turning axes");
  assert.ok(megaminx.faces.length>=60,"Megaminx is missing rendered pentagonal face geometry: "+megaminx.faces.length);
  assert.ok(new Set(megaminx.faces.map(face=>String(face.color).toLowerCase())).size>=12,"Megaminx must preserve all twelve face colours");
- console.log("PASS: Megaminx dodecahedron, six axes, and twelve face colours.");
+ assert.ok(megaminx.axes.every(axis=>Array.isArray(axis.angles)&&axis.angles.length===axis.layers),
+   "Megaminx axes must expose an exact turning angle for every layer");
+ for(const axis of megaminx.axes){
+   const layer=axis.angles.findIndex(angle=>Number.isFinite(Number(angle))&&Math.abs(Number(angle))>1e-6);
+   assert.ok(layer>=0,"Megaminx axis "+axis.index+" has no movable layer angle");
+   const before=JSON.stringify(await page.evaluate(()=>window.pCubes.getRenderData()));
+   const turned=await page.evaluate(({axisNo,layerNo})=>window.pCubes.turnLayer(axisNo,layerNo,1),{axisNo:axis.index,layerNo:layer});
+   assert.equal(turned,true,"Megaminx axis "+axis.index+" layer "+layer+" did not turn");
+   const after=JSON.stringify(await page.evaluate(()=>window.pCubes.getRenderData()));
+   assert.notEqual(after,before,"Megaminx axis "+axis.index+" did not change geometry");
+   await page.evaluate(()=>window.pCubes.undo());
+ }
+ console.log("PASS: Megaminx dodecahedron, six axes, twelve colours, and per-layer turning.");
  // Generator UI is available after the Pascal startup self-test.
  await page.locator("#generator").click();
  await page.waitForFunction(()=>document.querySelector("#generator-dialog")?.open);
