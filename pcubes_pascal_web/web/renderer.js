@@ -17,8 +17,11 @@ export class PuzzleRenderer {
     this.cameraSnapEnabled=false;
     canvas.style.touchAction="none";
     canvas.addEventListener("contextmenu",e=>e.preventDefault());
+    canvas.addEventListener("auxclick",e=>e.preventDefault());
     canvas.addEventListener("pointerdown",e=>{
       if(this.interactive===false)return;
+      // Middle-click is a camera gesture, never a face/layer selection.
+      if(e.button===1)e.preventDefault();
       // One pointer gesture owns the canvas until it is released; a second
       // pointer/button cannot replace the active layer drag mid-turn.
       if(this.pointer)return;
@@ -41,6 +44,10 @@ export class PuzzleRenderer {
       const p=this.pointer;
       if(!p){
         if(this.interactive===false)return;
+        // Do not run hover picking while any mouse button is held. This also
+        // prevents a lost middle-button pointer capture from painting a face
+        // highlight during a camera drag.
+        if(e.buttons!==0){this.highlightMask=null;return;}
         const rect=canvas.getBoundingClientRect();
         const x=e.clientX-rect.left,y=e.clientY-rect.top;
         const hit=this.pickFace(x,y);
