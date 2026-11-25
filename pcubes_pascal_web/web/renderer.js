@@ -479,7 +479,7 @@ export class PuzzleRenderer {
       const screen=viewVertices.map(project);
       let depth=0;
       for(let j=0;j<viewVertices.length;j++)depth+=viewVertices[j][2];
-      ordered.push({vertices,screen,depth:depth/viewVertices.length,color:face.color,partIndex:face.partIndex,selected:Boolean(this.selectedMask?.[index]),hovered:Boolean(this.hoverMask?.[index])});
+      ordered.push({vertices,screen,depth:depth/viewVertices.length,color:face.color,partIndex:face.partIndex,selected:Boolean(this.highlightMask?.[index]||this.selectedMask?.[index]),hovered:Boolean(this.hoverMask?.[index])});
     }
     ordered.sort((a,b)=>a.depth-b.depth);
     this.projectedFaces=ordered;
