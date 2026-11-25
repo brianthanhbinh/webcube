@@ -35,7 +35,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     renderer.deferGeometry = false;
     const target = window.pCubes?.getRenderData?.();
     if (succeeded && target) {
-       renderer.animateTurn(before, target, axis, turns * (Number(axis.angle) || Math.PI/2), 180, previewAngle, pick.layer, pick.normalSign || 1);
+       renderer.animateTurn(before, target, axis, turns * (Number(axis.angles?.[pick.layer] ?? axis.angle) || Math.PI/2), 180, previewAngle, pick.layer, pick.normalSign || 1);
     } else renderer.setGeometry(window.pCubes?.getRenderData?.() || before);
   };
   renderer.onTurnDrag = () => {
@@ -638,7 +638,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     const before = api.getRenderData();
     const axis = (api.getAxesInfo() || []).find(item => item.index === axisNo);
     if (!axis) return false;
-    const angle = Number(axis.angle) * direction;
+    const angle = Number(axis.angles?.[layerNo] ?? axis.angle) * direction;
     renderer.deferGeometry = true;
     const result = call("turnLayer", axisNo, layerNo, direction);
     renderer.deferGeometry = false;
