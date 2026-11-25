@@ -43,15 +43,23 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   let libraryData = null;
   let remoteLibrary = null;
   let preflightPassed = false;
+  let timerMode = $("timer-mode")?.value || "free";
   let timerState = "idle", timerStartedAt = 0, timerElapsed = 0, timerHoldAt = 0, timerHoldFrame = 0;
   const timerPanel = $("timer-panel"), timerDisplay = $("timer-display"), timerHint = $("timer-hint");
   const formatTime = ms => { const cs=Math.floor(ms/10)%100, total=Math.floor(ms/1000), sec=total%60, min=Math.floor(total/60); return String(min).padStart(2,"0")+":"+String(sec).padStart(2,"0")+"."+String(cs).padStart(2,"0"); };
   function paintTimer(){ const ms=timerState==="running"?performance.now()-timerStartedAt:timerElapsed; timerDisplay.textContent=formatTime(ms); }
-  function startSolveTimer(){ if(timerState!=="idle")return; timerState="running";timerStartedAt=performance.now();timerPanel.className="";timerHint.textContent="Timer running · Press SPACE to stop";requestAnimationFrame(function tick(){if(timerState!=="running")return;paintTimer();requestAnimationFrame(tick);}); }
+  function runTimer(){timerState="running";timerStartedAt=performance.now();timerPanel.className="";timerHint.textContent="Running · Press SPACE to stop";requestAnimationFrame(function tick(){if(timerState!=="running")return;paintTimer();requestAnimationFrame(tick);});}
+  function startSolveTimer(){if(timerMode!=="cube"||timerState!=="idle")return;runTimer();}
   function stopSolveTimer(){if(timerState==="running"){timerElapsed=performance.now()-timerStartedAt;timerState="stopped";paintTimer();timerHint.textContent="Stopped · Press SPACE to reset";}}
-  function resetSolveTimer(){timerState="idle";timerElapsed=0;timerPanel.className="";timerHint.textContent="First move starts the timer · Hold SPACE until green, release to start";paintTimer();}
+  function resetSolveTimer(){timerState="idle";timerElapsed=0;timerPanel.className="";timerHint.textContent=timerMode==="cube"?"First move starts the timer":"Hold SPACE until green, then release";paintTimer();}
   function updateHold(){if(timerState!=="holding")return;const held=performance.now()-timerHoldAt;if(held>=500){timerPanel.className="ready";timerHint.textContent="GREEN · Release SPACE to start";}else timerPanel.className="inspecting";timerHoldFrame=requestAnimationFrame(updateHold);}
-  if(!previewMode){window.addEventListener("keydown",e=>{if(e.code!=="Space"||e.repeat||e.target.matches("input,textarea,select,button"))return;e.preventDefault();if(timerState==="running"){stopSolveTimer();return;}if(timerState==="stopped"){resetSolveTimer();return;}if(timerState==="idle"){timerState="holding";timerHoldAt=performance.now();timerPanel.className="inspecting";timerHint.textContent="Hold SPACE…";timerHoldFrame=requestAnimationFrame(updateHold);}});window.addEventListener("keyup",e=>{if(e.code!=="Space"||timerState!=="holding")return;e.preventDefault();cancelAnimationFrame(timerHoldFrame);if(performance.now()-timerHoldAt>=500){timerState="running";timerStartedAt=performance.now();timerPanel.className="";timerHint.textContent="Timer running · Press SPACE to stop";requestAnimationFrame(function tick(){if(timerState!=="running")return;paintTimer();requestAnimationFrame(tick);});}else{timerState="idle";timerPanel.className="";timerHint.textContent="Hold SPACE until green, then release";}});}
+  function setTimerMode(mode){timerMode=mode;cancelAnimationFrame(timerHoldFrame);timerState="idle";timerElapsed=0;timerStartedAt=0;timerPanel.className="";timerPanel.hidden=mode==="free";if(mode==="cube")timerHint.textContent="First move starts the timer · Press SPACE to stop";else if(mode==="singular")timerHint.textContent="Hold SPACE until green, then release to start";paintTimer();}
+  $("timer-mode")?.addEventListener("change",e=>setTimerMode(e.target.value));
+  setTimerMode(timerMode);
+  if(!previewMode){
+    window.addEventListener("keydown",e=>{if(e.code!=="Space"||e.repeat||e.target.matches("input,textarea,select,button")||timerMode!=="singular")return;e.preventDefault();if(timerState==="running"){stopSolveTimer();return;}if(timerState==="stopped"){resetSolveTimer();return;}if(timerState==="idle"){timerState="holding";timerHoldAt=performance.now();timerPanel.className="inspecting";timerHint.textContent="Hold SPACE…";timerHoldFrame=requestAnimationFrame(updateHold);}});
+    window.addEventListener("keyup",e=>{if(e.code!=="Space"||timerMode!=="singular"||timerState!=="holding")return;e.preventDefault();cancelAnimationFrame(timerHoldFrame);if(performance.now()-timerHoldAt>=500)runTimer();else{timerState="idle";timerPanel.className="";timerHint.textContent="Hold SPACE until green, then release";}});
+  }
   
   let preflightReport = [];
 
