@@ -19,6 +19,7 @@
         <input id="puzzle-file" type="file" accept=".xml,text/xml" hidden><input id="figure-file" type="file" accept=".xml,.inc,text/xml,text/plain" multiple hidden><input id="figure-folder" type="file" accept=".xml,.inc,text/xml,text/plain" webkitdirectory directory multiple hidden>
       </div>
       <p class="muted">Left-drag a visible face to turn its layer. Right-drag to rotate the camera. Scroll to zoom.</p>
+      <div id="timer-panel"><div id="timer-display" aria-live="off">00:00.00</div><small id="timer-hint">First move starts the timer · Hold SPACE until green, release to start</small></div>
       <p id="engine-status" role="status" aria-live="polite">Loading compiled Pascal module…</p>
       <p id="model-info" class="muted">Waiting for Pascal API…</p>
       <details id="preflight-panel"><summary>Startup self-test</summary><pre id="preflight-results" aria-live="polite">Tests have not run yet.</pre></details>
@@ -30,6 +31,7 @@
     <input id="library-search" type="search" placeholder="Search puzzles…" autocomplete="off">
     <div id="library-list"></div>
   </dialog>
+  <dialog id="preview-dialog"><div class="library-heading"><div><h2 id="preview-title">Cube preview</h2><p class="muted">Spinning preview · interaction disabled</p></div><button id="preview-close" type="button">Close</button></div><iframe id="preview-frame" title="Non-interactive spinning puzzle preview"></iframe></dialog>
   <dialog id="generator-dialog">
     <div class="library-heading"><div><h2>Puzzle generator</h2><p class="muted">Create and load a puzzle directly. No XML file selection needed.</p></div><button id="generator-close" type="button">Close</button></div>
     <label for="generator-type">Generator</label>
