@@ -452,14 +452,16 @@ export class PuzzleRenderer {
       const screen=viewVertices.map(project);
       let depth=0;
       for(let j=0;j<viewVertices.length;j++)depth+=viewVertices[j][2];
-      ordered.push({vertices,screen,depth:depth/viewVertices.length,color:face.color});
+      ordered.push({vertices,screen,depth:depth/viewVertices.length,color:face.color,highlighted:Boolean(this.highlightMask?.[index])});
     }
     ordered.sort((a,b)=>a.depth-b.depth);
     this.projectedFaces=ordered;
     for(const item of ordered){
       if(item.screen.length<3)continue;
       ctx.beginPath();for(let i=0;i<item.screen.length;i++){const [x,y]=item.screen[i];if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
-      ctx.closePath();ctx.fillStyle=this.color(item.color);ctx.fill();ctx.strokeStyle="#101820";ctx.lineWidth=1.25;ctx.stroke();
+      ctx.closePath();ctx.fillStyle=this.color(item.color);ctx.fill();
+       if(item.highlighted){ctx.fillStyle="rgba(80,220,255,0.38)";ctx.fill();ctx.strokeStyle="#7DEBFF";ctx.lineWidth=2.5;ctx.stroke();}
+       else{ctx.strokeStyle="#101820";ctx.lineWidth=1.25;ctx.stroke();}
     }
   }
   destroy(){this.resizeObserver.disconnect();}
