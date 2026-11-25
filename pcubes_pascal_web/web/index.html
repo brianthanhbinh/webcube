@@ -26,6 +26,13 @@
         <option value="singular">Singular timer</option>
       </select>
       <div id="timer-panel" hidden><div id="timer-display" aria-live="off">00:00.00</div><small id="timer-hint">First move starts the timer</small></div>
+      <button id="edit-keybinds" type="button">Edit keybinds</button>
+      <dialog id="keybind-dialog">
+        <div class="library-heading"><div><h2>Edit keybinds</h2><p class="muted">Select a key, then press the new key you want to assign.</p></div><button id="keybind-close" type="button">Close</button></div>
+        <div id="keybind-editor"></div>
+        <p id="keybind-status" role="status" aria-live="polite"></p>
+        <div class="keybind-actions"><button id="keybind-reset" type="button">Restore defaults</button><button id="keybind-save" type="button">Save keybinds</button></div>
+      </dialog>
       <details id="keybinds-panel"><summary>Keyboard shortcuts</summary>
         <div class="keybind-list">
           <span>Q / E</span><span>Turn selected layer −90° / +90°</span>
