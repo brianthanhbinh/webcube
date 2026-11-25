@@ -172,11 +172,16 @@ export class PuzzleRenderer {
       // plus every side polygon belonging to the same cubie slice. The prior
       // center-only test excluded the grabbed outer face, making turns look
       // like a single sticker peeling away.
-      const isSelectedOuterFace = normal &&
-        this.dot(normal, n) * normalSign >= .82 &&
+      const normalAlongAxis = normal ? this.dot(normal, n) * normalSign : 0;
+      const isSelectedOuterFace = normalAlongAxis >= .82 &&
         Math.abs(centerProjection - selectedSurface) <= 1e-4;
+      // The opposite sticker face belongs to the same cubie slice too.
+      // Without it, only the grabbed sticker and the cubie's side polygons
+      // move, which looks like the face is peeling away from the puzzle.
+      const isOppositeCubieFace = normalAlongAxis <= -.82 &&
+        Math.abs(centerProjection - (selectedSurface - normalSign * spacing)) <= 1e-4;
       const isSelectedCubieSide = Math.abs(centerProjection - layerCenter) <= tolerance;
-      return Boolean(isSelectedOuterFace || isSelectedCubieSide);
+      return Boolean(isSelectedOuterFace || isOppositeCubieFace || isSelectedCubieSide);
     });
 
     // The Pascal model exports each face separately, but all faces belonging
