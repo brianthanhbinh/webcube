@@ -136,112 +136,38 @@ export class PuzzleRenderer {
     this.resize();
   }
   layerFaceMask(geometry, axis, layer, normalSign = 1) {
-    const faces = geometry?.faces || [];
-    const vector = [Number(axis?.x), Number(axis?.y), Number(axis?.z)];
-    const length = Math.hypot(...vector);
-    if (!length || !faces.length) return [];
-    const n = vector.map(v => v / length);
-
-    // First find the parallel outer faces. Their planes identify the requested
-    // layer, but they are NOT the complete layer: side faces have perpendicular
-    // normals and must rotate with the same cubies.
-    const surfaceValues = [];
-    for (const face of faces) {
-      const vertices = face.vertices || [];
-      const normal = this.faceNormal(vertices);
-      if (!normal || this.dot(normal, n) * normalSign < .82) continue;
-      const center = vertices.reduce(
-        (sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length),
-        [0, 0, 0]
-      );
-      const value = this.dot(center, n);
-      if (!surfaceValues.some(old => Math.abs(old - value) < 1e-4))
-        surfaceValues.push(value);
+    const faces=geometry?.faces||[];
+    const vector=[Number(axis?.x),Number(axis?.y),Number(axis?.z)];
+    const length=Math.hypot(...vector);
+    const count=Math.max(1,Number(axis?.layers)||1);
+    if(!length||!faces.length)return [];
+    const n=vector.map(v=>v/length);
+    let min=Infinity,max=-Infinity;
+    for(const face of faces)for(const v of face.vertices||[]){
+      const value=this.dot(v,n);
+      if(value<min)min=value;
+      if(value>max)max=value;
     }
-    surfaceValues.sort((a, b) => a - b);
-    if (!surfaceValues.length) return [];
-
-    const selectedSurface = surfaceValues[Math.max(0, Math.min(
-      surfaceValues.length - 1,
-      Math.round(layer * (surfaceValues.length - 1) /
-        Math.max(1, (axis.layers || surfaceValues.length) - 1))
-    ))];
-
-    // Estimate layer thickness from the spacing between adjacent parallel
-    // surface planes. The cubie center lies half a layer inward from the
-    // selected outer surface. Include faces by their center's axial position,
-    // regardless of their own normal, so side faces rotate too.
-    const gaps = [];
-    for (let i = 1; i < surfaceValues.length; i++) {
-      const gap = surfaceValues[i] - surfaceValues[i - 1];
-      if (gap > 1e-4) gaps.push(gap);
-    }
-    const spacing = gaps.length
-      ? gaps[Math.floor(gaps.length / 2)]
-      : 0;
-    if (!spacing) {
-      // A one-layer object has no neighboring plane from which to infer its
-      // thickness; retain a conservative coplanar selection.
-      return faces.map(face => {
-        const vertices = face.vertices || [];
-        if (!vertices.length) return false;
-        const center = vertices.reduce(
-          (sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length),
-          [0, 0, 0]
-        );
-        return Math.abs(this.dot(center, n) - selectedSurface) < 1e-4;
-      });
-    }
-
-    const layerCenter = selectedSurface - normalSign * spacing / 2;
-    const tolerance = spacing * 0.55 + 1e-4;
-    const selected = faces.map(face => {
-      const vertices = face.vertices || [];
-      if (!vertices.length) return false;
-      const center = vertices.reduce(
-        (sum, v) => sum.map((x, k) => x + Number(v[k]) / vertices.length),
-        [0, 0, 0]
-      );
-      const centerProjection = this.dot(center, n);
-      const normal = this.faceNormal(vertices);
-      // Include the sticker/outer polygon on the selected surface itself,
-      // plus every side polygon belonging to the same cubie slice. The prior
-      // center-only test excluded the grabbed outer face, making turns look
-      // like a single sticker peeling away.
-      const normalAlongAxis = normal ? this.dot(normal, n) * normalSign : 0;
-      const isSelectedOuterFace = normalAlongAxis >= .82 &&
-        Math.abs(centerProjection - selectedSurface) <= 1e-4;
-      // The opposite sticker face belongs to the same cubie slice too.
-      // Without it, only the grabbed sticker and the cubie's side polygons
-      // move, which looks like the face is peeling away from the puzzle.
-      const isOppositeCubieFace = normalAlongAxis <= -.82 &&
-        Math.abs(centerProjection - (selectedSurface - normalSign * spacing)) <= 1e-4;
-      const isSelectedCubieSide = Math.abs(centerProjection - layerCenter) <= tolerance;
-      return Boolean(isSelectedOuterFace || isOppositeCubieFace || isSelectedCubieSide);
+    const pitch=(max-min)/count;
+    if(!(pitch>1e-7))return faces.map(()=>true);
+    const index=Math.max(0,Math.min(count-1,Math.round(Number(layer)||0)));
+    const center=min+(index+.5)*pitch;
+    const eps=pitch*.08;
+    return faces.map(face=>{
+      const vertices=face.vertices||[];
+      if(!vertices.length)return false;
+      const faceCenter=vertices.reduce((sum,v)=>sum.map((x,k)=>x+Number(v[k])/vertices.length),[0,0,0]);
+      const projection=this.dot(faceCenter,n);
+      const normal=this.faceNormal(vertices);
+      const along=normal?this.dot(normal,n):0;
+      // The outside sticker polygon sits on the boundary, not at the cubie
+      // center. Include it only for the outermost slice on that side.
+      const onPositiveBoundary=index===count-1&&along*normalSign>.82&&
+        Math.abs(projection-max)<eps;
+      const onNegativeBoundary=index===0&&along*normalSign<-.82&&
+        Math.abs(projection-min)<eps;
+      return onPositiveBoundary||onNegativeBoundary||Math.abs(projection-center)<=pitch*.55;
     });
-
-    // The Pascal model exports each face separately, but all faces belonging
-    // to one physical cubie share the same Part index. Use that identity for
-    // polyhedral puzzles: vertex-connectivity is not a safe proxy because
-    // neighboring Megaminx pieces also meet at cut vertices.
-    if (this.geometryKind === "minx") {
-      const movingParts = new Set();
-      for (let i = 0; i < faces.length; i++) {
-        if (!selected[i]) continue;
-        const face = faces[i], normal = this.faceNormal(face.vertices || []);
-        if (!normal || this.dot(normal, n) * normalSign < .82) continue;
-        const center = (face.vertices || []).reduce(
-          (sum, v) => sum.map((x, k) => x + Number(v[k]) / face.vertices.length),
-          [0, 0, 0]
-        );
-        if (Math.abs(this.dot(center, n) - selectedSurface) <= Math.max(1e-4, spacing * .08) &&
-            Number.isInteger(face.partIndex))
-          movingParts.add(face.partIndex);
-      }
-      if (movingParts.size)
-        return faces.map(face => movingParts.has(face.partIndex));
-    }
-    return selected;
   }
   animateTurn(before, after, axis, angle, duration = 220, startAngle = 0, layer = 0, normalSign = 1) {
     if (!before?.faces || !after?.faces || !axis || !Number.isFinite(angle)) {
@@ -419,24 +345,19 @@ export class PuzzleRenderer {
       if(!chosen||!chosen.layers)continue;
       const cent=item.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/item.vertices.length),[0,0,0]);
       const coordinate=this.dot(cent,chosen.vector);
-      const values=[];
-      // Layer coordinates must come from the complete geometry. The
-      // projected list omits back-facing slice planes and breaks inner-layer
-      // indexing when the puzzle is viewed from certain angles.
-      for(const face of this.geometry?.faces||[]){
-        const vertices=face.vertices||[];
-        const n=this.faceNormal(vertices);
-        if(!n||this.dot(n,chosen.vector)*chosen.sign<.82)continue;
-        const c=vertices.reduce((sum,v)=>sum.map((z,k)=>z+v[k]/vertices.length),[0,0,0]);
-        const value=this.dot(c,chosen.vector);
-        if(!values.some(old=>Math.abs(old-value)<1e-4))values.push(value);
+      // Determine the slice from the full model-space bounds, not only
+      // axis-facing sticker polygons. Inner slices often have no such polygon.
+      let min=Infinity,max=-Infinity;
+      for(const face of this.geometry?.faces||[])for(const v of face.vertices||[]){
+        const value=this.dot(v,chosen.vector);
+        if(value<min)min=value;
+        if(value>max)max=value;
       }
-      values.sort((a,b)=>a-b);
-      let layer=0,bestDistance=Infinity;
-      values.forEach((v,index)=>{const d=Math.abs(v-coordinate);if(d<bestDistance){bestDistance=d;layer=index;}});
-      if(values.length!==chosen.layers&&values.length>1)
-        layer=Math.round(layer*(chosen.layers-1)/(values.length-1));
-      layer=Math.max(0,Math.min(chosen.layers-1,layer));
+      const count=Math.max(1,Number(chosen.layers)||1);
+      const pitch=(max-min)/count;
+      const layer=pitch>1e-7
+        ? Math.max(0,Math.min(count-1,Math.floor((coordinate-min)/pitch)))
+        : 0;
       return {axis:chosen.axis,layer,normalSign:chosen.sign,faceNormal:normal};
     }
     return null;
