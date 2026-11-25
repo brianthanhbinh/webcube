@@ -17,10 +17,27 @@ try{
  const axes=await page.evaluate(()=>window.pCubes.getAxesInfo()),axis=axes.find(a=>a.layers>0)?.index;assert.notEqual(axis,undefined,"No turn axis");
  let before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
  assert.equal(await page.evaluate(a=>window.pCubes.turnLayer(a,0,1),axis),true);assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before);
- // Left-drag turns the selected layer without clicking turn buttons.
+ // Left-drag turns a real visible cubie by following its projected arc.
  await page.locator("#turn-axis").selectOption(String(axis));await page.locator("#turn-layer").selectOption("0");
  before=await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData()));
- await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down();await page.mouse.move(bounds.x+bounds.width/2+65,bounds.y+bounds.height/2,{steps:5});await page.mouse.up();
+ const drag=await page.evaluate(()=>{
+   const canvas=document.querySelector("#puzzle-canvas"),r=canvas.__pCubesRenderer;
+   const axes=window.pCubes.getAxesInfo();
+   for(const face of [...r.projectedFaces].reverse()){
+     if(face.screen.length<3)continue;
+     const x=face.screen.reduce((s,p)=>s+p[0],0)/face.screen.length;
+     const y=face.screen.reduce((s,p)=>s+p[1],0)/face.screen.length;
+     const hit=r.pickFace(x,y);if(!hit)continue;
+     for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){
+       const target=r.pickLayerForDrag(hit,axes,dx,dy);
+       if(target)return {x,y,dx:target.screenTangent[0],dy:target.screenTangent[1]};
+     }
+   }
+   return null;
+ });
+ assert.ok(drag,"Could not find a visible cubie with a valid drag tangent");
+ const dragLength=Math.hypot(drag.dx,drag.dy),endX=drag.x+drag.dx/dragLength*65,endY=drag.y+drag.dy/dragLength*65;
+ await page.mouse.move(bounds.x+drag.x,bounds.y+drag.y);await page.mouse.down();await page.mouse.move(bounds.x+endX,bounds.y+endY,{steps:8});await page.mouse.up();
  assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Left-drag did not turn the layer under the pointer");
  const picked=await canvas.evaluate(c=>({axis:c.dataset.pickedAxis,layer:c.dataset.pickedLayer}));
  assert.ok(picked.axis!==undefined&&picked.layer!==undefined,"Pointer did not hit a visible cubie face");
