@@ -17,6 +17,7 @@ export class PuzzleRenderer {
     canvas.style.touchAction="none";
     canvas.addEventListener("contextmenu",e=>e.preventDefault());
     canvas.addEventListener("pointerdown",e=>{
+      if(this.interactive===false)return;
       // One pointer gesture owns the canvas until it is released; a second
       // pointer/button cannot replace the active layer drag mid-turn.
       if(this.pointer)return;
@@ -89,10 +90,11 @@ export class PuzzleRenderer {
     canvas.addEventListener("lostpointercapture",()=>{this.pointer=null;});
     canvas.addEventListener("wheel",e=>{
       e.preventDefault();
+      if(this.interactive===false)return;
       this.zoom=Math.max(.35,Math.min(4,this.zoom*Math.exp(-e.deltaY*.001)));
       this.draw();
     },{passive:false});
-    canvas.addEventListener("dblclick",()=>this.resetView());
+    canvas.addEventListener("dblclick",()=>{if(this.interactive!==false)this.resetView();});
     this.resizeObserver=new ResizeObserver(()=>this.resize());
     this.resizeObserver.observe(canvas);
     this.resize();
