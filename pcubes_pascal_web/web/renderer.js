@@ -345,18 +345,30 @@ export class PuzzleRenderer {
       if(!chosen||!chosen.layers)continue;
       const cent=item.vertices.reduce((sum,v)=>sum.map((n,k)=>n+v[k]/item.vertices.length),[0,0,0]);
       const coordinate=this.dot(cent,chosen.vector);
-      // Determine the slice from the full model-space bounds, not only
-      // axis-facing sticker polygons. Inner slices often have no such polygon.
-      let min=Infinity,max=-Infinity;
-      for(const face of this.geometry?.faces||[])for(const v of face.vertices||[]){
-        const value=this.dot(v,chosen.vector);
-        if(value<min)min=value;
-        if(value>max)max=value;
+      // Map the pointer to the nearest actual slice plane using face
+      // centroids across the complete geometry. A bounds/floor calculation
+      // incorrectly classifies many non-cubic shapes as an outer slice:
+      // their visible surface may sit at the model boundary even when the
+      // selected face belongs to an interior layer.
+      const sliceCenters=[];
+      for(const face of this.geometry?.faces||[]){
+        const vertices=face.vertices||[];
+        if(!vertices.length)continue;
+        const faceNormal=this.faceNormal(vertices);
+        if(!faceNormal||Math.abs(this.dot(faceNormal,chosen.vector))<.82)continue;
+        const center=vertices.reduce((sum,v)=>sum.map((n,k)=>n+Number(v[k])/vertices.length),[0,0,0]);
+        const value=this.dot(center,chosen.vector);
+        if(!sliceCenters.some(old=>Math.abs(old-value)<1e-4))sliceCenters.push(value);
       }
+      sliceCenters.sort((a,b)=>a-b);
       const count=Math.max(1,Number(chosen.layers)||1);
-      const pitch=(max-min)/count;
-      const layer=pitch>1e-7
-        ? Math.max(0,Math.min(count-1,Math.floor((coordinate-min)/pitch)))
+      let nearest=0,nearestDistance=Infinity;
+      for(let index=0;index<sliceCenters.length;index++){
+        const distance=Math.abs(sliceCenters[index]-coordinate);
+        if(distance<nearestDistance){nearestDistance=distance;nearest=index;}
+      }
+      const layer=sliceCenters.length>1
+        ? Math.round(nearest*(count-1)/(sliceCenters.length-1))
         : 0;
       return {axis:chosen.axis,layer,normalSign:chosen.sign,faceNormal:normal};
     }
