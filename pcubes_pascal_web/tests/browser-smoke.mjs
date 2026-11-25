@@ -31,9 +31,9 @@ try{
        if(target)return {x,y,dx:target.screenTangent[0],dy:target.screenTangent[1]};
      }
    }
-   return null;
+   return {debug:{faces:r.projectedFaces.length,parts:window.pCubes.getPartCenters().length,axes,first:r.projectedFaces[0]&&{partIndex:r.projectedFaces[0].partIndex,vertices:r.projectedFaces[0].vertices.slice(0,3)},firstHit:(()=>{for(let y=8;y<h-8;y+=5)for(let x=8;x<w-8;x+=5){const hit=r.pickFace(x,y);if(hit)return {partIndex:hit.partIndex,center:hit.center,normal:hit.normal};}return null;})()}};
  });
- assert.ok(drag,"Could not find a visible cubie with a valid drag tangent");
+ assert.ok(drag?.x!==undefined,"Could not find a visible cubie with a valid drag tangent: "+JSON.stringify(drag?.debug));
  const dragLength=Math.hypot(drag.dx,drag.dy),endX=drag.x+drag.dx/dragLength*65,endY=drag.y+drag.dy/dragLength*65;
  await page.mouse.move(bounds.x+drag.x,bounds.y+drag.y);await page.mouse.down();await page.mouse.move(bounds.x+endX,bounds.y+endY,{steps:8});await page.mouse.up();
  assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Left-drag did not turn the layer under the pointer");
