@@ -87,21 +87,23 @@ export class PuzzleRenderer {
         }
         const target=p.dragTarget;
         if(target){
-          // Keep the layer fixed, but continuously measure the full drag
-          // distance from pointerdown so the preview follows the pointer.
-          // screenTangent is measured in pixels per radian, matching the
-          // actual canvas projection. Using model-space units here made a
-          // tiny mouse movement produce a huge angle, then hit the clamp.
-          const tangent=target.screenTangent;
-          const tangentLengthSquared=tangent[0]*tangent[0]+tangent[1]*tangent[1];
+          // Integrate each pointer movement against the *current* tangent.
+          // A fixed tangent only works for a straight swipe and loses motion
+          // when the user follows the layer's circular path past 90-180°.
           p.pick=target.pick;p.axis=target.axis;
           canvas.dataset.pickedAxis=String(p.pick.axis);canvas.dataset.pickedLayer=String(p.pick.layer);
-          const step=Math.abs(Number(p.axis.angles?.[p.pick.layer] ?? p.axis.angle))||Math.PI/2;
-          p.previewAngle=tangentLengthSquared>1e-8
-            ? (dx0*tangent[0]+dy0*tangent[1])/tangentLengthSquared
-            : 0;
-          // Do not clamp the pointer-derived angle to one move. Keep tracking
-          // the complete drag so users can rotate through multiple revolutions.
+          const a=target.axisVector,radial=target.radial;
+          const c=Math.cos(p.previewAngle),sn=Math.sin(p.previewAngle);
+          const cross=[a[1]*radial[2]-a[2]*radial[1],a[2]*radial[0]-a[0]*radial[2],a[0]*radial[1]-a[1]*radial[0]];
+          const dot=this.dot(a,radial);
+          const currentRadial=radial.map((v,k)=>v*c+cross[k]*sn+a[k]*dot*(1-c));
+          const currentTangent=[a[1]*currentRadial[2]-a[2]*currentRadial[1],a[2]*currentRadial[0]-a[0]*currentRadial[2],a[0]*currentRadial[1]-a[1]*currentRadial[0]];
+          const cy=Math.cos(this.rotationY),sy=Math.sin(this.rotationY),cx=Math.cos(this.rotationX),sx=Math.sin(this.rotationX);
+          const tx=currentTangent[0]*cy+currentTangent[2]*sy;
+          const tz=-currentTangent[0]*sy+currentTangent[2]*cy;
+          const tangent=[tx*(this.renderScale||1),-(currentTangent[1]*cx-tz*sx)*(this.renderScale||1)];
+          const tangentLengthSquared=tangent[0]*tangent[0]+tangent[1]*tangent[1];
+          if(tangentLengthSquared>1e-8)p.previewAngle+=(dx*tangent[0]+dy*tangent[1])/tangentLengthSquared;
           this.previewTurn(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
         }
       }
@@ -389,6 +391,8 @@ export class PuzzleRenderer {
     return {
       pick:{axis:chosen.axis.index,layer,normalSign:1},
       axis:chosen.axis,
+      axisVector:chosen.vector,
+      radial:center.map((v,k)=>v-chosen.vector[k]*chosen.radialCoordinate),
       screenTangent:chosen.screenTangent
     };
   }
