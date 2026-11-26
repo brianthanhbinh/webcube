@@ -1,7 +1,7 @@
 program pcubes_web;
 {$mode objfpc}{$H+}
 { Browser bridge for the original Pascal pCubes puzzle model. }
-uses JS, Web, SysUtils, Math, DOM, uPuzzle, uXmlReadWrite, uPart, uFace, uVector, uAxis;
+uses JS, Web, SysUtils, Math, DOM, uPuzzle, uXmlReadWrite, uPart, uFace, uVector, uAxis, uSelection;
 var
   StatusNode: TJSElement;
   API: TJSObject;
@@ -171,6 +171,25 @@ begin
   Result['faces'] := FacesArray;
 end;
 
+function APIGetMovingPartMask(AxisNo, LayerNo: Integer): TJSArray;
+var I, J, FromLayer, ToLayer: Integer; Selected: Boolean;
+begin
+  Result := TJSArray.new;
+  if (CurrentPuzzle = nil) or (AxisNo < 0) or (AxisNo >= CurrentPuzzle.Axes.Count) or
+     (LayerNo < 0) or (LayerNo >= CurrentPuzzle.Axes[AxisNo].Layers.Count) then Exit;
+  CurrentPuzzle.CalcMovingLayers(AxisNo, LayerNo, 1);
+  for I := 0 to CurrentPuzzle.Parts.Count - 1 do begin
+    CurrentPuzzle.GetPartPosition(AxisNo, I, FromLayer, ToLayer);
+    Selected := False;
+    for J := FromLayer to ToLayer do
+      if (J >= 0) and (J < Length(TSelection.TurnLayers)) and TSelection.TurnLayers[J] then begin
+        Selected := True;
+        Break;
+      end;
+    Result.push(Selected);
+  end;
+end;
+
 function APIGetPartLayerRanges(AxisNo: Integer): TJSArray;
 var I, FromLayer, ToLayer: Integer; Range: TJSArray;
 begin
@@ -276,6 +295,7 @@ begin
   API['getRenderData'] := TJSFunction(@APIGetRenderData);
   API['getPartCenters'] := TJSFunction(@APIGetPartCenters);
   API['getPartLayerRanges'] := TJSFunction(@APIGetPartLayerRanges);
+  API['getMovingPartMask'] := TJSFunction(@APIGetMovingPartMask);
   API['getAxesInfo'] := TJSFunction(@APIGetAxesInfo);
   API['turnLayer'] := TJSFunction(@APITurnLayer);
   API['scramble'] := TJSFunction(@APIScramble);
