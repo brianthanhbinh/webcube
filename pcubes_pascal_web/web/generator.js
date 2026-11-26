@@ -105,7 +105,7 @@ function storeRequest(mode,operation){
 }
 export async function listCustomGenerators(){
  const rows=await storeRequest("readonly",store=>store.getAll());
- return (rows||[]).sort((a,b)=>b.updatedAt-a.updatedAt).map(({id,name,updatedAt,figureName})=>({id,name,updatedAt,figureName}));
+ return (rows||[]).filter(row=>typeof row.source==="string"&&typeof row.figureXml==="string").sort((a,b)=>b.updatedAt-a.updatedAt).map(({id,name,updatedAt,figureName})=>({id,name,updatedAt,figureName}));
 }
 export async function saveCustomGenerator(scriptFile,figureFile){
  if(!scriptFile||!String(scriptFile.name||"").toLowerCase().endsWith(".py"))
