@@ -65,6 +65,16 @@
     <label for="generator-size">Size / layers</label><input id="generator-size" value="3" autocomplete="off" spellcheck="false">
     <p id="generator-help" class="muted">Enter one number, such as 3.</p>
     <button id="generator-create" type="button">Generate and load</button><p id="generator-status" role="status" aria-live="polite"></p>
+    <hr>
+    <h3>Custom Python generator</h3>
+    <p class="muted">Upload a <code>.figure</code> file containing Python. It is saved only in this browser and can be run later from this device.</p>
+    <label for="custom-figure-file">Upload Python .figure file</label>
+    <input id="custom-figure-file" type="file" accept=".figure,text/plain">
+    <label for="custom-generator-list">Saved local generators</label>
+    <select id="custom-generator-list"><option value="">No saved generators yet</option></select>
+    <div class="generator-actions"><button id="custom-generator-run" type="button" disabled>Run saved generator</button><button id="custom-generator-delete" type="button" disabled>Delete</button></div>
+    <p id="custom-generator-status" role="status" aria-live="polite">Upload a .figure file to add your first local generator.</p>
+    <p class="muted">Your Python file must define <code>generate(spec)</code> and return an XML string, or a dictionary with <code>name</code>, <code>xml</code>, and optional <code>figures</code>. Only run Python files you wrote or trust.</p>
   </dialog>
   <footer>Pascal puzzle model · JavaScript Canvas renderer · browser interface</footer>
   <script src="rtl.js"></script><script src="pcubes_web.js"></script><script type="module" src="app.js"></script>

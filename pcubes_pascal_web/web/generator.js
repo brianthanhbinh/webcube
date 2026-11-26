@@ -78,3 +78,92 @@ json.dumps({"name":name,"xml":xml,"figures":figures})
 `;
  return JSON.parse(await py.runPythonAsync(code));
 }
+
+
+// User-authored .figure files are stored only in this browser's IndexedDB.
+const CUSTOM_DB="pcubes-custom-generators";
+const CUSTOM_STORE="generators";
+let customDbPromise;
+function openCustomDb(){
+ if(!("indexedDB" in window))return Promise.reject(new Error("This browser does not support local generator storage."));
+ if(!customDbPromise)customDbPromise=new Promise((resolve,reject)=>{
+  const request=indexedDB.open(CUSTOM_DB,1);
+  request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(CUSTOM_STORE))db.createObjectStore(CUSTOM_STORE,{keyPath:"id"});};
+  request.onsuccess=()=>resolve(request.result);
+  request.onerror=()=>reject(request.error||new Error("Could not open local generator storage."));
+ });
+ return customDbPromise;
+}
+function storeRequest(mode,operation){
+ return openCustomDb().then(db=>new Promise((resolve,reject)=>{
+  const tx=db.transaction(CUSTOM_STORE,mode),store=tx.objectStore(CUSTOM_STORE);
+  let request;
+  try{request=operation(store);}catch(error){reject(error);return;}
+  if(request){request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error("Local generator storage failed."));}
+  else{tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error||new Error("Local generator storage failed."));}
+ }));
+}
+export async function listCustomGenerators(){
+ const rows=await storeRequest("readonly",store=>store.getAll());
+ return (rows||[]).sort((a,b)=>b.updatedAt-a.updatedAt).map(({id,name,updatedAt})=>({id,name,updatedAt}));
+}
+export async function saveCustomGenerator(file){
+ if(!file||!String(file.name||"").toLowerCase().endsWith(".figure"))throw new Error("Choose a Python generator file with the .figure extension.");
+ const name=String(file.name).split("/").pop().split("\\").pop().trim();
+ if(!name||name.length>120)throw new Error("Generator filename must be 1–120 characters.");
+ const source=await file.text();
+ if(!source.trim())throw new Error("The .figure file is empty.");
+ if(source.length>512*1024)throw new Error("Custom generator files must be 512 KB or smaller.");
+ const id=name.toLowerCase();
+ await storeRequest("readwrite",store=>store.put({id,name,source,updatedAt:Date.now()}));
+ return {id,name};
+}
+export async function deleteCustomGenerator(id){
+ if(!id)return false;
+ await storeRequest("readwrite",store=>store.delete(String(id)));
+ return true;
+}
+async function getCustomGenerator(id){
+ const row=await storeRequest("readonly",store=>store.get(String(id)));
+ if(!row)throw new Error("That saved generator no longer exists.");
+ return row;
+}
+export async function generateCustomPuzzle(id,spec,onStatus){
+ const record=await getCustomGenerator(id);
+ const py=await getRuntime(onStatus);
+ onStatus?.("Running "+record.name+" in the browser's Python runtime…");
+ py.globals.set("webcube_custom_source",record.source);
+ py.globals.set("webcube_custom_filename",record.name);
+ py.globals.set("webcube_custom_spec",String(spec??""));
+ const code=String.raw\`
+import json
+namespace={"__name__":"__webcube_custom_generator__","__file__":webcube_custom_filename}
+exec(compile(webcube_custom_source,webcube_custom_filename,"exec"),namespace)
+entry=namespace.get("generate_puzzle") or namespace.get("generate")
+if not callable(entry):
+    raise ValueError("Your .figure file must define generate(spec) or generate_puzzle(spec).")
+result=entry(webcube_custom_spec)
+if isinstance(result,str):
+    result={"xml":result}
+if not isinstance(result,dict):
+    raise TypeError("The generator must return an XML string or a dictionary.")
+if not isinstance(result.get("xml"),str) or not result["xml"].strip():
+    raise ValueError("The generator result must include a non-empty 'xml' string.")
+if "figures" not in result:
+    result["figures"]={}
+if not isinstance(result["figures"],dict):
+    raise TypeError("'figures' must be a dictionary of relative filenames to XML strings.")
+if any(not isinstance(k,str) or not isinstance(v,str) for k,v in result["figures"].items()):
+    raise TypeError("Every figure entry must map a filename to XML text.")
+json.dumps({"name":str(result.get("name") or webcube_custom_filename.rsplit(".",1)[0]),
+            "xml":result["xml"],"figures":result["figures"]},ensure_ascii=False)
+\`;
+ const generated=JSON.parse(await py.runPythonAsync(code));
+ if(generated.xml.length>10*1024*1024)throw new Error("Generated puzzle XML is larger than 10 MB.");
+ for(const [name,xml] of Object.entries(generated.figures||{})){
+  const normalized=String(name).split("\\").join("/");
+  if(normalized.startsWith("/")||normalized.split("/").includes(".."))throw new Error("Figure filenames must stay inside the puzzle folder: "+name);
+  if(typeof xml!=="string"||xml.length>10*1024*1024)throw new Error("Invalid or oversized figure: "+name);
+ }
+ return generated;
+}

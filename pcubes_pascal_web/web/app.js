@@ -1,6 +1,6 @@
 import { PuzzleRenderer } from "./renderer.js";
 import { loadBuiltinLibrary } from "./library-data.js";
-import { generatePuzzle } from "./generator.js";
+import { generatePuzzle, listCustomGenerators, saveCustomGenerator, deleteCustomGenerator, generateCustomPuzzle } from "./generator.js";
 import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
 
 (() => {
@@ -632,19 +632,38 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     if (typeof api.getRenderData === "function" && !renderer.deferGeometry) renderer.setGeometry(api.getRenderData());
   }
 
-  function turnLayerAnimated(axisNo, layerNo, direction) {
+  function turnLayerAnimated(axisNo, layerNo, direction, steps = 1) {
     const api = window.pCubes;
     if (!api?.getRenderData || !api?.getAxesInfo) return call("turnLayer", axisNo, layerNo, direction);
     const before = api.getRenderData();
     const axis = (api.getAxesInfo() || []).find(item => item.index === axisNo);
     if (!axis) return false;
-    const angle = Number(axis.angles?.[layerNo] ?? axis.angle) * direction;
+    const stepAngle = Number(axis.angles?.[layerNo] ?? axis.angle);
+    if (!Number.isFinite(stepAngle) || Math.abs(stepAngle) < 1e-7) return false;
+    const count = Math.max(1, Math.min(4, Math.trunc(Number(steps) || 1)));
     renderer.deferGeometry = true;
-    const result = call("turnLayer", axisNo, layerNo, direction);
+    let result = true;
+    for (let i=0;i<count;i++) {
+      if (!call("turnLayer", axisNo, layerNo, direction)) { result = false; break; }
+    }
     renderer.deferGeometry = false;
-    if (result) { if(!previewMode)startSolveTimer(); renderer.animateTurn(before, api.getRenderData(), axis, angle, 220, 0, layerNo, 1); }
-    else renderer.setGeometry(api.getRenderData() || before);
+    if (result) {
+      if(!previewMode)startSolveTimer();
+      renderer.animateTurn(before, api.getRenderData(), axis, stepAngle * direction * count, 220, 0, layerNo, 1);
+    } else renderer.setGeometry(api.getRenderData() || before);
     return result;
+  }
+
+  function updateTurnButtonLabels(api) {
+    const axis=(api?.getAxesInfo?.()||[]).find(item=>item.index===Number($("turn-axis").value));
+    const layer=Number($("turn-layer").value)||0;
+    const radians=Number(axis?.angles?.[layer] ?? axis?.angle ?? Math.PI/2);
+    const degrees=Math.round(Math.abs(radians)*180/Math.PI);
+    const label=Number.isFinite(degrees)&&degrees>0?degrees+"°":"turn";
+    $("turn-ccw").textContent="Turn −"+label;
+    $("turn-cw").textContent="Turn +"+label;
+    $("turn-half-ccw").textContent="Turn −"+(degrees*2)+"°";
+    $("turn-half-cw").textContent="Turn +"+(degrees*2)+"°";
   }
 
   function refreshTurnControls(api) {
@@ -668,8 +687,9 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       layerSelect.value=String(Math.min(oldLayer,Math.max(0,axis.layers-1)));
     }
     axisSelect.disabled=layerSelect.disabled=!preflightPassed||!axes.length;
-    $("turn-ccw").disabled=$("turn-cw").disabled=!preflightPassed||!axes.length;
+    $("turn-ccw").disabled=$("turn-cw").disabled=$("turn-half-ccw").disabled=$("turn-half-cw").disabled=!preflightPassed||!axes.length;
     if(axes.length)renderer.setSelectedLayer(Number(axisSelect.value),Number(layerSelect.value));
+    updateTurnButtonLabels(api);
   }
 
   function call(name, ...args) {
@@ -875,9 +895,11 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     });
   }
   $("turn-axis").addEventListener("change", () => refreshTurnControls(window.pCubes));
-  $("turn-layer").addEventListener("change", () => renderer.setSelectedLayer(Number($("turn-axis").value),Number($("turn-layer").value)));
+  $("turn-layer").addEventListener("change", () => { renderer.setSelectedLayer(Number($("turn-axis").value),Number($("turn-layer").value)); updateTurnButtonLabels(window.pCubes); });
   $("turn-ccw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), -1));
   $("turn-cw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), 1));
+  $("turn-half-ccw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), -1, 2));
+  $("turn-half-cw").addEventListener("click", () => turnLayerAnimated(Number($("turn-axis").value), Number($("turn-layer").value), 1, 2));
   $("view-reset").addEventListener("click", () => renderer.resetView());
   $("scramble").addEventListener("click", () => {
     const api = window.pCubes;
@@ -950,7 +972,19 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     if (!passed) throw new Error(name + (detail ? ": " + detail : ""));
   }
 
-  $("generator").addEventListener("click",()=>$("generator-dialog").showModal());
+  async function refreshCustomGeneratorList(){
+    const select=$("custom-generator-list"),run=$("custom-generator-run"),remove=$("custom-generator-delete");
+    try{
+      const entries=await listCustomGenerators(),selected=select.value;
+      select.replaceChildren();
+      if(!entries.length){const option=document.createElement("option");option.value="";option.textContent="No saved generators yet";select.append(option);}
+      for(const entry of entries){const option=document.createElement("option");option.value=entry.id;option.textContent=entry.name;select.append(option);}
+      if(entries.some(entry=>entry.id===selected))select.value=selected;
+      run.disabled=remove.disabled=!entries.length;
+      $("custom-generator-status").textContent=entries.length?entries.length+" generator(s) saved on this device.":"Upload a .figure file to add your first local generator.";
+    }catch(error){run.disabled=remove.disabled=true;$("custom-generator-status").textContent="Local storage unavailable: "+error.message;}
+  }
+  $("generator").addEventListener("click",()=>{$("generator-dialog").showModal();refreshCustomGeneratorList();});
   $("generator-close").addEventListener("click",()=>$("generator-dialog").close());
   $("generator-type").addEventListener("change",()=>{
     const kind=$("generator-type").value;
@@ -970,6 +1004,35 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       $("generator-dialog").close();status.textContent="Generated and loaded: "+generated.name;
     }catch(error){out.textContent="Generator failed: "+(error?.message||String(error));}
     finally{button.disabled=false;}
+  });
+  $("custom-figure-file").addEventListener("change",async()=>{
+    const input=$("custom-figure-file"),file=input.files?.[0];if(!file)return;
+    const out=$("custom-generator-status");
+    try{const saved=await saveCustomGenerator(file);await refreshCustomGeneratorList();$("custom-generator-list").value=saved.id;out.textContent="Saved "+saved.name+" locally on this device.";}
+    catch(error){out.textContent="Upload failed: "+error.message;}
+    finally{input.value="";}
+  });
+  $("custom-generator-list").addEventListener("change",()=>{
+    const enabled=!!$("custom-generator-list").value;
+    $("custom-generator-run").disabled=$("custom-generator-delete").disabled=!enabled;
+  });
+  $("custom-generator-delete").addEventListener("click",async()=>{
+    const id=$("custom-generator-list").value;if(!id)return;
+    try{await deleteCustomGenerator(id);await refreshCustomGeneratorList();$("custom-generator-status").textContent="Generator deleted from this device.";}
+    catch(error){$("custom-generator-status").textContent="Delete failed: "+error.message;}
+  });
+  $("custom-generator-run").addEventListener("click",async()=>{
+    const id=$("custom-generator-list").value,spec=$("generator-size").value.trim(),out=$("custom-generator-status"),button=$("custom-generator-run");
+    if(!id){out.textContent="Choose a saved .figure generator first.";return;}
+    button.disabled=true;let failure="";
+    try{
+      const generated=await generateCustomPuzzle(id,spec,message=>{out.textContent=message;});
+      out.textContent="Loading generated XML into the Pascal puzzle engine…";
+      if(!remoteLibrary) remoteLibrary=await loadRemoteLibraryIndex();
+      await loadPuzzleWithFigures(generated.xml,generated.figures);
+      $("generator-dialog").close();status.textContent="Custom Python generator loaded: "+generated.name;
+    }catch(error){failure="Custom generator failed: "+(error?.message||String(error));out.textContent=failure;}
+    finally{button.disabled=false;await refreshCustomGeneratorList();if(failure)out.textContent=failure;}
   });
 
   async function runPreflight(api) {

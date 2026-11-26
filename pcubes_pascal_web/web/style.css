@@ -32,3 +32,11 @@ html.preview-mode #preview-dialog,html.preview-mode #library-dialog,html.preview
 .keybind-edit-row button.capturing{border-color:#65e58a;color:#65e58a}
 .keybind-actions{display:flex;justify-content:space-between;gap:8px;margin-top:14px}
 #keybind-status{min-height:1.5em;color:#e8c66a;font-size:11px}
+
+
+.generator-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0}
+#generator-dialog{max-width:min(640px,calc(100vw - 2rem));max-height:calc(100vh - 2rem);overflow:auto}
+#generator-dialog h3{margin:.7rem 0 .25rem}
+#generator-dialog hr{border:0;border-top:1px solid var(--border,#bbb);margin:1rem 0}
+#custom-generator-file{display:block;max-width:100%;margin:.4rem 0 .7rem}
+#custom-generator-status{overflow-wrap:anywhere}

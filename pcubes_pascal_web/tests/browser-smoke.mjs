@@ -211,6 +211,27 @@ try{
  assert.equal(megaminx.axes.length,6,"Megaminx must expose all six dodecahedral turning axes");
  assert.ok(megaminx.faces.length>=60,"Megaminx is missing rendered pentagonal face geometry: "+megaminx.faces.length);
  assert.ok(new Set(megaminx.faces.map(face=>String(face.color).toLowerCase())).size>=12,"Megaminx must preserve all twelve face colours");
+ await page.locator("#turn-axis").selectOption("0");
+ await page.locator("#turn-layer").selectOption("2");
+ assert.equal(await page.locator("#turn-cw").textContent(),"Turn +72°","Megaminx turn button shows the wrong angle");
+ assert.equal(await page.locator("#turn-half-cw").textContent(),"Turn +144°","Megaminx half-turn button shows the wrong angle");
+ const minxBefore=JSON.stringify(await page.evaluate(()=>window.pCubes.getRenderData()));
+ await page.locator("#turn-cw").click();
+ assert.notEqual(JSON.stringify(await page.evaluate(()=>window.pCubes.getRenderData())),minxBefore,"Megaminx turn button did not change the puzzle");
+ const undoBeforeHalf=await page.evaluate(()=>window.pCubes.getModelInfo().undoCount);
+ await page.locator("#turn-half-cw").click();
+ assert.equal(await page.evaluate(()=>window.pCubes.getModelInfo().undoCount),undoBeforeHalf+2,"Megaminx half-turn must record two 72-degree turns");
+ await page.evaluate(()=>window.pCubes.reset());
+ await page.waitForFunction(()=>window.pCubes.getModelInfo().undoCount===0);
+ const customGeneratorModule=await page.evaluate(async()=>await import("./generator.js"));
+ const customSource=["def generate(spec):","    return {'name': 'Custom Python test', 'xml': '<xml/>', 'figures': {}}"].join("\n");
+ const savedCustom=await customGeneratorModule.saveCustomGenerator({name:"smoke-test.figure",text:async()=>customSource});
+ assert.ok((await customGeneratorModule.listCustomGenerators()).some(item=>item.id===savedCustom.id),"Uploaded .figure generator was not saved locally");
+ const generatedCustom=await customGeneratorModule.generateCustomPuzzle(savedCustom.id,"4");
+ assert.equal(generatedCustom.name,"Custom Python test","Custom Python generator did not execute");
+ assert.equal(generatedCustom.xml,"<xml/>","Custom Python generator returned the wrong XML");
+ await customGeneratorModule.deleteCustomGenerator(savedCustom.id);
+ assert.ok(!(await customGeneratorModule.listCustomGenerators()).some(item=>item.id===savedCustom.id),"Deleted .figure generator remains in local storage");
  assert.ok(megaminx.axes.every(axis=>Array.isArray(axis.angles)&&axis.angles.length===axis.layers),
    "Megaminx axes must expose an exact turning angle for every layer");
  for(const axis of megaminx.axes){
