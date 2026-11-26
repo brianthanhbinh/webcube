@@ -177,7 +177,13 @@ begin
   Result := TJSArray.new;
   if CurrentPuzzle = nil then Exit;
   for Part in CurrentPuzzle.Parts do begin
-    if Part.Vertices.Count = 0 then Continue;
+    // Keep this array index-aligned with getRenderData().faces[].partIndex.
+    // Parts without vertices still occupy a part index, so emit null rather
+    // than skipping them and shifting every later part's center.
+    if Part.Vertices.Count = 0 then begin
+      Result.push(TJSNull);
+      Continue;
+    end;
     X := 0; Y := 0; Z := 0;
     for I := 0 to Part.Vertices.Count - 1 do begin
       X := X + Part.Vertices[I].X;
