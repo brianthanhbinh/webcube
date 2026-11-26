@@ -1057,7 +1057,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       for(const entry of entries){const option=document.createElement("option");option.value=entry.id;option.textContent=entry.name;select.append(option);}
       if(entries.some(entry=>entry.id===selected))select.value=selected;
       run.disabled=remove.disabled=!entries.length;
-      $("custom-generator-status").textContent=entries.length?entries.length+" generator(s) saved on this device.":"Upload a .figure file to add your first local generator.";
+      $("custom-generator-status").textContent=entries.length?entries.length+" generator(s) saved on this device.":"Upload a .py file and its matching figure.xml to add your first local generator.";
     }catch(error){run.disabled=remove.disabled=true;$("custom-generator-status").textContent="Local storage unavailable: "+error.message;}
   }
   $("generator").addEventListener("click",()=>{$("generator-dialog").showModal();refreshCustomGeneratorList();});
@@ -1085,9 +1085,9 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   $("custom-figure-file").addEventListener("change",async()=>{
     const input=$("custom-figure-file"),file=input.files?.[0];if(!file)return;
     const out=$("custom-generator-status");
-    try{const saved=await saveCustomGenerator(file);await refreshCustomGeneratorList();$("custom-generator-list").value=saved.id;out.textContent="Saved "+saved.name+" locally on this device.";}
+    try{const script=$("custom-python-file").files?.[0];if(!script)throw new Error("Choose the .py generator first.");const saved=await saveCustomGenerator(script,file);await refreshCustomGeneratorList();$("custom-generator-list").value=saved.id;out.textContent="Saved "+saved.name+" and figure.xml together on this device.";}
     catch(error){out.textContent="Upload failed: "+error.message;}
-    finally{input.value="";}
+    finally{input.value="";$("custom-python-file").value="";}
   });
   $("custom-generator-list").addEventListener("change",()=>{
     const enabled=!!$("custom-generator-list").value;
@@ -1100,7 +1100,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   });
   $("custom-generator-run").addEventListener("click",async()=>{
     const id=$("custom-generator-list").value,spec=$("generator-size").value.trim(),out=$("custom-generator-status"),button=$("custom-generator-run");
-    if(!id){out.textContent="Choose a saved .figure generator first.";return;}
+    if(!id){out.textContent="Choose a saved .py + figure.xml generator first.";return;}
     button.disabled=true;let failure="";
     try{
       const generated=await generateCustomPuzzle(id,spec,message=>{out.textContent=message;});

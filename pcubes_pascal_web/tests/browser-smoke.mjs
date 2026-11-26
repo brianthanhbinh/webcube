@@ -233,18 +233,20 @@ try{
  assert.ok(largeCube.xml.includes("<Name>26x26x26 Cube</Name>"),"Large cube XML was not generated correctly");
  const customGeneratorResult=await page.evaluate(async()=>{
    const module=await import("./generator.js");
-   const source="def generate(spec):"+String.fromCharCode(10)+"    return "+JSON.stringify({name:"Custom Python test",xml:"<xml/>",figures:{}});
-   const saved=await module.saveCustomGenerator({name:"smoke-test.figure",text:async()=>source});
+   const source="def generate(spec):"+String.fromCharCode(10)+"    return "+JSON.stringify({name:"Custom Python test",xml:'<xml><Interface><Name>Custom paired figure</Name></Interface><Figure><LoadFrom File="Figures\\\\figure.xml" W="0.5"/><SplitByAxes/></Figure><Axes TurningAngles="Pi / 2" PlaneDistances="-1/6;1/6"><Axis NormVector="1;0;0"/><Axis NormVector="0;1;0"/><Axis NormVector="0;0;1"/></Axes></xml>'});
+   const figureXml='<xml><Part><Vertices><Add Vector="-0.5;-0.5;-0.5"/><Add Vector="0.5;-0.5;-0.5"/><Add Vector="-0.5;0.5;-0.5"/><Add Vector="0.5;0.5;-0.5"/><Add Vector="-0.5;-0.5;0.5"/><Add Vector="0.5;-0.5;0.5"/><Add Vector="-0.5;0.5;0.5"/><Add Vector="0.5;0.5;0.5"/></Vertices><Faces><Face Color="FF0000" VertexIndexes="0;1;3;2"/><Face Color="00FF00" VertexIndexes="4;5;7;6"/><Face Color="0000FF" VertexIndexes="0;1;5;4"/><Face Color="FFFF00" VertexIndexes="2;3;7;6"/><Face Color="FFFFFF" VertexIndexes="0;2;6;4"/><Face Color="FF8000" VertexIndexes="1;3;7;5"/></Faces></Part></xml>';
+   const saved=await module.saveCustomGenerator({name:"smoke-test.py",text:async()=>source},{name:"figure.xml",text:async()=>figureXml});
    const listed=await module.listCustomGenerators();
    const generated=await module.generateCustomPuzzle(saved.id,"4");
    await module.deleteCustomGenerator(saved.id);
    const afterDelete=await module.listCustomGenerators();
-   return {saved,listed,generated,afterDelete};
+   return {saved,listed,generated,afterDelete,figureXml};
  });
- assert.ok(customGeneratorResult.listed.some(item=>item.id===customGeneratorResult.saved.id),"Uploaded .figure generator was not saved locally");
+ assert.ok(customGeneratorResult.listed.some(item=>item.id===customGeneratorResult.saved.id),"Uploaded .py + figure.xml pair was not saved locally");
  assert.equal(customGeneratorResult.generated.name,"Custom Python test","Custom Python generator did not execute");
- assert.equal(customGeneratorResult.generated.xml,"<xml/>","Custom Python generator returned the wrong XML");
- assert.ok(!customGeneratorResult.afterDelete.some(item=>item.id===customGeneratorResult.saved.id),"Deleted .figure generator remains in local storage");
+ assert.match(customGeneratorResult.generated.xml,/Figures\\\\figure.xml/,"Custom puzzle XML did not reference its figure.xml file");
+ assert.equal(customGeneratorResult.generated.figures["Figures/figure.xml"],customGeneratorResult.figureXml,"Paired figure.xml was not attached to the generated puzzle");
+ assert.ok(!customGeneratorResult.afterDelete.some(item=>item.id===customGeneratorResult.saved.id),"Deleted custom generator remains in local storage");
  assert.ok(megaminx.axes.every(axis=>Array.isArray(axis.angles)&&axis.angles.length===axis.layers),
    "Megaminx axes must expose an exact turning angle for every layer");
  for(const axis of megaminx.axes){
