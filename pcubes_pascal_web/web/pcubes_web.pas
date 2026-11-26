@@ -181,7 +181,8 @@ begin
     // Parts without vertices still occupy a part index, so emit null rather
     // than skipping them and shifting every later part's center.
     if Part.Vertices.Count = 0 then begin
-      Result.push(TJSNull);
+      Center := TJSArray.new;
+      Result.push(Center);
       Continue;
     end;
     X := 0; Y := 0; Z := 0;
