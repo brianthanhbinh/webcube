@@ -112,7 +112,7 @@ export async function saveCustomGenerator(scriptFile,figureFile){
   throw new Error("Choose the Python generator file (.py).");
  if(!figureFile||String(figureFile.name||"").split(/[\\/]/).pop().toLowerCase()!=="figure.xml")
   throw new Error("Choose the matching figure.xml file.");
- const name=String(scriptFile.name).split("/").pop().split("\\\\").pop().trim();
+ const name=String(scriptFile.name).split(/[\\/]/).pop().trim();
  if(!name||name.length>120)throw new Error("Generator filename must be 1–120 characters.");
  const [source,figureXml]=await Promise.all([scriptFile.text(),figureFile.text()]);
  if(!source.trim())throw new Error("The .py generator file is empty.");

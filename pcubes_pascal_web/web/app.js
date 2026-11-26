@@ -1082,13 +1082,19 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     }catch(error){out.textContent="Generator failed: "+(error?.message||String(error));}
     finally{button.disabled=false;}
   });
-  $("custom-figure-file").addEventListener("change",async()=>{
-    const input=$("custom-figure-file"),file=input.files?.[0];if(!file)return;
-    const out=$("custom-generator-status");
-    try{const script=$("custom-python-file").files?.[0];if(!script)throw new Error("Choose the .py generator first.");const saved=await saveCustomGenerator(script,file);await refreshCustomGeneratorList();$("custom-generator-list").value=saved.id;out.textContent="Saved "+saved.name+" and figure.xml together on this device.";}
-    catch(error){out.textContent="Upload failed: "+error.message;}
-    finally{input.value="";$("custom-python-file").value="";}
-  });
+  async function saveCustomGeneratorPair(){
+    const script=$("custom-python-file").files?.[0],figure=$("custom-figure-file").files?.[0],out=$("custom-generator-status");
+    if(!script||!figure){out.textContent="Choose both the .py generator and its figure.xml file.";return;}
+    try{
+      const saved=await saveCustomGenerator(script,figure);
+      await refreshCustomGeneratorList();
+      $("custom-generator-list").value=saved.id;
+      out.textContent="Saved "+saved.name+" and figure.xml together on this device.";
+      $("custom-python-file").value="";$("custom-figure-file").value="";
+    }catch(error){out.textContent="Upload failed: "+error.message;}
+  }
+  $("custom-python-file").addEventListener("change",saveCustomGeneratorPair);
+  $("custom-figure-file").addEventListener("change",saveCustomGeneratorPair);
   $("custom-generator-list").addEventListener("change",()=>{
     const enabled=!!$("custom-generator-list").value;
     $("custom-generator-run").disabled=$("custom-generator-delete").disabled=!enabled;
