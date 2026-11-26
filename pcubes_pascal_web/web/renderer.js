@@ -151,11 +151,14 @@ export class PuzzleRenderer {
     const count=Math.max(1,Number(axis?.layers)||1);
     if(!length||!faces.length)return [];
     const n=vector.map(v=>v/length);
+    const movingPartMask=window.pCubes?.getMovingPartMask?.(axis.index,layer)||[];
+    // Ask Pascal for the expanded moving-piece selection, including blocked
+    // slice boundaries and connected layers. This is the same selection
+    // RotateLayer will apply, so preview/highlight can never diverge.
+    if(movingPartMask.length && faces.some(face=>Number.isInteger(face.partIndex))){
+      return faces.map(face=>Number.isInteger(face.partIndex)&&!!movingPartMask[face.partIndex]);
+    }
     const partRanges=window.pCubes?.getPartLayerRanges?.(axis.index)||[];
-    // Use the Pascal model's exact part-to-layer intervals. A cubie can span
-    // more than one geometric center position; grouping centers into evenly
-    // spaced buckets breaks tetrahedral puzzles (Pyraminx layers are 10/4/1
-    // pieces, not equal-sized groups).
     if(partRanges.length && faces.some(face=>Number.isInteger(face.partIndex))){
       const index=Math.max(0,Math.min(count-1,Math.round(Number(layer)||0)));
       return faces.map(face=>{
