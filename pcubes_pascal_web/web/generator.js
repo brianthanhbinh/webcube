@@ -149,7 +149,7 @@ export async function generateCustomPuzzle(id,spec,onStatus){
   'if not isinstance(result["figures"],dict): raise TypeError("figures must be a dictionary of filenames to XML strings.")',
   'if any(not isinstance(k,str) or not isinstance(v,str) for k,v in result["figures"].items()): raise TypeError("Every figure entry must map a filename to XML text.")',
   'json.dumps({"name":str(result.get("name") or webcube_custom_filename.rsplit(".",1)[0]),"xml":result["xml"],"figures":result["figures"]},ensure_ascii=False)'
- ].join("\\n");;
+ ].join("\n");
  const generated=JSON.parse(await py.runPythonAsync(code));
  if(generated.xml.length>10*1024*1024)throw new Error("Generated puzzle XML is larger than 10 MB.");
  for(const [name,xml] of Object.entries(generated.figures||{})){
