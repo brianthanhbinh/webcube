@@ -151,9 +151,20 @@ export class PuzzleRenderer {
     const count=Math.max(1,Number(axis?.layers)||1);
     if(!length||!faces.length)return [];
     const n=vector.map(v=>v/length);
+    const partRanges=window.pCubes?.getPartLayerRanges?.(axis.index)||[];
+    // Use the Pascal model's exact part-to-layer intervals. A cubie can span
+    // more than one geometric center position; grouping centers into evenly
+    // spaced buckets breaks tetrahedral puzzles (Pyraminx layers are 10/4/1
+    // pieces, not equal-sized groups).
+    if(partRanges.length && faces.some(face=>Number.isInteger(face.partIndex))){
+      const index=Math.max(0,Math.min(count-1,Math.round(Number(layer)||0)));
+      return faces.map(face=>{
+        const range=Number.isInteger(face.partIndex)?partRanges[face.partIndex]:null;
+        return Array.isArray(range)&&range.length>=2&&index>=Number(range[0])&&index<=Number(range[1]);
+      });
+    }
     const partCenters=window.pCubes?.getPartCenters?.()||[];
-    // Classify each sticker by its owning cubie's center. Polygon centroids
-    // lie on sticker surfaces and can leak across adjacent slice boundaries.
+    // Classify by cubie centers only for models without Pascal layer ranges.
     if(partCenters.length && faces.some(face=>Number.isInteger(face.partIndex))){
       const positions=[];
       for(const center of partCenters){
