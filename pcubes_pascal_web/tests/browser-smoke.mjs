@@ -290,6 +290,42 @@ try{
    await page.evaluate(()=>window.pCubes.undo());
  }
  console.log("PASS: Megaminx dodecahedron, six axes, twelve colours, and per-layer turning.");
+ // Pyraminx regression: verify the browser's animated layer mask matches the
+ // physical pieces that Pascal actually turns on all four tetrahedral axes.
+ await page.locator("#library").click();
+ await page.waitForFunction(()=>document.querySelector("#library-dialog")?.open);
+ await page.locator("#library-search").fill("pyramid/Pyraminx_3x3.xml");
+ const pyraminxEntry=page.locator("#library-list button").filter({hasText:"webcube-library / pyramid/Pyraminx_3x3.xml"});
+ await pyraminxEntry.waitFor({state:"visible"});
+ await pyraminxEntry.click();
+ await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open || (document.querySelector("#engine-status")?.textContent||"").startsWith("Library load failed"),null,{timeout:30000});
+ assert.equal(await page.locator("#library-dialog").evaluate(d=>d.open),false,"Pyraminx failed to load: "+await page.locator("#engine-status").textContent());
+ const pyraminx=await page.evaluate(()=>({model:window.pCubes.getModelInfo(),axes:window.pCubes.getAxesInfo(),faces:window.pCubes.getRenderData().faces}));
+ assert.match(pyraminx.model.name,/Pyraminx 3x3/i,"Wrong puzzle loaded instead of Pyraminx");
+ assert.equal(pyraminx.axes.length,4,"Pyraminx must expose four tetrahedral turning axes");
+ for(const axis of pyraminx.axes){
+   for(let layer=0;layer<axis.layers;layer++){
+     if(Math.abs(Number(axis.angles?.[layer]??axis.angle))<1e-7)continue;
+     const check=await page.evaluate(({axisNo,layerNo})=>{
+       const api=window.pCubes,r=document.querySelector("#puzzle-canvas").__pCubesRenderer;
+       const axes=api.getAxesInfo(),axis=axes.find(a=>a.index===axisNo),before=api.getRenderData();
+       const mask=r.layerFaceMask(before,axis,layerNo,1);
+       const expected=new Set(before.faces.filter((f,i)=>mask[i]&&Number.isInteger(f.partIndex)).map(f=>f.partIndex));
+       const turned=api.turnLayer(axisNo,layerNo,1);
+       const after=api.getRenderData(),moved=new Set();
+       for(let i=0;i<Math.min(before.faces.length,after.faces.length);i++){
+         const a=before.faces[i],b=after.faces[i];
+         if(JSON.stringify(a.vertices)!==JSON.stringify(b.vertices)&&Number.isInteger(a.partIndex))moved.add(a.partIndex);
+       }
+       api.undo();
+       return {turned,expected:[...expected].sort((a,b)=>a-b),moved:[...moved].sort((a,b)=>a-b),maskFaces:mask.filter(Boolean).length};
+     },{axisNo:axis.index,layerNo:layer});
+     assert.equal(check.turned,true,"Pyraminx axis "+axis.index+" layer "+layer+" did not turn");
+     assert.ok(check.maskFaces>0,"Pyraminx animation selected no faces on axis "+axis.index+" layer "+layer);
+     assert.deepEqual(check.expected,check.moved,"Pyraminx animation mask disagrees with physical pieces on axis "+axis.index+" layer "+layer+": "+JSON.stringify(check));
+   }
+ }
+ console.log("PASS: Pyraminx four axes and animated masks match Pascal physical-piece turns.");
  // Generator UI is available after the Pascal startup self-test.
  await page.locator("#generator").click();
  await page.waitForFunction(()=>document.querySelector("#generator-dialog")?.open);
