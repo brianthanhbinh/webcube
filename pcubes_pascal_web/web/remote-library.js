@@ -25,7 +25,7 @@ export async function fetchRemotePuzzle(entry,index){
  if(doc.getElementsByTagName("parsererror")[0])throw new Error("Malformed puzzle XML: "+entry.path);
  const figures={};
  for(const load of Array.from(doc.getElementsByTagName("LoadFrom"))){
-  const name=String(load.getAttribute("File")||"").replace(/\\\\/g,"/").split("/").pop();
+  const name=String(load.getAttribute("File")||"").replace(/\\/g,"/").split("/").pop();
   const path=index.figures.find(p=>p.split("/").pop().toLowerCase()===name.toLowerCase());
   if(path&&!figures[path]){
    const fr=await fetch(RAW+enc(path));if(!fr.ok)throw new Error("Could not fetch figure "+path+" ("+fr.status+").");
