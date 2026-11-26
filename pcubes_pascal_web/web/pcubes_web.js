@@ -8120,6 +8120,28 @@ rtl.module("uPuzzle",["System","uSolvedState","uMatrix","uPart","uAxis","uMacro"
       Result = !this.IsTurningWhole(pas.uSelection.TSelection.TurnLayers);
       return Result;
     };
+    this.CalcMovingLayers$1 = function (AxisNo, LayerNo, LayersCount) {
+      var Result = false;
+      var Axis = null;
+      var i = 0;
+      Axis = this.FAxes.GetItem(AxisNo);
+      if (!Axis.Enabled) return false;
+      pas.uSelection.TSelection.TurnLayers = rtl.arraySetLength(pas.uSelection.TSelection.TurnLayers,false,Axis.Layers.FLength);
+      for (var $l = 0, $end = rtl.length(pas.uSelection.TSelection.TurnLayers) - 1; $l <= $end; $l++) {
+        i = $l;
+        pas.uSelection.TSelection.TurnLayers[i] = false;
+      };
+      for (var $l1 = 0, $end1 = LayersCount - 1; $l1 <= $end1; $l1++) {
+        i = $l1;
+        this.AddMovingLayer(AxisNo,LayerNo + i,{p: pas.uSelection.TSelection.TSelection, get: function () {
+            return this.p.TurnLayers;
+          }, set: function (v) {
+            this.p.TurnLayers = v;
+          }});
+      };
+      Result = !this.IsTurningWhole(pas.uSelection.TSelection.TurnLayers);
+      return Result;
+    };
     var PI2 = 2 * Math.PI;
     this.GetTurningAngle = function (AxisNo, Layers, Al, AngleMin, AngleMax) {
       var $Self = this;
@@ -10334,7 +10356,7 @@ rtl.module("uXmlReadWrite",["System","Types","uPuzzle","uVector","uPlane","uLine
     $impl.CIRCLE_SECTORS = 64;
   };
 },["uScript","uUtils","uXmlUtils","uMatrix","uSolvedState","uPuzzleUtils","uSelection","uGeometryUtils","JS","Variants","SysUtils","strutils","Classes","Math"]);
-rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXmlReadWrite","uPart","uFace","uVector","uAxis"],function () {
+rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXmlReadWrite","uPart","uFace","uVector","uAxis","uSelection"],function () {
   "use strict";
   var $mod = this;
   this.StatusNode = null;
@@ -10546,6 +10568,65 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
     Result["faces"] = FacesArray;
     return Result;
   };
+  this.APIGetMovingPartMask = function (AxisNo, LayerNo) {
+    var Result = null;
+    var I = 0;
+    var J = 0;
+    var FromLayer = 0;
+    var ToLayer = 0;
+    var Selected = false;
+    Result = new Array();
+    if (($mod.CurrentPuzzle === null) || (AxisNo < 0) || (AxisNo >= $mod.CurrentPuzzle.FAxes.FLength) || (LayerNo < 0) || (LayerNo >= $mod.CurrentPuzzle.FAxes.GetItem(AxisNo).Layers.FLength)) return Result;
+    $mod.CurrentPuzzle.CalcMovingLayers$1(AxisNo,LayerNo,1);
+    for (var $l = 0, $end = $mod.CurrentPuzzle.FParts.FLength - 1; $l <= $end; $l++) {
+      I = $l;
+      $mod.CurrentPuzzle.GetPartPosition(AxisNo,I,{get: function () {
+          return FromLayer;
+        }, set: function (v) {
+          FromLayer = v;
+        }},{get: function () {
+          return ToLayer;
+        }, set: function (v) {
+          ToLayer = v;
+        }});
+      Selected = false;
+      for (var $l1 = FromLayer, $end1 = ToLayer; $l1 <= $end1; $l1++) {
+        J = $l1;
+        if ((J >= 0) && (J < rtl.length(pas.uSelection.TSelection.TurnLayers)) && pas.uSelection.TSelection.TurnLayers[J]) {
+          Selected = true;
+          break;
+        };
+      };
+      Result.push(Selected);
+    };
+    return Result;
+  };
+  this.APIGetPartLayerRanges = function (AxisNo) {
+    var Result = null;
+    var I = 0;
+    var FromLayer = 0;
+    var ToLayer = 0;
+    var Range = null;
+    Result = new Array();
+    if (($mod.CurrentPuzzle === null) || (AxisNo < 0) || (AxisNo >= $mod.CurrentPuzzle.FAxes.FLength)) return Result;
+    for (var $l = 0, $end = $mod.CurrentPuzzle.FParts.FLength - 1; $l <= $end; $l++) {
+      I = $l;
+      $mod.CurrentPuzzle.GetPartPosition(AxisNo,I,{get: function () {
+          return FromLayer;
+        }, set: function (v) {
+          FromLayer = v;
+        }},{get: function () {
+          return ToLayer;
+        }, set: function (v) {
+          ToLayer = v;
+        }});
+      Range = new Array();
+      Range.push(FromLayer);
+      Range.push(ToLayer);
+      Result.push(Range);
+    };
+    return Result;
+  };
   this.APIGetPartCenters = function () {
     var Result = null;
     var Part = null;
@@ -10560,7 +10641,11 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
     try {
       while ($in.MoveNext()) {
         Part = $in.DoGetCurrent();
-        if (Part.FVertices.FLength === 0) continue;
+        if (Part.FVertices.FLength === 0) {
+          Center = new Array();
+          Result.push(Center);
+          continue;
+        };
         X = 0;
         Y = 0;
         Z = 0;
@@ -10644,6 +10729,8 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
     $mod.API["getModelInfo"] = $mod.APIGetModelInfo;
     $mod.API["getRenderData"] = $mod.APIGetRenderData;
     $mod.API["getPartCenters"] = $mod.APIGetPartCenters;
+    $mod.API["getPartLayerRanges"] = $mod.APIGetPartLayerRanges;
+    $mod.API["getMovingPartMask"] = $mod.APIGetMovingPartMask;
     $mod.API["getAxesInfo"] = $mod.APIGetAxesInfo;
     $mod.API["turnLayer"] = $mod.APITurnLayer;
     $mod.API["scramble"] = $mod.APIScramble;
