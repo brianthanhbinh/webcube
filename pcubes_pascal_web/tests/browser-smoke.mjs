@@ -223,15 +223,20 @@ try{
  assert.equal(await page.evaluate(()=>window.pCubes.getModelInfo().undoCount),undoBeforeHalf+2,"Megaminx half-turn must record two 72-degree turns");
  await page.evaluate(()=>window.pCubes.reset());
  await page.waitForFunction(()=>window.pCubes.getModelInfo().undoCount===0);
- const customGeneratorModule=await page.evaluate(async()=>await import("./generator.js"));
- const customSource=["def generate(spec):","    return {'name': 'Custom Python test', 'xml': '<xml/>', 'figures': {}}"].join("\n");
- const savedCustom=await customGeneratorModule.saveCustomGenerator({name:"smoke-test.figure",text:async()=>customSource});
- assert.ok((await customGeneratorModule.listCustomGenerators()).some(item=>item.id===savedCustom.id),"Uploaded .figure generator was not saved locally");
- const generatedCustom=await customGeneratorModule.generateCustomPuzzle(savedCustom.id,"4");
- assert.equal(generatedCustom.name,"Custom Python test","Custom Python generator did not execute");
- assert.equal(generatedCustom.xml,"<xml/>","Custom Python generator returned the wrong XML");
- await customGeneratorModule.deleteCustomGenerator(savedCustom.id);
- assert.ok(!(await customGeneratorModule.listCustomGenerators()).some(item=>item.id===savedCustom.id),"Deleted .figure generator remains in local storage");
+ const customGeneratorResult=await page.evaluate(async()=>{
+   const module=await import("./generator.js");
+   const source=["def generate(spec):","    return {'name': 'Custom Python test', 'xml': '<xml/>', 'figures': {}}"].join("\\n");
+   const saved=await module.saveCustomGenerator({name:"smoke-test.figure",text:async()=>source});
+   const listed=await module.listCustomGenerators();
+   const generated=await module.generateCustomPuzzle(saved.id,"4");
+   await module.deleteCustomGenerator(saved.id);
+   const afterDelete=await module.listCustomGenerators();
+   return {saved,listed,generated,afterDelete};
+ });
+ assert.ok(customGeneratorResult.listed.some(item=>item.id===customGeneratorResult.saved.id),"Uploaded .figure generator was not saved locally");
+ assert.equal(customGeneratorResult.generated.name,"Custom Python test","Custom Python generator did not execute");
+ assert.equal(customGeneratorResult.generated.xml,"<xml/>","Custom Python generator returned the wrong XML");
+ assert.ok(!customGeneratorResult.afterDelete.some(item=>item.id===customGeneratorResult.saved.id),"Deleted .figure generator remains in local storage");
  assert.ok(megaminx.axes.every(axis=>Array.isArray(axis.angles)&&axis.angles.length===axis.layers),
    "Megaminx axes must expose an exact turning angle for every layer");
  for(const axis of megaminx.axes){
