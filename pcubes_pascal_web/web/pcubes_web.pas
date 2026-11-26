@@ -50,7 +50,7 @@ begin
 end;
 
 function APIGetAxesInfo: TJSArray;
-var I, J: Integer; AxisInfo: TJSObject; Angles: TJSArray;
+var I, J: Integer; AxisInfo: TJSObject; Angles, FixedLayers: TJSArray;
 begin
   Result := TJSArray.new;
   if CurrentPuzzle = nil then Exit;
@@ -65,9 +65,13 @@ begin
     AxisInfo['enabled'] := CurrentPuzzle.Axes[I].Enabled;
     AxisInfo['layerCount'] := CurrentPuzzle.Axes[I].Layers.Count;
     Angles := TJSArray.new;
-    for J := 0 to CurrentPuzzle.Axes[I].Layers.Count - 1 do
+    FixedLayers := TJSArray.new;
+    for J := 0 to CurrentPuzzle.Axes[I].Layers.Count - 1 do begin
       Angles.push(CurrentPuzzle.Axes[I].Layers[J].TurningAngle);
+      FixedLayers.push(CurrentPuzzle.Axes[I].Layers[J].Fixed);
+    end;
     AxisInfo['angles'] := Angles;
+    AxisInfo['fixedLayers'] := FixedLayers;
     if CurrentPuzzle.Axes[I].Layers.Count > 0 then AxisInfo['angle'] := CurrentPuzzle.Axes[I].Layers[0].TurningAngle;
     Result.push(AxisInfo);
   end;

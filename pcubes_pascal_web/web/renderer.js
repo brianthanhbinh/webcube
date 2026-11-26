@@ -384,6 +384,7 @@ export class PuzzleRenderer {
     const layer=positions.length>1
       ? Math.max(0,Math.min(count-1,Math.round(nearest*(count-1)/(positions.length-1))))
       : 0;
+    if(chosen.axis.fixedLayers?.[layer])return null;
     return {
       pick:{axis:chosen.axis.index,layer,normalSign:1},
       axis:chosen.axis,
@@ -427,6 +428,7 @@ export class PuzzleRenderer {
       const layer=positions.length>1
         ? Math.max(0,Math.min(count-1,Math.round(nearest*(count-1)/(positions.length-1))))
         : 0;
+      if(chosen.axis.fixedLayers?.[layer])return null;
       return {axis:chosen.axis,layer,normalSign:chosen.sign,faceNormal:normal};
     }
     return null;

@@ -682,7 +682,10 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       axisSelect.value = String(axis.index);
       layerSelect.replaceChildren();
       for (let i=0;i<axis.layers;i++) {
-        const option=document.createElement("option"); option.value=i; option.textContent="Layer "+(i+1); layerSelect.append(option);
+        const option=document.createElement("option"); option.value=i;
+        option.textContent=axis.fixedLayers?.[i]?"Layer "+(i+1)+" (fixed core)":"Layer "+(i+1);
+        option.disabled=Boolean(axis.fixedLayers?.[i]);
+        layerSelect.append(option);
       }
       layerSelect.value=String(Math.min(oldLayer,Math.max(0,axis.layers-1)));
     }
@@ -720,6 +723,20 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   function loadXmlText(xmlText) {
     let doc = parseXml(xmlText);
     const puzzleName = (doc.getElementsByTagName("Name")[0]?.textContent || "").toLowerCase();
+    // Odd-layer dodecahedral minxes have a stationary central core. Their
+    // XML omitted FixedLayers, accidentally making the core slab turnable.
+    if (/megaminx|gigaminx|teraminx|petaminx/.test(puzzleName)) {
+      for (const axesNode of Array.from(doc.getElementsByTagName("Axes"))) {
+        const distances = String(axesNode.getAttribute("PlaneDistances") || "").split(/[;,]/).map(v=>v.trim()).filter(Boolean);
+        const layerCount = distances.length + 1;
+        if (layerCount % 2 === 1) {
+          const coreLayer = Math.floor(layerCount / 2);
+          const fixed = String(axesNode.getAttribute("FixedLayers") || "").split(/[;,]/).map(v=>v.trim()).filter(Boolean);
+          if (!fixed.includes(String(coreLayer))) fixed.push(String(coreLayer));
+          axesNode.setAttribute("FixedLayers", fixed.join(";"));
+        }
+      }
+    }
     renderer.geometryKind = /mega.?minx|minx|gigaminx|teraminx|petaminx|pyraminx/.test(puzzleName) ? "minx" :
       /cuboid/.test(puzzleName) ? "cuboid" : "other";
     renderer.cameraSnapEnabled = renderer.geometryKind === "cuboid";

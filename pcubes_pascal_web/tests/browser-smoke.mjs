@@ -209,6 +209,10 @@ try{
  assert.match(megaminx.model.name,/Megaminx 3x3/i,"Wrong puzzle loaded instead of Megaminx");
  assert.ok(megaminx.model.parts>=12,"Megaminx dodecahedron did not split into its expected pieces: "+megaminx.model.parts);
  assert.equal(megaminx.axes.length,6,"Megaminx must expose all six dodecahedral turning axes");
+ assert.ok(megaminx.axes.every(axis=>axis.fixedLayers?.length===3&&axis.fixedLayers[1]===true),"Megaminx core layer must be fixed on every axis");
+ const coreUndo=await page.evaluate(()=>window.pCubes.getModelInfo().undoCount);
+ assert.equal(await page.evaluate(axis=>window.pCubes.turnLayer(axis,1,1),megaminx.axes[0].index),false,"Megaminx core layer must reject turns");
+ assert.equal(await page.evaluate(()=>window.pCubes.getModelInfo().undoCount),coreUndo,"Rejected core turn must not enter undo history");
  assert.ok(megaminx.faces.length>=60,"Megaminx is missing rendered pentagonal face geometry: "+megaminx.faces.length);
  assert.ok(new Set(megaminx.faces.map(face=>String(face.color).toLowerCase())).size>=12,"Megaminx must preserve all twelve face colours");
  await page.locator("#turn-axis").selectOption("0");
