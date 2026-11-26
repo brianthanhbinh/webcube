@@ -171,6 +171,20 @@ begin
   Result['faces'] := FacesArray;
 end;
 
+function APIGetPartLayerRanges(AxisNo: Integer): TJSArray;
+var I, FromLayer, ToLayer: Integer; Range: TJSArray;
+begin
+  Result := TJSArray.new;
+  if (CurrentPuzzle = nil) or (AxisNo < 0) or (AxisNo >= CurrentPuzzle.Axes.Count) then Exit;
+  for I := 0 to CurrentPuzzle.Parts.Count - 1 do begin
+    CurrentPuzzle.GetPartPosition(AxisNo, I, FromLayer, ToLayer);
+    Range := TJSArray.new;
+    Range.push(FromLayer);
+    Range.push(ToLayer);
+    Result.push(Range);
+  end;
+end;
+
 function APIGetPartCenters: TJSArray;
 var Part: TPart; I: Integer; Center: TJSArray; X, Y, Z: Extended;
 begin
@@ -261,6 +275,7 @@ begin
   API['getModelInfo'] := TJSFunction(@APIGetModelInfo);
   API['getRenderData'] := TJSFunction(@APIGetRenderData);
   API['getPartCenters'] := TJSFunction(@APIGetPartCenters);
+  API['getPartLayerRanges'] := TJSFunction(@APIGetPartLayerRanges);
   API['getAxesInfo'] := TJSFunction(@APIGetAxesInfo);
   API['turnLayer'] := TJSFunction(@APITurnLayer);
   API['scramble'] := TJSFunction(@APIScramble);
