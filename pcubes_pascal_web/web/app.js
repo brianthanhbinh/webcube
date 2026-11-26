@@ -1198,7 +1198,10 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       updateModelInfo(api);
       let restored = false;
       try { restored = await restoreLastPuzzle(); }
-      catch (restoreError) { console.warn("Could not restore the last puzzle:", restoreError); }
+      catch (restoreError) {
+        console.warn("Could not restore the last puzzle:", restoreError);
+        status.textContent = "Could not restore last puzzle: " + (restoreError?.message || String(restoreError));
+      }
       if (!restored) status.textContent = "All " + preflightReport.length + " startup tests passed. Loaded " + cubeName + ".";
       document.documentElement.dataset.preflight = "passed";
       if(previewMode) parent.postMessage({type:"pcubes-preview-ready"},location.origin);
