@@ -740,6 +740,49 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     }
   }
 
+  // Keep the most recently loaded, successfully parsed puzzle on this device.
+  // IndexedDB avoids localStorage's small quota for larger cube XML documents.
+  const LAST_PUZZLE_DB = "pcubes-last-puzzle";
+  const LAST_PUZZLE_STORE = "state";
+  let lastPuzzleDbPromise;
+  function openLastPuzzleDb() {
+    if (!("indexedDB" in window)) return Promise.reject(new Error("IndexedDB is unavailable."));
+    if (!lastPuzzleDbPromise) lastPuzzleDbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(LAST_PUZZLE_DB, 1);
+      request.onupgradeneeded = () => {
+        if (!request.result.objectStoreNames.contains(LAST_PUZZLE_STORE))
+          request.result.createObjectStore(LAST_PUZZLE_STORE);
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error("Could not open puzzle storage."));
+    });
+    return lastPuzzleDbPromise;
+  }
+  async function saveLastPuzzle(xml, figures = {}) {
+    if (!xml || typeof xml !== "string") return;
+    const db = await openLastPuzzleDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(LAST_PUZZLE_STORE, "readwrite");
+      tx.objectStore(LAST_PUZZLE_STORE).put({ xml, figures, savedAt: Date.now() }, "latest");
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error || new Error("Could not save the last puzzle."));
+      tx.onabort = () => reject(tx.error || new Error("Puzzle save was cancelled."));
+    });
+  }
+  async function restoreLastPuzzle() {
+    const db = await openLastPuzzleDb();
+    const saved = await new Promise((resolve, reject) => {
+      const tx = db.transaction(LAST_PUZZLE_STORE, "readonly");
+      const request = tx.objectStore(LAST_PUZZLE_STORE).get("latest");
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error || new Error("Could not read the last puzzle."));
+    });
+    if (!saved?.xml) return false;
+    await loadPuzzleWithFigures(saved.xml, saved.figures || {});
+    status.textContent = "Restored last puzzle: " + (window.pCubes?.getModelInfo?.().name || "Saved puzzle") + ".";
+    return true;
+  }
+
   function loadXmlText(xmlText) {
     let doc = parseXml(xmlText);
     const puzzleName = (doc.getElementsByTagName("Name")[0]?.textContent || "").toLowerCase();
@@ -829,6 +872,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     status.textContent = "Fetching " + entry.path + "…";
     const result = await fetchRemotePuzzle(entry, remoteLibrary);
     await loadPuzzleWithFigures(result.xml, result.figures);
+    await saveLastPuzzle(result.xml, result.figures);
   }
 
   function supported(entry) {
@@ -858,7 +902,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
           button.append(title,meta);
           if(entry.source==="builtin"){
             if(!supported(entry)){button.disabled=true;button.title="Invalid XML entry.";}
-            else button.addEventListener("click",()=>{try{if(loadXmlText(entry.xml))dialog.close();}catch(error){setFigurePickerEnabled(!!pendingPuzzleDoc);status.textContent="Library load failed: "+error.message;}});
+            else button.addEventListener("click",()=>{try{if(loadXmlText(entry.xml)){saveLastPuzzle(originalXmlText,{}).catch(error=>console.warn("Could not save last puzzle:",error));dialog.close();}}catch(error){setFigurePickerEnabled(!!pendingPuzzleDoc);status.textContent="Library load failed: "+error.message;}});
           } else button.addEventListener("click",async()=>{
             button.disabled=true;
             try{await loadRemoteEntry(entry);dialog.close();}
@@ -960,6 +1004,13 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     const selected = input.files; if (!selected || !selected.length) return;
     try {
       await loadFigureFiles(selected);
+      const savedFigures = {};
+      for (const item of Array.from(selected)) {
+        if (!/\\.xml$/i.test(item.name)) continue;
+        const text = await item.text();
+        savedFigures[item.webkitRelativePath || item.name] = text;
+      }
+      await saveLastPuzzle(originalXmlText, savedFigures);
     } catch (error) {
       setFigurePickerEnabled(!!pendingPuzzleDoc);
       status.textContent = label + " failed: " + error.message;
@@ -976,7 +1027,9 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       const encoding = declared ? declared[1] : "utf-8";
       let xml = new TextDecoder(encoding).decode(bytes);
       xml = xml.replace(/(<\?xml[^>]*?)\s+encoding\s*=\s*(["'])[^"']+\2/i, "$1");
-      try { loadXmlText(xml); }
+      try {
+        if (loadXmlText(xml)) await saveLastPuzzle(originalXmlText, {});
+      }
       catch (error) {
         setFigurePickerEnabled(!!pendingPuzzleDoc);
         status.textContent = "XML needs a figure: " + error.message;
@@ -1024,6 +1077,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       out.textContent="Attaching generated geometry and loading into the Pascal game…";
       if(!remoteLibrary) remoteLibrary=await loadRemoteLibraryIndex();
       await loadPuzzleWithFigures(generated.xml,generated.figures);
+      await saveLastPuzzle(originalXmlText,generated.figures);
       $("generator-dialog").close();status.textContent="Generated and loaded: "+generated.name;
     }catch(error){out.textContent="Generator failed: "+(error?.message||String(error));}
     finally{button.disabled=false;}
@@ -1053,6 +1107,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       out.textContent="Loading generated XML into the Pascal puzzle engine…";
       if(!remoteLibrary) remoteLibrary=await loadRemoteLibraryIndex();
       await loadPuzzleWithFigures(generated.xml,generated.figures);
+      await saveLastPuzzle(originalXmlText,generated.figures);
       $("generator-dialog").close();status.textContent="Custom Python generator loaded: "+generated.name;
     }catch(error){failure="Custom generator failed: "+(error?.message||String(error));out.textContent=failure;}
     finally{button.disabled=false;await refreshCustomGeneratorList();if(failure)out.textContent=failure;}
@@ -1135,7 +1190,10 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       const cubeName = await runPreflight(api);
       preflightPassed = true;
       updateModelInfo(api);
-      status.textContent = "All " + preflightReport.length + " startup tests passed. Loaded " + cubeName + ".";
+      let restored = false;
+      try { restored = await restoreLastPuzzle(); }
+      catch (restoreError) { console.warn("Could not restore the last puzzle:", restoreError); }
+      if (!restored) status.textContent = "All " + preflightReport.length + " startup tests passed. Loaded " + cubeName + ".";
       document.documentElement.dataset.preflight = "passed";
       if(previewMode) parent.postMessage({type:"pcubes-preview-ready"},location.origin);
     } catch (error) {
