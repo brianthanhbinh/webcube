@@ -10390,6 +10390,7 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
     var J = 0;
     var AxisInfo = null;
     var Angles = null;
+    var FixedLayers = null;
     Result = new Array();
     if ($mod.CurrentPuzzle === null) return Result;
     for (var $l = 0, $end = $mod.CurrentPuzzle.FAxes.FLength - 1; $l <= $end; $l++) {
@@ -10404,11 +10405,14 @@ rtl.module("program",["System","JS","Web","SysUtils","Math","DOM","uPuzzle","uXm
       AxisInfo["enabled"] = $mod.CurrentPuzzle.FAxes.GetItem(I).Enabled;
       AxisInfo["layerCount"] = $mod.CurrentPuzzle.FAxes.GetItem(I).Layers.FLength;
       Angles = new Array();
+      FixedLayers = new Array();
       for (var $l1 = 0, $end1 = $mod.CurrentPuzzle.FAxes.GetItem(I).Layers.FLength - 1; $l1 <= $end1; $l1++) {
         J = $l1;
         Angles.push($mod.CurrentPuzzle.FAxes.GetItem(I).Layers.GetItem(J).FTurningAngle);
+        FixedLayers.push($mod.CurrentPuzzle.FAxes.GetItem(I).Layers.GetItem(J).Fixed);
       };
       AxisInfo["angles"] = Angles;
+      AxisInfo["fixedLayers"] = FixedLayers;
       if ($mod.CurrentPuzzle.FAxes.GetItem(I).Layers.FLength > 0) AxisInfo["angle"] = $mod.CurrentPuzzle.FAxes.GetItem(I).Layers.GetItem(0).FTurningAngle;
       Result.push(AxisInfo);
     };
