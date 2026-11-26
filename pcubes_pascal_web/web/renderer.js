@@ -100,7 +100,8 @@ export class PuzzleRenderer {
           p.previewAngle=tangentLengthSquared>1e-8
             ? (dx0*tangent[0]+dy0*tangent[1])/tangentLengthSquared
             : 0;
-          p.previewAngle=Math.max(-step*1.25,Math.min(step*1.25,p.previewAngle));
+          // Do not clamp the pointer-derived angle to one move. Keep tracking
+          // the complete drag so users can rotate through multiple revolutions.
           this.previewTurn(p.before,p.axis,p.pick.layer,p.pick.normalSign||1,p.previewAngle);
         }
       }

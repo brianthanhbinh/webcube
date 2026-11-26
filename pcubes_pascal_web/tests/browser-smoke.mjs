@@ -34,9 +34,15 @@ try{
    return {debug:{faces:r.projectedFaces.length,parts:window.pCubes.getPartCenters().length,axes,first:r.projectedFaces[0]&&{partIndex:r.projectedFaces[0].partIndex,vertices:r.projectedFaces[0].vertices.slice(0,3)},firstHit:(()=>{for(let y=8;y<h-8;y+=5)for(let x=8;x<w-8;x+=5){const hit=r.pickFace(x,y);if(hit)return {partIndex:hit.partIndex,center:hit.center,normal:hit.normal};}return null;})()}};
  });
  assert.ok(drag?.x!==undefined,"Could not find a visible cubie with a valid drag tangent: "+JSON.stringify(drag?.debug));
- const endX=drag.x+drag.dx*.95,endY=drag.y+drag.dy*.95;
- await page.mouse.move(bounds.x+drag.x,bounds.y+drag.y);await page.mouse.down();await page.mouse.move(bounds.x+endX,bounds.y+endY,{steps:8});await page.mouse.up();
+ // Drag through more than 360 degrees. The pointer must not stop at a
+ // one-turn/180-degree preview clamp; all complete turns are committed.
+ const dragAngle=Math.PI*2.25;
+ const endX=drag.x+drag.dx*dragAngle,endY=drag.y+drag.dy*dragAngle;
+ const undoBeforeDrag=await page.evaluate(()=>window.pCubes.getModelInfo().undoCount);
+ await page.mouse.move(bounds.x+drag.x,bounds.y+drag.y);await page.mouse.down();await page.mouse.move(bounds.x+endX,bounds.y+endY,{steps:24});await page.mouse.up();
  assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Left-drag did not turn the layer under the pointer");
+ const dragUndoDelta=(await page.evaluate(()=>window.pCubes.getModelInfo().undoCount))-undoBeforeDrag;
+ assert.ok(dragUndoDelta>=4,"A drag beyond 360 degrees was clamped instead of committing multiple turns: "+dragUndoDelta);
  const picked=await canvas.evaluate(c=>({axis:c.dataset.pickedAxis,layer:c.dataset.pickedLayer}));
  assert.ok(picked.axis!==undefined&&picked.layer!==undefined,"Pointer did not hit a visible cubie face");
  assert.equal(await page.locator("#turn-axis").inputValue(),picked.axis,"Drag did not use the axis under the pointer");
