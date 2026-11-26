@@ -225,7 +225,7 @@ try{
  await page.waitForFunction(()=>window.pCubes.getModelInfo().undoCount===0);
  const customGeneratorResult=await page.evaluate(async()=>{
    const module=await import("./generator.js");
-   const source=["def generate(spec):","    return {'name': 'Custom Python test', 'xml': '<xml/>', 'figures': {}}"].join("\\n");
+   const source="def generate(spec):"+String.fromCharCode(10)+"    return "+JSON.stringify({name:"Custom Python test",xml:"<xml/>",figures:{}});
    const saved=await module.saveCustomGenerator({name:"smoke-test.figure",text:async()=>source});
    const listed=await module.listCustomGenerators();
    const generated=await module.generateCustomPuzzle(saved.id,"4");
