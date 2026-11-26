@@ -734,6 +734,14 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
           const fixed = String(axesNode.getAttribute("FixedLayers") || "").split(/[;,]/).map(v=>v.trim()).filter(Boolean);
           if (!fixed.includes(String(coreLayer))) fixed.push(String(coreLayer));
           axesNode.setAttribute("FixedLayers", fixed.join(";"));
+          // A zero turning angle is the engine's canonical fixed-layer flag.
+          // Set it explicitly as well, since some legacy XML readers ignore
+          // FixedLayers inherited from the parent <Axes> element.
+          const angleSource=String(axesNode.getAttribute("TurningAngles") || "2*Pi/5");
+          const angleParts=angleSource.split(/[;,]/).map(v=>v.trim()).filter(Boolean);
+          const layerAngles=angleParts.length===layerCount?angleParts:Array(layerCount).fill(angleSource);
+          layerAngles[coreLayer]="0";
+          axesNode.setAttribute("TurningAngles",layerAngles.join(";"));
         }
       }
     }
