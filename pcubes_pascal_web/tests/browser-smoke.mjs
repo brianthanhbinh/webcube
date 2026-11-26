@@ -264,5 +264,10 @@ try{
  assert.equal(await page.locator("#generator-type option").count(),7,"Not all generator families are offered");
  await page.locator("#generator-close").click();
  console.log("PASS: Remote repository library integration and generator UI.");
+ // Returning to the app must restore the most recently loaded puzzle, not the startup test cube.
+ await page.reload();
+ await page.waitForFunction(()=>document.documentElement.dataset.preflight==="passed" && /Megaminx 3x3/i.test(window.pCubes?.getModelInfo?.().name||""),null,{timeout:45000});
+ assert.match(await page.locator("#engine-status").textContent(),/Restored last puzzle:.*Megaminx/i,"Last successfully loaded puzzle was not restored after reload");
+ console.log("PASS: last successfully loaded puzzle is restored after reload.");
  console.log("PASS: preflight, render, drag, scramble, undo/redo/reset, local and remote library, generator UI, XML upload.");
 }finally{await browser.close();}
