@@ -332,10 +332,19 @@ try{
  assert.equal(await page.locator("#generator-type option").count(),7,"Not all generator families are offered");
  await page.locator("#generator-close").click();
  console.log("PASS: Remote repository library integration and generator UI.");
+ // Confirm the remote Pyraminx and its external figure were saved before reload.
+ const savedPuzzle=await page.evaluate(async()=>{
+   const db=await new Promise((resolve,reject)=>{const r=indexedDB.open("pcubes-last-puzzle",1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+   return await new Promise((resolve,reject)=>{const tx=db.transaction("state","readonly"),r=tx.objectStore("state").get("latest");r.onsuccess=()=>resolve({xml:r.result?.xml||"",figures:Object.keys(r.result?.figures||{})});r.onerror=()=>reject(r.error);});
+ });
+ assert.match(savedPuzzle.xml,/Pyraminx 3x3/i,"Latest puzzle was not saved to IndexedDB before reload");
+ assert.ok(savedPuzzle.figures.some(path=>/Tetrahedron\.xml$/i.test(path)),"Saved Pyraminx is missing its Tetrahedron figure");
  // Returning to the app must restore the most recently loaded puzzle, not the startup test cube.
  await page.reload();
- await page.waitForFunction(()=>document.documentElement.dataset.preflight==="passed" && /Pyraminx 3x3/i.test(window.pCubes?.getModelInfo?.().name||""),null,{timeout:45000});
- assert.match(await page.locator("#engine-status").textContent(),/Restored last puzzle:.*Pyraminx/i,"Last successfully loaded puzzle was not restored after reload");
+ await page.waitForFunction(()=>document.documentElement.dataset.preflight==="passed",null,{timeout:45000});
+ const restoredState=await page.evaluate(()=>({name:window.pCubes?.getModelInfo?.().name||"",status:document.querySelector("#engine-status")?.textContent||""}));
+ assert.match(restoredState.name,/Pyraminx 3x3/i,"Last puzzle restore failed: "+JSON.stringify(restoredState));
+ assert.match(restoredState.status,/Restored last puzzle:.*Pyraminx/i,"Restore status was not reported: "+JSON.stringify(restoredState));
  console.log("PASS: last successfully loaded puzzle is restored after reload.");
  console.log("PASS: preflight, render, drag, scramble, undo/redo/reset, local and remote library, generator UI, XML upload.");
 }finally{await browser.close();}
