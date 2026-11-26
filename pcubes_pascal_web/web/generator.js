@@ -135,29 +135,21 @@ export async function generateCustomPuzzle(id,spec,onStatus){
  py.globals.set("webcube_custom_source",record.source);
  py.globals.set("webcube_custom_filename",record.name);
  py.globals.set("webcube_custom_spec",String(spec??""));
- const code=String.raw\`
-import json
-namespace={"__name__":"__webcube_custom_generator__","__file__":webcube_custom_filename}
-exec(compile(webcube_custom_source,webcube_custom_filename,"exec"),namespace)
-entry=namespace.get("generate_puzzle") or namespace.get("generate")
-if not callable(entry):
-    raise ValueError("Your .figure file must define generate(spec) or generate_puzzle(spec).")
-result=entry(webcube_custom_spec)
-if isinstance(result,str):
-    result={"xml":result}
-if not isinstance(result,dict):
-    raise TypeError("The generator must return an XML string or a dictionary.")
-if not isinstance(result.get("xml"),str) or not result["xml"].strip():
-    raise ValueError("The generator result must include a non-empty 'xml' string.")
-if "figures" not in result:
-    result["figures"]={}
-if not isinstance(result["figures"],dict):
-    raise TypeError("'figures' must be a dictionary of relative filenames to XML strings.")
-if any(not isinstance(k,str) or not isinstance(v,str) for k,v in result["figures"].items()):
-    raise TypeError("Every figure entry must map a filename to XML text.")
-json.dumps({"name":str(result.get("name") or webcube_custom_filename.rsplit(".",1)[0]),
-            "xml":result["xml"],"figures":result["figures"]},ensure_ascii=False)
-\`;
+ const code=[
+  "import json",
+  'namespace={"__name__":"__webcube_custom_generator__","__file__":webcube_custom_filename}',
+  'exec(compile(webcube_custom_source,webcube_custom_filename,"exec"),namespace)',
+  'entry=namespace.get("generate_puzzle") or namespace.get("generate")',
+  'if not callable(entry): raise ValueError("Your .figure file must define generate(spec) or generate_puzzle(spec).")',
+  'result=entry(webcube_custom_spec)',
+  'if isinstance(result,str): result={"xml":result}',
+  'if not isinstance(result,dict): raise TypeError("The generator must return an XML string or a dictionary.")',
+  'if not isinstance(result.get("xml"),str) or not result["xml"].strip(): raise ValueError("The generator result must include a non-empty xml string.")',
+  'if "figures" not in result: result["figures"]={}',
+  'if not isinstance(result["figures"],dict): raise TypeError("figures must be a dictionary of filenames to XML strings.")',
+  'if any(not isinstance(k,str) or not isinstance(v,str) for k,v in result["figures"].items()): raise TypeError("Every figure entry must map a filename to XML text.")',
+  'json.dumps({"name":str(result.get("name") or webcube_custom_filename.rsplit(".",1)[0]),"xml":result["xml"],"figures":result["figures"]},ensure_ascii=False)'
+ ].join("\\n");;
  const generated=JSON.parse(await py.runPythonAsync(code));
  if(generated.xml.length>10*1024*1024)throw new Error("Generated puzzle XML is larger than 10 MB.");
  for(const [name,xml] of Object.entries(generated.figures||{})){
