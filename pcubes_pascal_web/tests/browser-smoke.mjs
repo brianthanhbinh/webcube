@@ -28,7 +28,7 @@ try{
      const hit=r.pickFace(x,y);if(!hit)continue;
      for(const [dx,dy] of [[10,0],[-10,0],[0,10],[0,-10],[10,10],[-10,10],[10,-10],[-10,-10]]){
        const target=r.pickLayerForDrag(hit,axes,dx,dy);
-       if(target)return {x,y,dx:target.screenTangent[0],dy:target.screenTangent[1]};
+       if(target)return {x,y,dx:target.screenTangent[0],dy:target.screenTangent[1],axisVector:target.axisVector,radial:target.radial};
      }
    }
    return {debug:{faces:r.projectedFaces.length,parts:window.pCubes.getPartCenters().length,axes,first:r.projectedFaces[0]&&{partIndex:r.projectedFaces[0].partIndex,vertices:r.projectedFaces[0].vertices.slice(0,3)},firstHit:(()=>{for(let y=8;y<h-8;y+=5)for(let x=8;x<w-8;x+=5){const hit=r.pickFace(x,y);if(hit)return {partIndex:hit.partIndex,center:hit.center,normal:hit.normal};}return null;})()}};
@@ -61,7 +61,7 @@ try{
      const p=project(rotated);points.push([p[0]+offset[0],p[1]+offset[1]]);
    }
    return points;
- },{x:drag.x,y:drag.y,angle:dragAngle});
+ },{x:drag.x,y:drag.y,angle:dragAngle,a:drag.axisVector,radial:drag.radial});
  for(const [x,y] of arc)await page.mouse.move(bounds.x+x,bounds.y+y);
  await page.mouse.up();
  assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Left-drag did not turn the layer under the pointer");
