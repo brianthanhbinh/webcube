@@ -318,7 +318,7 @@ try{
          if(JSON.stringify(a.vertices)!==JSON.stringify(b.vertices)&&Number.isInteger(a.partIndex))moved.add(a.partIndex);
        }
        api.undo();
-       return {turned,expected:[...expected].sort((a,b)=>a-b),moved:[...moved].sort((a,b)=>a-b),maskFaces:mask.filter(Boolean).length};
+       return {turned,expected:[...expected].sort((a,b)=>a-b),moved:[...moved].sort((a,b)=>a-b),maskFaces:mask.filter(Boolean).length,ranges:api.getPartLayerRanges(axisNo)};
      },{axisNo:axis.index,layerNo:layer});
      assert.equal(check.turned,true,"Pyraminx axis "+axis.index+" layer "+layer+" did not turn");
      assert.ok(check.maskFaces>0,"Pyraminx animation selected no faces on axis "+axis.index+" layer "+layer);
