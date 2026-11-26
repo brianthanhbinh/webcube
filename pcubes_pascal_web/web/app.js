@@ -604,6 +604,26 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
             axis.setAttribute(name, normalizeNumericList(axis.getAttribute(name)));
         }
       }
+      // Fix the centre slice on odd-layer dodecahedral minxes. Apply the
+      // override to every <Axis>, not only <Axes>: the Pascal DOM reader
+      // reads the per-axis attributes directly.
+      const puzzleName = (doc.getElementsByTagName("Name")[0]?.textContent || "").toLowerCase();
+      if (/megaminx|gigaminx|teraminx|petaminx/.test(puzzleName)) {
+        for (const axis of Array.from(axesParent.getElementsByTagName("Axis"))) {
+          const distances = String(axis.getAttribute("PlaneDistances") || axesParent.getAttribute("PlaneDistances") || "").split(/[;,]/).map(v=>v.trim()).filter(Boolean);
+          const layerCount = distances.length + 1;
+          if (layerCount % 2 !== 1) continue;
+          const coreLayer = Math.floor(layerCount / 2);
+          const fixed = String(axis.getAttribute("FixedLayers") || "").split(/[;,]/).map(v=>v.trim()).filter(Boolean);
+          if (!fixed.includes(String(coreLayer))) fixed.push(String(coreLayer));
+          axis.setAttribute("FixedLayers", fixed.join(";"));
+          const angleSource = String(axis.getAttribute("TurningAngles") || axesParent.getAttribute("TurningAngles") || "2*Pi/5");
+          const angleParts = angleSource.split(/[;,]/).map(v=>v.trim()).filter(Boolean);
+          const layerAngles = angleParts.length === layerCount ? angleParts : Array(layerCount).fill(angleSource);
+          layerAngles[coreLayer] = "0";
+          axis.setAttribute("TurningAngles", layerAngles.join(";"));
+        }
+      }
     }
     const loads = Array.from(doc.getElementsByTagName("LoadFrom"));
     // The official Figures/Cube.xml is a single solid. pCubes then applies
@@ -723,28 +743,6 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
   function loadXmlText(xmlText) {
     let doc = parseXml(xmlText);
     const puzzleName = (doc.getElementsByTagName("Name")[0]?.textContent || "").toLowerCase();
-    // Odd-layer dodecahedral minxes have a stationary central core. Their
-    // XML omitted FixedLayers, accidentally making the core slab turnable.
-    if (/megaminx|gigaminx|teraminx|petaminx/.test(puzzleName)) {
-      for (const axesNode of Array.from(doc.getElementsByTagName("Axes"))) {
-        const distances = String(axesNode.getAttribute("PlaneDistances") || "").split(/[;,]/).map(v=>v.trim()).filter(Boolean);
-        const layerCount = distances.length + 1;
-        if (layerCount % 2 === 1) {
-          const coreLayer = Math.floor(layerCount / 2);
-          const fixed = String(axesNode.getAttribute("FixedLayers") || "").split(/[;,]/).map(v=>v.trim()).filter(Boolean);
-          if (!fixed.includes(String(coreLayer))) fixed.push(String(coreLayer));
-          axesNode.setAttribute("FixedLayers", fixed.join(";"));
-          // A zero turning angle is the engine's canonical fixed-layer flag.
-          // Set it explicitly as well, since some legacy XML readers ignore
-          // FixedLayers inherited from the parent <Axes> element.
-          const angleSource=String(axesNode.getAttribute("TurningAngles") || "2*Pi/5");
-          const angleParts=angleSource.split(/[;,]/).map(v=>v.trim()).filter(Boolean);
-          const layerAngles=angleParts.length===layerCount?angleParts:Array(layerCount).fill(angleSource);
-          layerAngles[coreLayer]="0";
-          axesNode.setAttribute("TurningAngles",layerAngles.join(";"));
-        }
-      }
-    }
     renderer.geometryKind = /mega.?minx|minx|gigaminx|teraminx|petaminx|pyraminx/.test(puzzleName) ? "minx" :
       /cuboid/.test(puzzleName) ? "cuboid" : "other";
     renderer.cameraSnapEnabled = renderer.geometryKind === "cuboid";

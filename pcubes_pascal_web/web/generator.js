@@ -40,7 +40,7 @@ def load_module(filename,module_name):
 figures={}
 if kind=="cube":
  m=load_module("cubes.py","webcube_cubes");n=int(spec)
- if n<2 or n>25:raise ValueError("Cube size must be from 2 to 25.")
+ if n<2:raise ValueError("Cube size must be at least 2.")
  name=f"{n}x{n}x{n} Cube";xml=m["generate_pcube_xml"](n,None)
 elif kind=="cuboid":
  m=load_module("cuboid.py","webcube_cuboid");dims=m["parse"](spec)

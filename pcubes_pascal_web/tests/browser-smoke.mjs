@@ -209,7 +209,7 @@ try{
  assert.match(megaminx.model.name,/Megaminx 3x3/i,"Wrong puzzle loaded instead of Megaminx");
  assert.ok(megaminx.model.parts>=12,"Megaminx dodecahedron did not split into its expected pieces: "+megaminx.model.parts);
  assert.equal(megaminx.axes.length,6,"Megaminx must expose all six dodecahedral turning axes");
- assert.ok(megaminx.axes.every(axis=>axis.fixedLayers?.length===3&&axis.fixedLayers[1]===true),"Megaminx core layer must be fixed on every axis");
+ assert.ok(megaminx.axes.every(axis=>axis.fixedLayers?.length===3&&axis.fixedLayers[1]===true&&Math.abs(Number(axis.angles?.[1]||0))<1e-7),"Megaminx core layer must be fixed with zero angle on every axis: "+JSON.stringify(megaminx.axes));
  const coreUndo=await page.evaluate(()=>window.pCubes.getModelInfo().undoCount);
  assert.equal(await page.evaluate(axis=>window.pCubes.turnLayer(axis,1,1),megaminx.axes[0].index),false,"Megaminx core layer must reject turns");
  assert.equal(await page.evaluate(()=>window.pCubes.getModelInfo().undoCount),coreUndo,"Rejected core turn must not enter undo history");
@@ -227,6 +227,10 @@ try{
  assert.equal(await page.evaluate(()=>window.pCubes.getModelInfo().undoCount),undoBeforeHalf+2,"Megaminx half-turn must record two 72-degree turns");
  await page.evaluate(()=>window.pCubes.reset());
  await page.waitForFunction(()=>window.pCubes.getModelInfo().undoCount===0);
+ // Cube generator must accept orders above the former arbitrary cap.
+ const largeCube=await page.evaluate(async()=>{const m=await import("./generator.js");return await m.generatePuzzle("cube","26");});
+ assert.match(largeCube.name,/26x26x26 Cube/,"Cube generator still caps orders at 25");
+ assert.ok(largeCube.xml.includes("<Name>26x26x26 Cube</Name>"),"Large cube XML was not generated correctly");
  const customGeneratorResult=await page.evaluate(async()=>{
    const module=await import("./generator.js");
    const source="def generate(spec):"+String.fromCharCode(10)+"    return "+JSON.stringify({name:"Custom Python test",xml:"<xml/>",figures:{}});
