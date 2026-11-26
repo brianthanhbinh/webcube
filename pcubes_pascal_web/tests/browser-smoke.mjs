@@ -37,9 +37,33 @@ try{
  // Drag through more than 360 degrees. The pointer must not stop at a
  // one-turn/180-degree preview clamp; all complete turns are committed.
  const dragAngle=Math.PI*2.25;
- const endX=drag.x+drag.dx*dragAngle,endY=drag.y+drag.dy*dragAngle;
  const undoBeforeDrag=await page.evaluate(()=>window.pCubes.getModelInfo().undoCount);
- await page.mouse.move(bounds.x+drag.x,bounds.y+drag.y);await page.mouse.down();await page.mouse.move(bounds.x+endX,bounds.y+endY,{steps:24});await page.mouse.up();
+ // Follow the grabbed cubie's actual projected circular path. A straight
+ // pointer line cannot represent a full physical turn and was a false test.
+ await page.mouse.move(bounds.x+drag.x,bounds.y+drag.y);await page.mouse.down();
+ const arc=await page.evaluate(({x,y,angle})=>{
+   const c=document.querySelector("#puzzle-canvas"),r=c.__pCubesRenderer;
+   const axes=window.pCubes.getAxesInfo();
+   const axisIndex=Number(c.dataset.pickedAxis);
+   const axis=axes.find(a=>a.index===axisIndex);
+   const centers=window.pCubes.getPartCenters();
+   const hit=r.pickFace(x,y);
+   const target=r.pickLayerForDrag(hit,axes,10,0);
+   if(!target)throw new Error("Could not resolve drag axis for arc test");
+   const a=target.axisVector,radial=target.radial;
+   const cross=(u,v)=>[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+   const cy=Math.cos(r.rotationY),sy=Math.sin(r.rotationY),cx=Math.cos(r.rotationX),sx=Math.sin(r.rotationX);
+   const project=v=>{const xx=v[0]*cy+v[2]*sy,zz=-v[0]*sy+v[2]*cy,yy=v[1]*cx-zz*sx;return [c.clientWidth/2+xx*r.renderScale,c.clientHeight/2-yy*r.renderScale];};
+   const start=project(radial),offset=[x-start[0],y-start[1]],points=[];
+   for(let i=1;i<=120;i++){
+     const t=angle*i/120,co=Math.cos(t),si=Math.sin(t),cr=cross(a,radial),dot=a[0]*radial[0]+a[1]*radial[1]+a[2]*radial[2];
+     const rotated=radial.map((v,k)=>v*co+cr[k]*si+a[k]*dot*(1-co));
+     const p=project(rotated);points.push([p[0]+offset[0],p[1]+offset[1]]);
+   }
+   return points;
+ },{x:drag.x,y:drag.y,angle:dragAngle});
+ for(const [x,y] of arc)await page.mouse.move(bounds.x+x,bounds.y+y);
+ await page.mouse.up();
  assert.notEqual(await page.evaluate(()=>JSON.stringify(window.pCubes.getRenderData())),before,"Left-drag did not turn the layer under the pointer");
  const dragUndoDelta=(await page.evaluate(()=>window.pCubes.getModelInfo().undoCount))-undoBeforeDrag;
  assert.ok(dragUndoDelta>=4,"A drag beyond 360 degrees was clamped instead of committing multiple turns: "+dragUndoDelta);
