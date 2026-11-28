@@ -876,6 +876,50 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     await saveLastPuzzle(result.xml, result.figures);
   }
 
+  // Ad frequency is tracked independently for library loads and generated puzzles.
+  const adCounterKey = "pcubes-ads-frequency-v1";
+  function maybeShowAd(source) {
+    if (previewMode || !["library", "generate"].includes(source)) return;
+    const interval = source === "library" ? 5 : 3;
+    let counters = { library: 0, generate: 0 };
+    try {
+      const saved = JSON.parse(localStorage.getItem(adCounterKey) || "null");
+      if (saved && typeof saved === "object") {
+        counters.library = Math.max(0, Number(saved.library) || 0);
+        counters.generate = Math.max(0, Number(saved.generate) || 0);
+      }
+    } catch {}
+    counters[source]++;
+    try { localStorage.setItem(adCounterKey, JSON.stringify(counters)); } catch {}
+    if (counters[source] % interval !== 0) return;
+
+    const container = $("adsense-container");
+    if (!container || !window.adsbygoogle) return;
+    // Each eligible action creates a fresh slot; keep it hidden unless Google fills it.
+    const slot = document.createElement("ins");
+    slot.className = "adsbygoogle";
+    slot.style.display = "block";
+    slot.setAttribute("data-ad-client", "ca-pub-3425065480295617");
+    slot.setAttribute("data-ad-slot", "3070476223");
+    slot.setAttribute("data-ad-format", "auto");
+    slot.setAttribute("data-full-width-responsive", "true");
+    container.replaceChildren(slot);
+    container.hidden = true;
+    const observer = new MutationObserver(() => {
+      const filled = slot.getAttribute("data-ad-status") === "filled";
+      container.hidden = !filled;
+      if (filled) observer.disconnect();
+      else if (slot.getAttribute("data-ad-status") === "unfilled") observer.disconnect();
+    });
+    observer.observe(slot, { attributes: true, attributeFilter: ["data-ad-status"] });
+    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); }
+    catch (error) {
+      observer.disconnect();
+      container.hidden = true;
+      console.warn("AdSense could not initialize:", error);
+    }
+  }
+
   function supported(entry) {
     // External figures are resolved through Add figure after selecting a
     // library puzzle, so library availability is not tied to known filenames.
@@ -903,10 +947,10 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
           button.append(title,meta);
           if(entry.source==="builtin"){
             if(!supported(entry)){button.disabled=true;button.title="Invalid XML entry.";}
-            else button.addEventListener("click",()=>{try{if(loadXmlText(entry.xml)){saveLastPuzzle(originalXmlText,{}).catch(error=>console.warn("Could not save last puzzle:",error));dialog.close();}}catch(error){setFigurePickerEnabled(!!pendingPuzzleDoc);status.textContent="Library load failed: "+error.message;}});
+            else button.addEventListener("click",()=>{try{if(loadXmlText(entry.xml)){saveLastPuzzle(originalXmlText,{}).catch(error=>console.warn("Could not save last puzzle:",error));dialog.close();maybeShowAd("library");}}catch(error){setFigurePickerEnabled(!!pendingPuzzleDoc);status.textContent="Library load failed: "+error.message;}});
           } else button.addEventListener("click",async()=>{
             button.disabled=true;
-            try{await loadRemoteEntry(entry);dialog.close();}
+            try{await loadRemoteEntry(entry);dialog.close();maybeShowAd("library");}
             catch(error){setFigurePickerEnabled(!!pendingPuzzleDoc);status.textContent="Library load failed: "+error.message;button.disabled=false;}
           });
           const row=document.createElement("div");row.className="library-row";row.appendChild(button);
@@ -1079,7 +1123,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       if(!remoteLibrary) remoteLibrary=await loadRemoteLibraryIndex();
       await loadPuzzleWithFigures(generated.xml,generated.figures);
       await saveLastPuzzle(originalXmlText,generated.figures);
-      $("generator-dialog").close();status.textContent="Generated and loaded: "+generated.name;
+      $("generator-dialog").close();status.textContent="Generated and loaded: "+generated.name;maybeShowAd("generate");
     }catch(error){out.textContent="Generator failed: "+(error?.message||String(error));}
     finally{button.disabled=false;}
   });
@@ -1115,7 +1159,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       if(!remoteLibrary) remoteLibrary=await loadRemoteLibraryIndex();
       await loadPuzzleWithFigures(generated.xml,generated.figures);
       await saveLastPuzzle(originalXmlText,generated.figures);
-      $("generator-dialog").close();status.textContent="Custom Python generator loaded: "+generated.name;
+      $("generator-dialog").close();status.textContent="Custom Python generator loaded: "+generated.name;maybeShowAd("generate");
     }catch(error){failure="Custom generator failed: "+(error?.message||String(error));out.textContent=failure;}
     finally{button.disabled=false;await refreshCustomGeneratorList();if(failure)out.textContent=failure;}
   });
