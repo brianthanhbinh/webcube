@@ -894,7 +894,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     if (counters[source] % interval !== 0) return;
 
     const container = $("adsense-container");
-    if (!container || !window.adsbygoogle) return;
+    if (!container) return;
     // Each eligible action creates a fresh slot; keep it hidden unless Google fills it.
     const slot = document.createElement("ins");
     slot.className = "adsbygoogle";
