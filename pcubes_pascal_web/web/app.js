@@ -584,17 +584,21 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     // in the Pascal DOM adapter, so materialize the same inherited values
     // on each axis before handing the document to Pascal. Explicit per-axis
     // values always win, preserving custom puzzle definitions.
-    const axesParent = doc.getElementsByTagName("Axes")[0];
-    if (axesParent) {
-      const numericAttributes = ["PlaneDistances", "TurningAngles", "AvailableAngles",
-        "JumbleAngle", "MinAngles", "MaxAngles"];
+    const axesParents = Array.from(doc.getElementsByTagName("Axes"));
+    const numericAttributes = ["PlaneDistances", "TurningAngles", "AvailableAngles",
+      "JumbleAngle", "MinAngles", "MaxAngles"];
+    const inherited = ["PlaneDistances", "TurningAngles", "AvailableAngles",
+      "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles",
+      "TurnAxesWithLayer", "TurnAxesWithPartNo"];
+    const puzzleName = (doc.getElementsByTagName("Name")[0]?.textContent || "").toLowerCase();
+    for (const axesParent of axesParents) {
+      // A generated cuboid can contain several <Axes> groups: each group
+      // carries different cutting planes for a different dimension. Normalize
+      // every group, otherwise later axes lose their own layer definitions.
       for (const name of numericAttributes) {
         if (axesParent.hasAttribute(name) && axesParent.getAttribute(name) !== "")
           axesParent.setAttribute(name, normalizeNumericList(axesParent.getAttribute(name)));
       }
-      const inherited = ["PlaneDistances", "TurningAngles", "AvailableAngles",
-        "JumbleAngle", "FixedLayers", "MinAngles", "MaxAngles",
-        "TurnAxesWithLayer", "TurnAxesWithPartNo"];
       for (const axis of Array.from(axesParent.getElementsByTagName("Axis"))) {
         for (const name of inherited) {
           const parentValue = axesParent.getAttribute(name);
@@ -604,10 +608,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
             axis.setAttribute(name, normalizeNumericList(axis.getAttribute(name)));
         }
       }
-      // Fix the centre slice on odd-layer dodecahedral minxes. Apply the
-      // override to every <Axis>, not only <Axes>: the Pascal DOM reader
-      // reads the per-axis attributes directly.
-      const puzzleName = (doc.getElementsByTagName("Name")[0]?.textContent || "").toLowerCase();
+      // Fix the centre slice on odd-layer dodecahedral minxes only.
       if (/megaminx|gigaminx|teraminx|petaminx/.test(puzzleName)) {
         for (const axis of Array.from(axesParent.getElementsByTagName("Axis"))) {
           const distances = String(axis.getAttribute("PlaneDistances") || axesParent.getAttribute("PlaneDistances") || "").split(/[;,]/).map(v=>v.trim()).filter(Boolean);
