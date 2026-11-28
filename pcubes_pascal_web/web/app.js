@@ -935,7 +935,11 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
         observer.disconnect();
         return;
       }
-      if (container.getBoundingClientRect().width > 0) {
+      // Check the actual <ins> width as well as its parent. A parent can have
+      // width while the ad element is still unmeasurable during layout changes.
+      const containerWidth = container.getBoundingClientRect().width;
+      const slotWidth = slot.getBoundingClientRect().width;
+      if (containerWidth > 0 && slotWidth > 0) {
         try {
           (window.adsbygoogle = window.adsbygoogle || []).push({});
         } catch (error) {
@@ -945,11 +949,11 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
         }
         return;
       }
-      if (++attempts < 30) requestAnimationFrame(initialize);
+      if (++attempts < 120) requestAnimationFrame(initialize);
       else {
         observer.disconnect();
         container.hidden = true;
-        console.warn("AdSense slot skipped: container has no measurable width.");
+        console.warn("AdSense slot skipped: container or slot has no measurable width.");
       }
     };
     requestAnimationFrame(initialize);
@@ -1147,11 +1151,23 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       slot.setAttribute("data-ad-format", "auto");
       slot.setAttribute("data-full-width-responsive", "true");
       container.replaceChildren(slot);
+      container.style.display = "block";
+      container.style.width = "100%";
+      container.style.boxSizing = "border-box";
       container.hidden = false;
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      const width = Math.round(container.getBoundingClientRect().width);
+      const width = await new Promise(resolve => {
+        let frames = 0;
+        const measure = () => {
+          const parentWidth = container.getBoundingClientRect().width;
+          const slotWidth = slot.getBoundingClientRect().width;
+          if (parentWidth > 0 && slotWidth > 0) return resolve(Math.round(slotWidth));
+          if (++frames >= 120) return resolve(0);
+          requestAnimationFrame(measure);
+        };
+        requestAnimationFrame(measure);
+      });
       report("Measurable ad width", width > 0, width + " px");
-      if (width <= 0) throw new Error("Ad container has zero width.");
+      if (width <= 0) throw new Error("Ad slot has no measurable width after waiting for layout.");
 
       const result = await new Promise(resolve => {
         let finished = false;
