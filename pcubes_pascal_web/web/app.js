@@ -903,8 +903,6 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
 
     const container = $("adsense-container");
     if (!container) return;
-    // AdSense must be able to measure the slot. A hidden ancestor has zero width,
-    // which causes: "No slot size for availableWidth=0".
     const slot = document.createElement("ins");
     slot.className = "adsbygoogle";
     slot.style.display = "block";
@@ -917,49 +915,77 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     container.style.visibility = "hidden";
     container.hidden = false;
 
-    const observer = new MutationObserver(() => {
+    let finished = false;
+    let observer;
+    let statusTimer;
+    const hideSlot = reason => {
+      if (finished) return;
+      finished = true;
+      observer?.disconnect();
+      clearTimeout(statusTimer);
+      container.hidden = true;
+      container.style.visibility = "hidden";
+      container.replaceChildren();
+      if (reason) console.info("AdSense slot kept hidden:", reason);
+    };
+    const showOnlyWithFrame = () => {
+      if (finished) return;
+      // A filled status without a rendered ad iframe can leave an empty white
+      // rectangle. Do not expose the slot unless Google has inserted a frame.
+      const frame = slot.querySelector("iframe");
+      if (!frame) return;
+      const rect = frame.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      finished = true;
+      observer?.disconnect();
+      clearTimeout(statusTimer);
+      container.hidden = false;
+      container.style.visibility = "visible";
+    };
+
+    observer = new MutationObserver(() => {
       const state = slot.getAttribute("data-ad-status");
       if (state === "filled") {
-        container.hidden = false;
-        container.style.visibility = "visible";
-        observer.disconnect();
+        // Give AdSense a moment to attach its iframe after updating the status.
+        setTimeout(showOnlyWithFrame, 1200);
       } else if (state === "unfilled") {
-        container.hidden = true;
-        container.style.visibility = "hidden";
-        observer.disconnect();
+        hideSlot("Google returned an unfilled ad request.");
       }
     });
-    observer.observe(slot, { attributes: true, attributeFilter: ["data-ad-status"] });
+    observer.observe(slot, {
+      attributes: true,
+      attributeFilter: ["data-ad-status"],
+      childList: true,
+      subtree: true
+    });
 
-    // Wait until the now-visible container has a real layout width before pushing.
+    // Fail closed if Google never reports a result, or reports filled but
+    // never creates a measurable ad iframe.
+    statusTimer = setTimeout(() => {
+      if (slot.getAttribute("data-ad-status") === "filled") {
+        showOnlyWithFrame();
+        if (!finished) hideSlot("Google marked the slot filled but no visible ad iframe appeared.");
+      } else {
+        hideSlot("Google did not return an ad status.");
+      }
+    }, 8000);
+
     let attempts = 0;
     const initialize = () => {
-      if (!slot.isConnected) {
-        observer.disconnect();
-        return;
-      }
-      // Check the actual <ins> width as well as its parent. A parent can have
-      // width while the ad element is still unmeasurable during layout changes.
+      if (!slot.isConnected || finished) return;
       const containerWidth = container.getBoundingClientRect().width;
       const slotWidth = slot.getBoundingClientRect().width;
       if (containerWidth > 0 && slotWidth > 0) {
         try {
           (window.adsbygoogle = window.adsbygoogle || []).push({});
         } catch (error) {
-          observer.disconnect();
-          container.hidden = true;
-          container.style.visibility = "hidden";
+          hideSlot("AdSense initialization failed.");
           console.warn("AdSense could not initialize:", error);
         }
         return;
       }
       if (++attempts < 120) requestAnimationFrame(initialize);
-      else {
-        observer.disconnect();
-        container.hidden = true;
-        container.style.visibility = "hidden";
-        console.warn("AdSense slot skipped: container or slot has no measurable width.");
-      }
+      else hideSlot("The ad slot never received a measurable width.");
     };
     requestAnimationFrame(initialize);
   }
