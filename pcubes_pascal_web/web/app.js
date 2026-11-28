@@ -1110,6 +1110,82 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     finally { file.value = ""; }
   });
 
+  async function runAdSelfTest() {
+    const button = $("ad-self-test");
+    const output = $("ad-self-test-results");
+    const container = $("adsense-container");
+    const lines = [];
+    const report = (name, ok, detail = "") => {
+      lines.push(`${ok ? "PASS" : "FAIL"} · ${name}${detail ? " — " + detail : ""}`);
+      output.textContent = lines.join("\n");
+      output.dataset.result = lines.some(line => line.startsWith("FAIL")) ? "fail" : "pass";
+    };
+    button.disabled = true;
+    output.dataset.result = "pending";
+    try {
+      const loader = document.querySelector('script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]');
+      report("AdSense loader tag", !!loader, loader ? "script tag found" : "loader script is missing");
+      if (!container) throw new Error("AdSense container is missing.");
+
+      const slot = document.createElement("ins");
+      slot.className = "adsbygoogle";
+      slot.style.display = "block";
+      slot.style.width = "100%";
+      slot.setAttribute("data-ad-client", "ca-pub-3425065480295617");
+      slot.setAttribute("data-ad-slot", "3070476223");
+      slot.setAttribute("data-ad-format", "auto");
+      slot.setAttribute("data-full-width-responsive", "true");
+      container.replaceChildren(slot);
+      container.hidden = false;
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const width = Math.round(container.getBoundingClientRect().width);
+      report("Measurable ad width", width > 0, width + " px");
+      if (width <= 0) throw new Error("Ad container has zero width.");
+
+      const result = await new Promise(resolve => {
+        let finished = false;
+        const finish = value => {
+          if (finished) return;
+          finished = true;
+          observer.disconnect();
+          clearTimeout(timeout);
+          resolve(value);
+        };
+        const observer = new MutationObserver(() => {
+          const state = slot.getAttribute("data-ad-status");
+          if (state === "filled" || state === "unfilled") finish(state);
+        });
+        observer.observe(slot, { attributes: true, attributeFilter: ["data-ad-status"] });
+        const timeout = setTimeout(() => finish("pending"), 12000);
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+          report("Ad request submitted", true, "waiting for Google response");
+        } catch (error) {
+          finish("error: " + (error?.message || String(error)));
+        }
+      });
+      if (result === "filled") {
+        report("Ad response", true, "Google filled the slot");
+      } else if (result === "unfilled") {
+        container.hidden = true;
+        report("Ad response", false, "Google returned no ad; setup may still be correct");
+      } else if (result === "pending") {
+        container.hidden = true;
+        report("Ad response", false, "no response within 12 seconds; check blockers, network, and console");
+      } else {
+        container.hidden = true;
+        report("Ad request", false, result);
+      }
+    } catch (error) {
+      if (container) container.hidden = true;
+      report("Ad test", false, error?.message || String(error));
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  $("ad-self-test")?.addEventListener("click", runAdSelfTest);
+
   function recordTest(name, passed, detail = "") {
     preflightReport.push({ name, passed, detail });
     const report = $("preflight-results");
