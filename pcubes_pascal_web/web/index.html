@@ -80,6 +80,37 @@
     <p id="custom-generator-status" role="status" aria-live="polite">Upload a .py file and its matching figure.xml to add your first local generator.</p>
     <p class="muted">Your .py file must define <code>generate(spec)</code> and return puzzle XML (as a string or a dictionary with <code>name</code> and <code>xml</code>). The puzzle XML should reference <code>Figures\\figure.xml</code>. The paired figure.xml supplies the geometry. Only run Python files you wrote or trust.</p>
   </dialog>
+  <section id="adsense-container" hidden aria-label="Advertisement" style="max-width: 970px; margin: 20px auto; padding: 0 16px;">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-3425065480295617"
+         data-ad-slot="3070476223"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+  </section>
+  <script>
+    (function () {
+      var container = document.getElementById("adsense-container");
+      var slot = container.querySelector(".adsbygoogle");
+
+      // Keep the space collapsed unless AdSense confirms that an ad was filled.
+      var observer = new MutationObserver(function () {
+        if (slot.getAttribute("data-ad-status") === "filled") {
+          container.hidden = false;
+        } else {
+          container.hidden = true;
+        }
+      });
+      observer.observe(slot, { attributes: true, attributeFilter: ["data-ad-status"] });
+
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (error) {
+        container.hidden = true;
+        console.warn("AdSense could not initialize:", error);
+      }
+    })();
+  </script>
   <footer>Pascal puzzle model · JavaScript Canvas renderer · browser interface</footer>
   <script src="rtl.js"></script><script src="pcubes_web.js"></script><script type="module" src="app.js"></script>
 </body>
