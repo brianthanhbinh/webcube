@@ -16,7 +16,7 @@ Latest verified build: [GitHub Actions run](https://github.com/brianthanhbinh/we
 - Reset reloads the last successfully loaded XML file.
 - The renderer projects and draws the Pascal geometry in the browser.
 
-The built-in puzzle library is not yet ported. Use **Load puzzle XML** to open a puzzle file.
+Use the built in library.Or use **Load puzzle XML** to open a puzzle file.
 
 ## Build locally
 
