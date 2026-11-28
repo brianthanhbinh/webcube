@@ -7,7 +7,7 @@ const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1365,height:900}});
 const errors=[];page.on("pageerror",e=>errors.push(e.message));
 try{
- await page.goto("http://127.0.0.1:4173/",{waitUntil:"networkidle"});
+ await page.goto("http://127.0.0.1:4173/?browser-test=1",{waitUntil:"networkidle"});
  await page.waitForFunction(()=>["passed","failed"].includes(document.documentElement.dataset.preflight),null,{timeout:120000});
  const pre=await page.evaluate(()=>({result:document.documentElement.dataset.preflight,status:document.querySelector("#engine-status")?.textContent||"",report:document.querySelector("#preflight-results")?.textContent||"",model:document.querySelector("#model-info")?.textContent||""}));
  assert.equal(pre.result,"passed","Preflight: "+pre.status+" | "+pre.report);assert.match(pre.model,/parts/);
@@ -191,34 +191,22 @@ try{
  const remoteAxes=await page.evaluate(()=>window.pCubes.getAxesInfo());
  assert.equal(remoteAxes.length,3,"Remote cube must load all three axes");
  assert.deepEqual(remoteAxes.map(a=>[Math.round(a.x),Math.round(a.y),Math.round(a.z)]),[[1,0,0],[0,1,0],[0,0,1]],"NormVector attributes were not loaded for remote axes");
- // Exercise every official remote puzzle, not just the two small cube fixtures.
+ // Exercise every official remote puzzle through the exact production
+ // fetch + figure-resolution + Pascal load path, without repeating the
+ // library dialog's search/filter/click UI work for all 104 entries.
  const catalog=await page.evaluate(async()=>{const m=await import("./remote-library.js");return await m.loadRemoteLibraryIndex();});
- const remoteFailures=[];
- for(const entry of catalog.puzzles){
-   if(!await page.locator("#library-dialog").evaluate(d=>d.open)){
-     await page.locator("#library").click();
-     await page.waitForFunction(()=>document.querySelector("#library-dialog")?.open);
+ const remoteFailures=await page.evaluate(async entries=>{
+   const loader=window.__pCubesBrowserTest?.loadRemoteEntry;
+   if(typeof loader!=="function")throw new Error("Browser-test loader hook is missing.");
+   const failures=[];
+   for(const entry of entries){
+     try{
+       const model=await loader(entry);
+       if(!model?.name)throw new Error("Pascal returned no loaded model.");
+     }catch(error){failures.push({path:entry.path,error:String(error).slice(0,300)});}
    }
-   await page.locator("#library-search").fill(entry.path);
-   const item=page.locator("#library-list button").filter({hasText:"webcube-library / "+entry.path});
-   try{
-     await item.waitFor({state:"visible",timeout:10000});
-     await item.click();
-     await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open || (document.querySelector("#engine-status")?.textContent||"").startsWith("Library load failed"),null,{timeout:30000});
-     const failed=await page.locator("#library-dialog").evaluate(d=>d.open);
-     if(failed) {
-       remoteFailures.push({path:entry.path,error:await page.locator("#engine-status").textContent()});
-       await page.locator("#library-close").click();
-       await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open);
-     }
-   }catch(error){
-     remoteFailures.push({path:entry.path,error:String(error).slice(0,300)});
-     if(await page.locator("#library-dialog").evaluate(d=>d.open)){
-       await page.locator("#library-close").click();
-       await page.waitForFunction(()=>!document.querySelector("#library-dialog")?.open);
-     }
-   }
- }
+   return failures;
+ },catalog.puzzles);
  console.log("REMOTE_CATALOG_SCAN "+JSON.stringify({total:catalog.puzzles.length,failures:remoteFailures}));
  assert.deepEqual(remoteFailures,[],"Remote library XML failures: "+JSON.stringify(remoteFailures));
  // Megaminx regression: verify its external dodecahedron figure, all six
