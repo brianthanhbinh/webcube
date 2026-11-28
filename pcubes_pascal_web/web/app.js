@@ -914,15 +914,18 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     slot.setAttribute("data-ad-format", "auto");
     slot.setAttribute("data-full-width-responsive", "true");
     container.replaceChildren(slot);
+    container.style.visibility = "hidden";
     container.hidden = false;
 
     const observer = new MutationObserver(() => {
       const state = slot.getAttribute("data-ad-status");
       if (state === "filled") {
         container.hidden = false;
+        container.style.visibility = "visible";
         observer.disconnect();
       } else if (state === "unfilled") {
         container.hidden = true;
+        container.style.visibility = "hidden";
         observer.disconnect();
       }
     });
@@ -945,6 +948,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
         } catch (error) {
           observer.disconnect();
           container.hidden = true;
+          container.style.visibility = "hidden";
           console.warn("AdSense could not initialize:", error);
         }
         return;
@@ -953,6 +957,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       else {
         observer.disconnect();
         container.hidden = true;
+        container.style.visibility = "hidden";
         console.warn("AdSense slot skipped: container or slot has no measurable width.");
       }
     };
