@@ -326,12 +326,23 @@ try{
    }
  }
  console.log("PASS: Pyraminx four axes and animated masks match Pascal physical-piece turns.");
- // Generator UI is available after the Pascal startup self-test.
+ // Regression: a 5x5x3 cuboid has three axes with 5, 5 and 3 layers.
+ // Its generator intentionally emits separate <Axes> groups because the
+ // dimensions have different PlaneDistances. Every group must survive the
+ // browser XML normalization and Pascal loading path.
  await page.locator("#generator").click();
  await page.waitForFunction(()=>document.querySelector("#generator-dialog")?.open);
  assert.equal(await page.locator("#generator-type option").count(),7,"Not all generator families are offered");
- await page.locator("#generator-close").click();
- console.log("PASS: Remote repository library integration and generator UI.");
+ await page.locator("#generator-type").selectOption("cuboid");
+ await page.locator("#generator-size").fill("5x5x3");
+ await page.locator("#generator-create").click();
+ await page.waitForFunction(()=>/Generated and loaded: Cuboid 5x5x3/i.test(document.querySelector("#engine-status")?.textContent||""),null,{timeout:180000});
+ const cuboidRegression=await page.evaluate(()=>({model:window.pCubes.getModelInfo(),axes:window.pCubes.getAxesInfo()}));
+ assert.equal(cuboidRegression.model.parts,75,"5x5x3 cuboid must split into 75 pieces: "+JSON.stringify(cuboidRegression));
+ assert.deepEqual(cuboidRegression.axes.map(axis=>axis.layers),[5,5,3],"5x5x3 axis layer counts are wrong: "+JSON.stringify(cuboidRegression.axes));
+ assert.ok(cuboidRegression.axes.every(axis=>axis.fixedLayers?.length===axis.layers&&axis.fixedLayers.every(fixed=>!fixed)),"Cuboid axes must not contain fixed core layers: "+JSON.stringify(cuboidRegression.axes));
+ assert.ok(cuboidRegression.axes.every(axis=>axis.angles?.length===axis.layers&&axis.angles.every(angle=>Math.abs(Number(angle))>1e-7)),"Every cuboid layer must have a nonzero turning angle: "+JSON.stringify(cuboidRegression.axes));
+ console.log("PASS: generated 5x5x3 cuboid has 75 pieces, [5,5,3] layers, and no fixed cores.");
  // Confirm the remote Pyraminx and its external figure were saved before reload.
  const savedPuzzle=await page.evaluate(async()=>{
    const db=await new Promise((resolve,reject)=>{const r=indexedDB.open("pcubes-last-puzzle",1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
