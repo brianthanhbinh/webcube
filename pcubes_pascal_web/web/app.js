@@ -918,39 +918,54 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     let finished = false;
     let observer;
     let statusTimer;
+    let frameCheckTimer;
     const hideSlot = reason => {
       if (finished) return;
       finished = true;
       observer?.disconnect();
       clearTimeout(statusTimer);
+      clearTimeout(frameCheckTimer);
       container.hidden = true;
       container.style.visibility = "hidden";
       container.replaceChildren();
       if (reason) console.info("AdSense slot kept hidden:", reason);
     };
     const showOnlyWithFrame = () => {
-      if (finished) return;
-      // A filled status without a rendered ad iframe can leave an empty white
-      // rectangle. Do not expose the slot unless Google has inserted a frame.
+      if (finished) return false;
+      // Display units use Google's responsive "auto" format. Only expose the
+      // single slot after its actual ad iframe has a measurable size.
       const frame = slot.querySelector("iframe");
-      if (!frame) return;
+      if (!frame) return false;
       const rect = frame.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return;
+      if (rect.width <= 0 || rect.height <= 0) return false;
       finished = true;
       observer?.disconnect();
       clearTimeout(statusTimer);
+      clearTimeout(frameCheckTimer);
       container.hidden = false;
       container.style.visibility = "visible";
+      return true;
     };
 
-    observer = new MutationObserver(() => {
+    observer = new MutationObserver(records => {
       const state = slot.getAttribute("data-ad-status");
-      if (state === "filled") {
-        // Give AdSense a moment to attach its iframe after updating the status.
-        setTimeout(showOnlyWithFrame, 1200);
-      } else if (state === "unfilled") {
+      if (state === "unfilled") {
         hideSlot("Google returned an unfilled ad request.");
+        return;
       }
+      if (state !== "filled") return;
+
+      // Check immediately when Google's iframe is inserted, then allow a
+      // short grace period for late iframe sizing. Never create a second slot.
+      if (records.some(record => record.type === "childList")) {
+        if (showOnlyWithFrame()) return;
+      }
+      clearTimeout(frameCheckTimer);
+      frameCheckTimer = setTimeout(() => {
+        if (!showOnlyWithFrame() && !finished) {
+          // Keep waiting for iframe insertion until the overall timeout.
+        }
+      }, 1200);
     });
     observer.observe(slot, {
       attributes: true,
