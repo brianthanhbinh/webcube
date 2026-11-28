@@ -919,53 +919,67 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     let observer;
     let statusTimer;
     let frameCheckTimer;
+    let pendingFrame = null;
     const hideSlot = reason => {
       if (finished) return;
       finished = true;
       observer?.disconnect();
       clearTimeout(statusTimer);
       clearTimeout(frameCheckTimer);
+      if (pendingFrame) pendingFrame.removeEventListener("load", onFrameLoad);
       container.hidden = true;
       container.style.visibility = "hidden";
       container.replaceChildren();
       if (reason) console.info("AdSense slot kept hidden:", reason);
     };
-    const showOnlyWithFrame = () => {
-      if (finished) return false;
-      // Display units use Google's responsive "auto" format. Only expose the
-      // single slot after its actual ad iframe has a measurable size.
-      const frame = slot.querySelector("iframe");
-      if (!frame) return false;
+    const revealLoadedFrame = frame => {
+      if (finished || !frame || !frame.isConnected) return false;
       const rect = frame.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return false;
       finished = true;
       observer?.disconnect();
       clearTimeout(statusTimer);
       clearTimeout(frameCheckTimer);
+      frame.removeEventListener("load", onFrameLoad);
       container.hidden = false;
       container.style.visibility = "visible";
       return true;
     };
+    const onFrameLoad = () => {
+      // An iframe can be inserted before its creative has finished loading.
+      // Keep the whole slot hidden until that load completes.
+      if (pendingFrame) revealLoadedFrame(pendingFrame);
+    };
+    const waitForLoadedFrame = () => {
+      if (finished) return false;
+      const frame = slot.querySelector("iframe");
+      if (!frame) return false;
+      if (pendingFrame !== frame) {
+        if (pendingFrame) pendingFrame.removeEventListener("load", onFrameLoad);
+        pendingFrame = frame;
+        frame.addEventListener("load", onFrameLoad, { once: true });
+      }
+      // Handle a frame that completed between insertion and listener setup.
+      try {
+        if (frame.contentDocument?.readyState === "complete") {
+          return revealLoadedFrame(frame);
+        }
+      } catch {}
+      return false;
+    };
 
-    observer = new MutationObserver(records => {
+    observer = new MutationObserver(() => {
       const state = slot.getAttribute("data-ad-status");
       if (state === "unfilled") {
         hideSlot("Google returned an unfilled ad request.");
         return;
       }
       if (state !== "filled") return;
-
-      // Check immediately when Google's iframe is inserted, then allow a
-      // short grace period for late iframe sizing. Never create a second slot.
-      if (records.some(record => record.type === "childList")) {
-        if (showOnlyWithFrame()) return;
-      }
+      waitForLoadedFrame();
       clearTimeout(frameCheckTimer);
       frameCheckTimer = setTimeout(() => {
-        if (!showOnlyWithFrame() && !finished) {
-          // Keep waiting for iframe insertion until the overall timeout.
-        }
-      }, 1200);
+        if (!finished) waitForLoadedFrame();
+      }, 500);
     });
     observer.observe(slot, {
       attributes: true,
@@ -983,7 +997,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       } else {
         hideSlot("Google did not return an ad status.");
       }
-    }, 8000);
+    }, 15000);
 
     let attempts = 0;
     const initialize = () => {
