@@ -876,6 +876,18 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
     await saveLastPuzzle(result.xml, result.figures);
   }
 
+  // Expose the same full loader to the browser smoke test without driving
+  // the library dialog 104 times. This hook exists only with ?browser-test=1.
+  if (new URLSearchParams(location.search).has("browser-test")) {
+    window.__pCubesBrowserTest = {
+      loadRemoteEntry: async entry => {
+        const result = await fetchRemotePuzzle(entry, remoteLibrary);
+        await loadPuzzleWithFigures(result.xml, result.figures);
+        return window.pCubes?.getModelInfo?.() || null;
+      }
+    };
+  }
+
   // Ad frequency is tracked independently for library loads and generated puzzles.
   const adCounterKey = "pcubes-ads-frequency-v1";
   function maybeShowAd(source) {
