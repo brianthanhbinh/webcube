@@ -40,3 +40,24 @@ html.preview-mode #preview-dialog,html.preview-mode #library-dialog,html.preview
 #generator-dialog hr{border:0;border-top:1px solid var(--border,#bbb);margin:1rem 0}
 #custom-generator-file{display:block;max-width:100%;margin:.4rem 0 .7rem}
 #custom-generator-status{overflow-wrap:anywhere}
+
+
+/* Ad placement: centered beneath the puzzle area; hidden really means hidden. */
+body{grid-template-rows:auto 1fr auto auto}
+#adsense-container{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  width:100%;
+  max-width:none;
+  margin:16px auto;
+  padding:0 16px;
+  box-sizing:border-box;
+}
+#adsense-container[hidden]{display:none!important}
+#adsense-container ins.adsbygoogle{
+  display:block;
+  width:100%;
+  max-width:970px;
+  margin:0 auto;
+}
