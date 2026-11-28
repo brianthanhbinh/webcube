@@ -1121,7 +1121,10 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       output.dataset.result = lines.some(line => line.startsWith("FAIL")) ? "fail" : "pass";
     };
     button.disabled = true;
+    const originalButtonText = button.textContent;
+    button.textContent = "Testing…";
     output.dataset.result = "pending";
+    output.textContent = "Checking the ad container and requesting an ad…";
     try {
       const loader = document.querySelector('script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]');
       report("AdSense loader tag", !!loader, loader ? "script tag found" : "loader script is missing");
@@ -1156,7 +1159,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
           if (state === "filled" || state === "unfilled") finish(state);
         });
         observer.observe(slot, { attributes: true, attributeFilter: ["data-ad-status"] });
-        const timeout = setTimeout(() => finish("pending"), 12000);
+        const timeout = setTimeout(() => finish("pending"), 6000);
         try {
           (window.adsbygoogle = window.adsbygoogle || []).push({});
           report("Ad request submitted", true, "waiting for Google response");
@@ -1171,7 +1174,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
         report("Ad response", false, "Google returned no ad; setup may still be correct");
       } else if (result === "pending") {
         container.hidden = true;
-        report("Ad response", false, "no response within 12 seconds; check blockers, network, and console");
+        report("Ad response", false, "no response within 6 seconds; check blockers, network, and console");
       } else {
         container.hidden = true;
         report("Ad request", false, result);
@@ -1181,6 +1184,7 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
       report("Ad test", false, error?.message || String(error));
     } finally {
       button.disabled = false;
+      button.textContent = originalButtonText;
     }
   }
 
