@@ -88,29 +88,6 @@
          data-ad-format="auto"
          data-full-width-responsive="true"></ins>
   </section>
-  <script>
-    (function () {
-      var container = document.getElementById("adsense-container");
-      var slot = container.querySelector(".adsbygoogle");
-
-      // Keep the space collapsed unless AdSense confirms that an ad was filled.
-      var observer = new MutationObserver(function () {
-        if (slot.getAttribute("data-ad-status") === "filled") {
-          container.hidden = false;
-        } else {
-          container.hidden = true;
-        }
-      });
-      observer.observe(slot, { attributes: true, attributeFilter: ["data-ad-status"] });
-
-      try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      } catch (error) {
-        container.hidden = true;
-        console.warn("AdSense could not initialize:", error);
-      }
-    })();
-  </script>
   <footer>Pascal puzzle model · JavaScript Canvas renderer · browser interface</footer>
   <script src="rtl.js"></script><script src="pcubes_web.js"></script><script type="module" src="app.js"></script>
 </body>
