@@ -326,6 +326,12 @@ try{
    }
  }
  console.log("PASS: Pyraminx four axes and animated masks match Pascal physical-piece turns.");
+ // Preserve the Pyraminx that the end-of-suite reload test expects;
+ // the generator UI automatically saves each newly generated puzzle.
+ const previousSavedPuzzle=await page.evaluate(async()=>{
+   const db=await new Promise((resolve,reject)=>{const r=indexedDB.open("pcubes-last-puzzle",1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+   return await new Promise((resolve,reject)=>{const tx=db.transaction("state","readonly"),r=tx.objectStore("state").get("latest");r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+ });
  // Regression: a 5x5x3 cuboid has three axes with 5, 5 and 3 layers.
  // Its generator intentionally emits separate <Axes> groups because the
  // dimensions have different PlaneDistances. Every group must survive the
@@ -347,6 +353,10 @@ try{
  const centerCounts=[0,1,2].map(axis=>new Set(cuboidRegression.centers.map(center=>Math.round(center[axis]*10000)/10000)).size);
  assert.deepEqual(centerCounts,[5,5,3],"Cuboid geometry is stretched or collapsed; distinct center coordinates must be [5,5,3]: "+JSON.stringify(centerCounts));
  console.log("PASS: generated 5x5x3 cuboid has 66 visible pieces, [5,5,3] geometry, and no fixed cores.");
+ await page.evaluate(async(saved)=>{
+   const db=await new Promise((resolve,reject)=>{const r=indexedDB.open("pcubes-last-puzzle",1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+   await new Promise((resolve,reject)=>{const tx=db.transaction("state","readwrite");tx.objectStore("state").put(saved,"latest");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+ },previousSavedPuzzle);
  // Confirm the remote Pyraminx and its external figure were saved before reload.
  const savedPuzzle=await page.evaluate(async()=>{
    const db=await new Promise((resolve,reject)=>{const r=indexedDB.open("pcubes-last-puzzle",1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
