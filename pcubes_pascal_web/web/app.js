@@ -895,29 +895,56 @@ import { loadRemoteLibraryIndex, fetchRemotePuzzle } from "./remote-library.js";
 
     const container = $("adsense-container");
     if (!container) return;
-    // Each eligible action creates a fresh slot; keep it hidden unless Google fills it.
+    // AdSense must be able to measure the slot. A hidden ancestor has zero width,
+    // which causes: "No slot size for availableWidth=0".
     const slot = document.createElement("ins");
     slot.className = "adsbygoogle";
     slot.style.display = "block";
+    slot.style.width = "100%";
     slot.setAttribute("data-ad-client", "ca-pub-3425065480295617");
     slot.setAttribute("data-ad-slot", "3070476223");
     slot.setAttribute("data-ad-format", "auto");
     slot.setAttribute("data-full-width-responsive", "true");
     container.replaceChildren(slot);
-    container.hidden = true;
+    container.hidden = false;
+
     const observer = new MutationObserver(() => {
-      const filled = slot.getAttribute("data-ad-status") === "filled";
-      container.hidden = !filled;
-      if (filled) observer.disconnect();
-      else if (slot.getAttribute("data-ad-status") === "unfilled") observer.disconnect();
+      const state = slot.getAttribute("data-ad-status");
+      if (state === "filled") {
+        container.hidden = false;
+        observer.disconnect();
+      } else if (state === "unfilled") {
+        container.hidden = true;
+        observer.disconnect();
+      }
     });
     observer.observe(slot, { attributes: true, attributeFilter: ["data-ad-status"] });
-    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); }
-    catch (error) {
-      observer.disconnect();
-      container.hidden = true;
-      console.warn("AdSense could not initialize:", error);
-    }
+
+    // Wait until the now-visible container has a real layout width before pushing.
+    let attempts = 0;
+    const initialize = () => {
+      if (!slot.isConnected) {
+        observer.disconnect();
+        return;
+      }
+      if (container.getBoundingClientRect().width > 0) {
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (error) {
+          observer.disconnect();
+          container.hidden = true;
+          console.warn("AdSense could not initialize:", error);
+        }
+        return;
+      }
+      if (++attempts < 30) requestAnimationFrame(initialize);
+      else {
+        observer.disconnect();
+        container.hidden = true;
+        console.warn("AdSense slot skipped: container has no measurable width.");
+      }
+    };
+    requestAnimationFrame(initialize);
   }
 
   function supported(entry) {
