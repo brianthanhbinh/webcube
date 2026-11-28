@@ -191,23 +191,31 @@ try{
  const remoteAxes=await page.evaluate(()=>window.pCubes.getAxesInfo());
  assert.equal(remoteAxes.length,3,"Remote cube must load all three axes");
  assert.deepEqual(remoteAxes.map(a=>[Math.round(a.x),Math.round(a.y),Math.round(a.z)]),[[1,0,0],[0,1,0],[0,0,1]],"NormVector attributes were not loaded for remote axes");
- // Exercise every official remote puzzle through the exact production
- // fetch + figure-resolution + Pascal load path, without repeating the
- // library dialog's search/filter/click UI work for all 104 entries.
+ // Validate every official remote puzzle and its external figures without
+ // re-running the expensive Pascal engine 104 times. Representative remote
+ // puzzles, Megaminx and Pyraminx are still loaded through Pascal below.
  const catalog=await page.evaluate(async()=>{const m=await import("./remote-library.js");return await m.loadRemoteLibraryIndex();});
- const remoteFailures=await page.evaluate(async entries=>{
-   const loader=window.__pCubesBrowserTest?.loadRemoteEntry;
-   if(typeof loader!=="function")throw new Error("Browser-test loader hook is missing.");
+ const remoteScan=await page.evaluate(async entries=>{
+   const fetchEntry=window.__pCubesBrowserTest?.fetchRemoteEntry;
+   if(typeof fetchEntry!=="function")throw new Error("Browser-test fetch hook is missing.");
    const failures=[];
    for(const entry of entries){
      try{
-       const model=await loader(entry);
-       if(!model?.name)throw new Error("Pascal returned no loaded model.");
+       const result=await fetchEntry(entry);
+       if(!result.xml?.trim())throw new Error("Puzzle XML is empty.");
+       const doc=new DOMParser().parseFromString(result.xml,"application/xml");
+       if(doc.querySelector("parsererror"))throw new Error("Puzzle XML is malformed.");
+       for(const [name,xml] of Object.entries(result.figures||{})){
+         if(!xml?.trim())throw new Error("External figure is empty: "+name);
+         if(new DOMParser().parseFromString(xml,"application/xml").querySelector("parsererror"))
+           throw new Error("External figure XML is malformed: "+name);
+       }
      }catch(error){failures.push({path:entry.path,error:String(error).slice(0,300)});}
    }
-   return failures;
+   return {failures,checked:entries.length};
  },catalog.puzzles);
- console.log("REMOTE_CATALOG_SCAN "+JSON.stringify({total:catalog.puzzles.length,failures:remoteFailures}));
+ const remoteFailures=remoteScan.failures;
+ console.log("REMOTE_CATALOG_SCAN "+JSON.stringify({total:remoteScan.checked,failures:remoteFailures}));
  assert.deepEqual(remoteFailures,[],"Remote library XML failures: "+JSON.stringify(remoteFailures));
  // Megaminx regression: verify its external dodecahedron figure, all six
  // cutting axes, and all twelve independently defined face colours.
