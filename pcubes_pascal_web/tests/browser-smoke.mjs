@@ -337,12 +337,16 @@ try{
  await page.locator("#generator-size").fill("5x5x3");
  await page.locator("#generator-create").click();
  await page.waitForFunction(()=>/Generated and loaded: Cuboid 5x5x3/i.test(document.querySelector("#engine-status")?.textContent||""),null,{timeout:180000});
- const cuboidRegression=await page.evaluate(()=>({model:window.pCubes.getModelInfo(),axes:window.pCubes.getAxesInfo()}));
- assert.equal(cuboidRegression.model.parts,75,"5x5x3 cuboid must split into 75 pieces: "+JSON.stringify(cuboidRegression));
+ const cuboidRegression=await page.evaluate(()=>({model:window.pCubes.getModelInfo(),axes:window.pCubes.getAxesInfo(),centers:window.pCubes.getPartCenters().filter(center=>center?.length===3)}));
+ // RemoveGrayParts intentionally removes the 9 completely internal cubies;
+ // all 66 visible surface cubies must remain.
+ assert.equal(cuboidRegression.model.parts,66,"5x5x3 cuboid must contain all 66 visible surface pieces: "+JSON.stringify(cuboidRegression.model));
  assert.deepEqual(cuboidRegression.axes.map(axis=>axis.layers),[5,5,3],"5x5x3 axis layer counts are wrong: "+JSON.stringify(cuboidRegression.axes));
  assert.ok(cuboidRegression.axes.every(axis=>axis.fixedLayers?.length===axis.layers&&axis.fixedLayers.every(fixed=>!fixed)),"Cuboid axes must not contain fixed core layers: "+JSON.stringify(cuboidRegression.axes));
  assert.ok(cuboidRegression.axes.every(axis=>axis.angles?.length===axis.layers&&axis.angles.every(angle=>Math.abs(Number(angle))>1e-7)),"Every cuboid layer must have a nonzero turning angle: "+JSON.stringify(cuboidRegression.axes));
- console.log("PASS: generated 5x5x3 cuboid has 75 pieces, [5,5,3] layers, and no fixed cores.");
+ const centerCounts=[0,1,2].map(axis=>new Set(cuboidRegression.centers.map(center=>Math.round(center[axis]*10000)/10000)).size);
+ assert.deepEqual(centerCounts,[5,5,3],"Cuboid geometry is stretched or collapsed; distinct center coordinates must be [5,5,3]: "+JSON.stringify(centerCounts));
+ console.log("PASS: generated 5x5x3 cuboid has 66 visible pieces, [5,5,3] geometry, and no fixed cores.");
  // Confirm the remote Pyraminx and its external figure were saved before reload.
  const savedPuzzle=await page.evaluate(async()=>{
    const db=await new Promise((resolve,reject)=>{const r=indexedDB.open("pcubes-last-puzzle",1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
